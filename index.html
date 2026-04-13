@@ -20,8 +20,14 @@
   .wrap {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 20px;
+  }
+
+  .logo {
+    height: 200px; 
+    width: auto;
+    margin-bottom: 10px; 
   }
 
   .reels {
@@ -78,18 +84,29 @@
 
   .reel-cell.lit { color: #1e1e1e; }
 
+  .controls {
+    display: flex;
+    width: 374px; 
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+  }
+
   .btn-kitas {
     font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 400;
+    font-size: 14px;
+    font-weight: 500;
     letter-spacing: 1.5px;
     color: #aaa;
     background: none;
     border: none;
-    padding: 4px 0;
+    padding: 4px;
     cursor: pointer;
     transition: color 0.15s;
-    margin-left: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
   }
 
   .btn-kitas:hover:not(:disabled) { color: #555; }
@@ -99,12 +116,21 @@
 <body>
 
 <div class="wrap">
+  <img src="logo.png" alt="Houston We Have Data" class="logo">
+  
   <div class="reels" id="reels"></div>
-  <button class="btn-kitas" id="btn-next">kitas</button>
+  <div class="controls">
+    <button class="btn-kitas" id="btn-next">kitas</button>
+    <button class="btn-kitas" id="btn-reset" title="Reset">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <script>
-
   const WORDS_RAW = ['CPVA','MŪZA','GITA','BETA','JĖGA','AČIŪ','JŪSŲ'];
 
   const EXTRA = 'ĄČĘĖĮŠŲŪŽąčęėįšųūž';
@@ -130,13 +156,14 @@
     outer.className = 'reel-outer';
     const strip = document.createElement('div');
     strip.className = 'reel-strip';
-    for (let rep = 0; rep < REPS; rep++)
+    for (let rep = 0; rep < REPS; rep++) {
       for (const ch of ALPHABET) {
         const cell = document.createElement('div');
         cell.className = 'reel-cell';
         cell.textContent = ch;
         strip.appendChild(cell);
       }
+    }
     strip.style.transform = 'translateY(0px)';
     outer.appendChild(strip);
     reelsEl.appendChild(outer);
@@ -176,7 +203,6 @@
     });
   }
 
-  // Main 
   async function doSpin() {
     if (spinning) return;
     spinning = true;
@@ -208,7 +234,25 @@
     document.getElementById('btn-next').disabled = false;
   }
 
+  function doReset() {
+    if (spinning) return; 
+    
+    wordIndex = 0; 
+    
+    strips.forEach(s => {
+      s.style.transform = 'translateY(0px)'; 
+      s.querySelectorAll('.reel-cell').forEach(c => {
+        c.classList.remove('lit'); 
+        c.textContent = ALPHABET[
+          Array.from(s.querySelectorAll('.reel-cell')).indexOf(c) % N
+        ] || c.textContent;
+      });
+    });
+  }
+
   document.getElementById('btn-next').addEventListener('click', doSpin);
+  document.getElementById('btn-reset').addEventListener('click', doReset);
+  
   document.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); doSpin(); }
   });
