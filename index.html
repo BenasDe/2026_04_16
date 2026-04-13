@@ -104,15 +104,12 @@
 </div>
 
 <script>
-  // Lithuanian words — uppercase for spinning logic, display can be mixed
+
   const WORDS_RAW = ['CPVA','MŪZA','GITA','BETA','JĖGA','AČIŪ','JŪSŲ'];
-  // Build a spinning alphabet that includes all unique chars across all words
-  // For the reel we'll use a broad char set: A-Z plus the special Lithuanian chars
+
   const EXTRA = 'ĄČĘĖĮŠŲŪŽąčęėįšųūž';
   const BASE   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  // We'll work entirely in uppercase-normalised form for the strip
-  // but display the actual character the word uses
-  // Simpler: just build the strip from all letters that appear + basic latin
+  
   function buildAlphabet() {
     const set = new Set();
     for (const c of BASE) set.add(c);
@@ -121,14 +118,12 @@
   }
   const ALPHABET = buildAlphabet();
   const N = ALPHABET.length;
-
   const CELL_H = 106;
   const REPS   = 7;
   let wordIndex = 0;
   let spinning  = false;
   const strips  = [];
 
-  // ── Build DOM ─────────────────────────────────────────────────────────────
   const reelsEl = document.getElementById('reels');
   for (let r = 0; r < 4; r++) {
     const outer = document.createElement('div');
@@ -148,10 +143,8 @@
     strips.push(strip);
   }
 
-  // ── Easing ────────────────────────────────────────────────────────────────
   function easeOutExpo(t) { return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t); }
 
-  // ── Spin one reel ─────────────────────────────────────────────────────────
   function spinReel(reelIndex, targetChar) {
     return new Promise(resolve => {
       const strip   = strips[reelIndex];
@@ -175,7 +168,6 @@
         } else {
           strip.style.transform = `translateY(${targetY}px)`;
           const cell = strip.querySelectorAll('.reel-cell')[destRep * N + idx];
-          // Show the actual character (with diacritics) from the word
           if (cell) { cell.textContent = targetChar.toUpperCase(); cell.classList.add('lit'); }
           resolve();
         }
@@ -184,7 +176,7 @@
     });
   }
 
-  // ── Main ──────────────────────────────────────────────────────────────────
+  // Main 
   async function doSpin() {
     if (spinning) return;
     spinning = true;
@@ -193,11 +185,9 @@
     const word = WORDS_RAW[wordIndex % WORDS_RAW.length];
     wordIndex++;
 
-    // Reset strips
     strips.forEach(s => {
       s.querySelectorAll('.reel-cell').forEach(c => {
         c.classList.remove('lit');
-        // Restore uppercase version (in case we swapped in a diacritic)
         c.textContent = ALPHABET[
           Array.from(s.querySelectorAll('.reel-cell')).indexOf(c) % N
         ] || c.textContent;
