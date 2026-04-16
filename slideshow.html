@@ -19,7 +19,6 @@
             position: relative;
             width: 100%;
             height: 100%;
-            outline: none;
         }
 
         iframe {
@@ -31,11 +30,6 @@
             opacity: 1;
             transition: opacity 0.8s ease-in-out;
             background: #000;
-        }
-
-        /* Important: prevent the visible iframe from stealing mouse focus */
-        #viewer {
-            pointer-events: none;
         }
 
         #viewer.fade-out {
@@ -120,56 +114,62 @@
             bottom: 16px;
             z-index: 11;
             color: white;
-            background: rgba(0,0,0,0.45);
+            background: rgba(0,0,0,0.55);
             padding: 8px 12px;
-            border-radius: 999px;
+            border-radius: 8px;
             font-size: 13px;
             backdrop-filter: blur(4px);
+            pointer-events: none;
         }
 
-        .controls {
+        /* ON-SCREEN CONTROLS */
+        .controls-panel {
             position: absolute;
             right: 16px;
             bottom: 16px;
-            z-index: 20;
+            z-index: 11;
             display: flex;
-            gap: 10px;
-        }
-
-        .controls button {
-            border: none;
-            border-radius: 999px;
-            padding: 10px 14px;
-            font-size: 14px;
-            cursor: pointer;
+            gap: 8px;
             background: rgba(0,0,0,0.55);
-            color: white;
+            padding: 6px;
+            border-radius: 8px;
             backdrop-filter: blur(4px);
         }
 
-        .controls button:hover {
-            background: rgba(0,0,0,0.72);
+        .control-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .control-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
         }
 
         @keyframes pulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255,255,255,0.18);
-            }
-            70% {
-                transform: scale(1.05);
-                box-shadow: 0 0 0 18px rgba(255,255,255,0);
-            }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255,255,255,0);
-            }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.18); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 18px rgba(255,255,255,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
         }
     </style>
 </head>
 <body>
 
-<div id="app" class="frame-wrap" tabindex="0" aria-label="Slideshow controls">
+<div class="frame-wrap">
     <iframe id="viewer" src=""></iframe>
     <iframe id="preloader" src=""></iframe>
 
@@ -182,92 +182,89 @@
                 </div>
             </div>
             <div class="pause-text">Paused</div>
-            <div class="pause-hint">Space = resume • ← → = navigate</div>
+            <div class="pause-hint">Press Space or click Play to resume</div>
         </div>
     </div>
 
     <div id="statusBadge" class="status-badge"></div>
-
-    <div class="controls">
-        <button id="prevBtn" type="button">◀ Prev</button>
-        <button id="pauseBtn" type="button">Pause</button>
-        <button id="nextBtn" type="button">Next ▶</button>
+    
+    <!-- On-Screen Controls -->
+    <div class="controls-panel">
+        <button class="control-btn" onclick="prevSlide()" title="Previous (Left Arrow)">
+            <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+        </button>
+        <button class="control-btn" id="playPauseBtn" onclick="togglePause()" title="Play/Pause (Space)">
+            <!-- Pause Icon -->
+            <svg id="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <!-- Play Icon -->
+            <svg id="icon-play" viewBox="0 0 24 24" style="display: none;"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="control-btn" onclick="nextSlide()" title="Next (Right Arrow)">
+            <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </button>
     </div>
 </div>
 
 <script>
     const slides = [
-        {
-            url: "https://open.geodata.gov.lt/",
-            settleMs: 3000
-        },
-        {
-            url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai/sd005198?page=1",
-            settleMs: 6000
-        },
-        {
-            url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-SURA%C5%A0YMAS",
-            settleMs: 8000
-        },
-        {
-            url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai?categoryType=LT_ENVI&categoryType=LT_ENVI_3EM&categoryType=LT_ENVI_4IIAE&categoryType=LT_ENVI_4TAC&categoryType=LT_ENVI_4GGAS&categoryType=LT_ENVI_2W&categoryType=LT_ENVI_3PA&categoryType=LT_ENVI_3SA&categoryType=LT_ENVI_3PS&categoryType=LT_ENVI_3SM&categoryType=LT_ENVI_4MFAC&categoryType=LT_ENVI_4MFA&categoryType=LT_ENVI_4M&categoryType=LT_ENVI_3C&categoryType=LT_ENVI_3AQ&categoryType=LT_ENVI_2WH&page=1",
-            settleMs: 6000
-        },
-        {
-            url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-E%C5%BDERAS",
-            settleMs: 8000
-        },
-        {
-            url: "https://open.geodata.gov.lt/",
-            settleMs: 3000
-        },
-        {
-            url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=DIDEL%C4%96S-VERT%C4%96S-DUOMENYS",
-            settleMs: 8000
-        },
-        {
-            url: "https://open.geodata.gov.lt/datasets/5c703c313e5d459783a17c70e485344b_0/explore?location=54.680704%2C25.270150%2C15",
-            settleMs: 5000
-        },
-        {
-            url: "https://paslaugos.stat.gov.lt/duomenu-srautai/tarp-instituciju.html",
-            settleMs: 4000
-        },
-        {
-            url: "https://open.geodata.gov.lt/datasets/873ce8253df9417286bb04f7d12c0053_0/explore?location=54.969337%2C24.622391%2C9",
-            settleMs: 5000
-        },
-        {
-            url: "https://open.geodata.gov.lt/apps/5a1fa6163e274825870993aadb151b5e/explore",
-            settleMs: 5000
-        }
+        { url: "https://open.geodata.gov.lt/", settleMs: 3000 },
+        { url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai/sd005198?page=1", settleMs: 6000 },
+        { url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-SURA%C5%A0YMAS", settleMs: 8000 },
+        { url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai?categoryType=LT_ENVI&categoryType=LT_ENVI_3EM&categoryType=LT_ENVI_4IIAE&categoryType=LT_ENVI_4TAC&categoryType=LT_ENVI_4GGAS&categoryType=LT_ENVI_2W&categoryType=LT_ENVI_3PA&categoryType=LT_ENVI_3SA&categoryType=LT_ENVI_3PS&categoryType=LT_ENVI_3SM&categoryType=LT_ENVI_4MFAC&categoryType=LT_ENVI_4MFA&categoryType=LT_ENVI_4M&categoryType=LT_ENVI_3C&categoryType=LT_ENVI_3AQ&categoryType=LT_ENVI_2WH&page=1", settleMs: 6000 },
+        { url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-E%C5%BDERAS", settleMs: 8000 },
+        { url: "https://open.geodata.gov.lt/", settleMs: 3000 },
+        { url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=DIDEL%C4%96S-VERT%C4%96S-DUOMENYS", settleMs: 8000 },
+        { url: "https://open.geodata.gov.lt/datasets/5c703c313e5d459783a17c70e485344b_0/explore?location=54.680704%2C25.270150%2C15", settleMs: 5000 },
+        { url: "https://paslaugos.stat.gov.lt/duomenu-srautai/tarp-instituciju.html", settleMs: 4000 },
+        { url: "https://open.geodata.gov.lt/datasets/873ce8253df9417286bb04f7d12c0053_0/explore?location=54.969337%2C24.622391%2C9", settleMs: 5000 },
+        { url: "https://open.geodata.gov.lt/apps/5a1fa6163e274825870993aadb151b5e/explore", settleMs: 5000 }
     ];
 
-    const DISPLAY_MS = 35000;
-    const FADE_MS = 800;
-    const LOAD_TIMEOUT_MS = 15000;
+    const DISPLAY_MS = 35000;      
+    const FADE_MS = 800;           
+    const LOAD_TIMEOUT_MS = 15000; 
 
     let currentIndex = 0;
     let isPaused = false;
     let slideTimer = null;
     let navLock = false;
-    let fallbackTimer = null;
 
-    const app = document.getElementById("app");
     const viewer = document.getElementById("viewer");
     const preloader = document.getElementById("preloader");
     const pauseOverlay = document.getElementById("pauseOverlay");
     const statusBadge = document.getElementById("statusBadge");
-    const prevBtn = document.getElementById("prevBtn");
-    const pauseBtn = document.getElementById("pauseBtn");
-    const nextBtn = document.getElementById("nextBtn");
+    
+    // UI Icons
+    const iconPause = document.getElementById("icon-pause");
+    const iconPlay = document.getElementById("icon-play");
 
-    function focusShell() {
-        app.focus({ preventScroll: true });
+    function updateStatus() {
+        const slide = slides[currentIndex];
+        statusBadge.textContent = `${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`;
+        statusBadge.title = slide.url;
     }
 
-    function normalizedIndex(index) {
-        return (index + slides.length) % slides.length;
+    function setPaused(paused) {
+        isPaused = paused;
+        pauseOverlay.classList.toggle("visible", paused);
+
+        if (paused) {
+            iconPause.style.display = "none";
+            iconPlay.style.display = "block";
+            clearSlideTimer();
+            slideTimer = null;
+        } else {
+            iconPause.style.display = "block";
+            iconPlay.style.display = "none";
+            scheduleNextAdvance();
+        }
+
+        updateStatus();
+    }
+
+    function togglePause() {
+        window.focus(); // Pull focus from iframe
+        setPaused(!isPaused);
     }
 
     function clearSlideTimer() {
@@ -277,41 +274,8 @@
         }
     }
 
-    function clearFallbackTimer() {
-        if (fallbackTimer) {
-            clearTimeout(fallbackTimer);
-            fallbackTimer = null;
-        }
-    }
-
-    function updateStatus() {
-        const slide = slides[currentIndex];
-        statusBadge.textContent = `${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`;
-        statusBadge.title = slide.url;
-        pauseBtn.textContent = isPaused ? "Resume" : "Pause";
-    }
-
-    function setPaused(paused) {
-        isPaused = paused;
-        pauseOverlay.classList.toggle("visible", paused);
-
-        if (paused) {
-            clearSlideTimer();
-        } else {
-            scheduleNextAdvance();
-        }
-
-        updateStatus();
-        focusShell();
-    }
-
-    function togglePause() {
-        setPaused(!isPaused);
-    }
-
     function scheduleNextAdvance() {
         clearSlideTimer();
-
         if (isPaused) return;
 
         slideTimer = setTimeout(() => {
@@ -319,90 +283,66 @@
         }, DISPLAY_MS);
     }
 
-    function preloadSlide(index) {
-        const slide = slides[normalizedIndex(index)];
-        preloader.src = slide.url;
+    function normalizedIndex(index) {
+        return (index + slides.length) % slides.length;
     }
 
-    function preloadAndWait(index) {
-        const slide = slides[normalizedIndex(index)];
-
-        return new Promise((resolve) => {
-            let done = false;
-
-            const finish = () => {
-                if (done) return;
-                done = true;
-                preloader.onload = null;
-                setTimeout(resolve, slide.settleMs || 0);
-            };
-
-            preloader.onload = finish;
-            preloader.src = slide.url;
-            setTimeout(finish, LOAD_TIMEOUT_MS);
-        });
-    }
-
-    async function goToSlide(index) {
+    // This function handles the visual change of slides
+    function goToSlide(index) {
         if (navLock) return;
         navLock = true;
-
         clearSlideTimer();
-        clearFallbackTimer();
 
         const nextIndex = normalizedIndex(index);
         const slide = slides[nextIndex];
 
-        await preloadAndWait(nextIndex);
-
+        // 1. Immediately fade out the current slide
         viewer.classList.add("fade-out");
 
+        // 2. Wait for the fade-out CSS transition to finish before swapping the page
         setTimeout(() => {
-            viewer.onload = () => {
-                clearFallbackTimer();
-                viewer.onload = null;
+            viewer.src = slide.url;
+            currentIndex = nextIndex;
+            updateStatus();
+
+            let slideLoaded = false;
+            
+            const onViewerLoad = () => {
+                if (slideLoaded) return;
+                slideLoaded = true;
+
+                // 3. Fade the new page in
                 viewer.classList.remove("fade-out");
-                currentIndex = nextIndex;
-                updateStatus();
-                preloadSlide(currentIndex + 1);
+
+                // 4. Silently preload the NEXT slide in the background
+                const nextPreloadIndex = normalizedIndex(currentIndex + 1);
+                preloader.src = slides[nextPreloadIndex].url;
 
                 if (!isPaused) {
                     scheduleNextAdvance();
                 }
-
                 navLock = false;
-                focusShell();
             };
 
-            viewer.src = slide.url;
+            viewer.onload = onViewerLoad;
 
-            fallbackTimer = setTimeout(() => {
-                viewer.onload = null;
-                viewer.classList.remove("fade-out");
-                currentIndex = nextIndex;
-                updateStatus();
-                preloadSlide(currentIndex + 1);
-
-                if (!isPaused) {
-                    scheduleNextAdvance();
-                }
-
-                navLock = false;
-                focusShell();
-            }, LOAD_TIMEOUT_MS);
+            // Fallback in case a heavy domain ignores the onload hook
+            setTimeout(onViewerLoad, LOAD_TIMEOUT_MS);
 
         }, FADE_MS);
     }
 
     function nextSlide() {
+        window.focus(); // Pull focus from iframe
         goToSlide(currentIndex + 1);
     }
 
     function prevSlide() {
+        window.focus(); // Pull focus from iframe
         goToSlide(currentIndex - 1);
     }
 
-    function handleKey(event) {
+    document.addEventListener("keydown", (event) => {
         const key = event.key;
 
         if (key === " " || key === "Spacebar") {
@@ -413,42 +353,18 @@
 
         if (key === "ArrowRight") {
             event.preventDefault();
-            clearSlideTimer();
             nextSlide();
             return;
         }
 
         if (key === "ArrowLeft") {
             event.preventDefault();
-            clearSlideTimer();
             prevSlide();
             return;
         }
-    }
-
-    window.addEventListener("keydown", handleKey, true);
-    document.addEventListener("keydown", handleKey, true);
-
-    prevBtn.addEventListener("click", () => {
-        clearSlideTimer();
-        prevSlide();
-        focusShell();
     });
 
-    pauseBtn.addEventListener("click", () => {
-        togglePause();
-        focusShell();
-    });
-
-    nextBtn.addEventListener("click", () => {
-        clearSlideTimer();
-        nextSlide();
-        focusShell();
-    });
-
-    app.addEventListener("click", focusShell);
-    window.addEventListener("load", focusShell);
-
+    // Initial load
     updateStatus();
     goToSlide(0);
 </script>
