@@ -53,7 +53,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.20);
+            background: rgba(0, 0, 0, 0.12);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.25s ease;
@@ -119,18 +119,17 @@
             padding: 8px 12px;
             border-radius: 8px;
             font-size: 13px;
-            backdrop-filter: blur(4px);
             pointer-events: none;
             max-width: calc(100vw - 220px);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: background 0.3s;
+            transition: background 0.3s ease;
         }
 
-        /* Added a pulse effect when loading manually */
         .status-badge.loading {
-            background: rgba(180, 100, 0, 0.75); 
+            background: rgba(180, 100, 0, 0.75);
+            animation: badgePulse 1s infinite ease-in-out;
         }
 
         .controls-panel {
@@ -143,7 +142,6 @@
             background: rgba(0,0,0,0.55);
             padding: 6px;
             border-radius: 8px;
-            backdrop-filter: blur(4px);
         }
 
         .control-btn {
@@ -168,6 +166,18 @@
             width: 22px;
             height: 22px;
             fill: currentColor;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.18); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 18px rgba(255,255,255,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+
+        @keyframes badgePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -207,7 +217,7 @@
 </div>
 
 <script>
-    const slides =[
+    const slides = [
         { url: "https://open.geodata.gov.lt/", settleMs: 3000 },
         { url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai/sd005198?page=1", settleMs: 6000 },
         { url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-SURA%C5%A0YMAS", settleMs: 10000 },
@@ -257,11 +267,15 @@
         app.focus({ preventScroll: true });
     }
 
+    function setStatus(text, loading = false) {
+        statusBadge.textContent = text;
+        statusBadge.classList.toggle("loading", loading);
+    }
+
     function updateStatus() {
         const slide = slides[currentIndex];
-        statusBadge.textContent = `${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`;
+        setStatus(`${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`, false);
         statusBadge.title = slide.url;
-        statusBadge.classList.remove("loading");
     }
 
     function clearSlideTimer() {
@@ -273,11 +287,10 @@
 
     function scheduleNextAdvance() {
         clearSlideTimer();
-
         if (isPaused) return;
 
         slideTimer = setTimeout(() => {
-            goToSlide(currentIndex + 1);
+            goToSlide(currentIndex + 1, false);
         }, DISPLAY_MS);
     }
 
@@ -295,10 +308,10 @@
             scheduleNextAdvance();
         }
 
-        // Don't override the loading text if it's currently waiting on a manual click
         if (!statusBadge.classList.contains("loading")) {
             updateStatus();
         }
+
         focusShell();
     }
 
@@ -309,7 +322,6 @@
     function applyFrameClasses() {
         frameA.classList.remove("active", "standby");
         frameB.classList.remove("active", "standby");
-
         activeFrame.classList.add("active");
         standbyFrame.classList.add("standby");
     }
@@ -317,7 +329,6 @@
     function loadSlideIntoFrame(frame, slideIndex) {
         const slide = slides[normalizedIndex(slideIndex)];
         const token = `${Date.now()}-${Math.random()}`;
-
         frame.dataset.loadToken = token;
 
         return new Promise((resolve) => {
@@ -338,7 +349,6 @@
 
             frame.onload = complete;
             frame.src = slide.url;
-
             setTimeout(complete, LOAD_TIMEOUT_MS);
         });
     }
@@ -366,7 +376,6 @@
         standbyFrame = oldActive;
 
         currentIndex = normalizedIndex(targetIndex);
-
         standbyPreparedIndex = null;
         standbyPreparedReady = false;
 
@@ -381,26 +390,23 @@
         focusShell();
     }
 
-    async function goToSlide(index) {
+    async function goToSlide(index, isManual = true) {
         if (navLock) return;
         navLock = true;
-
         clearSlideTimer();
 
         const targetIndex = normalizedIndex(index);
 
         try {
-            // Check if the requested slide is NOT preloaded
             if (!(standbyPreparedReady && standbyPreparedIndex === targetIndex)) {
-                // UI feedback so user knows the button worked and is waiting for settleMs
-                statusBadge.textContent = `Loading next map...`;
-                statusBadge.classList.add("loading");
-                
+                if (isManual) {
+                    setStatus("Loading slide...", true);
+                }
                 await preloadStandby(targetIndex);
             }
 
             if (!(standbyPreparedReady && standbyPreparedIndex === targetIndex)) {
-                navLock = false;
+                updateStatus();
                 return;
             }
 
@@ -411,11 +417,11 @@
     }
 
     function nextSlide() {
-        goToSlide(currentIndex + 1);
+        goToSlide(currentIndex + 1, true);
     }
 
     function prevSlide() {
-        goToSlide(currentIndex - 1);
+        goToSlide(currentIndex - 1, true);
     }
 
     function handleKey(event) {
@@ -463,10 +469,8 @@
         standbyFrame = frameB;
         applyFrameClasses();
         focusShell();
-        
-        // Initial Loading state
-        statusBadge.textContent = "Booting maps...";
-        statusBadge.classList.add("loading");
+
+        setStatus("Booting slides...", true);
 
         await loadSlideIntoFrame(activeFrame, 0);
         currentIndex = 0;
