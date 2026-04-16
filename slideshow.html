@@ -19,6 +19,7 @@
             position: relative;
             width: 100%;
             height: 100%;
+            outline: none;
         }
 
         iframe {
@@ -30,6 +31,11 @@
             opacity: 1;
             transition: opacity 0.8s ease-in-out;
             background: #000;
+        }
+
+        /* Important: prevent the visible iframe from stealing mouse focus */
+        #viewer {
+            pointer-events: none;
         }
 
         #viewer.fade-out {
@@ -121,6 +127,30 @@
             backdrop-filter: blur(4px);
         }
 
+        .controls {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            z-index: 20;
+            display: flex;
+            gap: 10px;
+        }
+
+        .controls button {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.55);
+            color: white;
+            backdrop-filter: blur(4px);
+        }
+
+        .controls button:hover {
+            background: rgba(0,0,0,0.72);
+        }
+
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -139,7 +169,7 @@
 </head>
 <body>
 
-<div class="frame-wrap">
+<div id="app" class="frame-wrap" tabindex="0" aria-label="Slideshow controls">
     <iframe id="viewer" src=""></iframe>
     <iframe id="preloader" src=""></iframe>
 
@@ -152,11 +182,17 @@
                 </div>
             </div>
             <div class="pause-text">Paused</div>
-            <div class="pause-hint">Press Space to resume</div>
+            <div class="pause-hint">Space = resume • ← → = navigate</div>
         </div>
     </div>
 
     <div id="statusBadge" class="status-badge"></div>
+
+    <div class="controls">
+        <button id="prevBtn" type="button">◀ Prev</button>
+        <button id="pauseBtn" type="button">Pause</button>
+        <button id="nextBtn" type="button">Next ▶</button>
+    </div>
 </div>
 
 <script>
@@ -207,42 +243,31 @@
         }
     ];
 
-    const DISPLAY_MS = 35000;      // how long slide stays visible after it is shown
-    const FADE_MS = 800;           // CSS fade duration
-    const LOAD_TIMEOUT_MS = 15000; // fallback if iframe load event is slow
+    const DISPLAY_MS = 35000;
+    const FADE_MS = 800;
+    const LOAD_TIMEOUT_MS = 15000;
 
     let currentIndex = 0;
     let isPaused = false;
     let slideTimer = null;
     let navLock = false;
+    let fallbackTimer = null;
 
+    const app = document.getElementById("app");
     const viewer = document.getElementById("viewer");
     const preloader = document.getElementById("preloader");
     const pauseOverlay = document.getElementById("pauseOverlay");
     const statusBadge = document.getElementById("statusBadge");
+    const prevBtn = document.getElementById("prevBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const nextBtn = document.getElementById("nextBtn");
 
-    function updateStatus() {
-        const slide = slides[currentIndex];
-        statusBadge.textContent = `${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`;
-        statusBadge.title = slide.url;
+    function focusShell() {
+        app.focus({ preventScroll: true });
     }
 
-    function setPaused(paused) {
-        isPaused = paused;
-        pauseOverlay.classList.toggle("visible", paused);
-
-        if (paused) {
-            clearTimeout(slideTimer);
-            slideTimer = null;
-        } else {
-            scheduleNextAdvance();
-        }
-
-        updateStatus();
-    }
-
-    function togglePause() {
-        setPaused(!isPaused);
+    function normalizedIndex(index) {
+        return (index + slides.length) % slides.length;
     }
 
     function clearSlideTimer() {
@@ -252,8 +277,41 @@
         }
     }
 
+    function clearFallbackTimer() {
+        if (fallbackTimer) {
+            clearTimeout(fallbackTimer);
+            fallbackTimer = null;
+        }
+    }
+
+    function updateStatus() {
+        const slide = slides[currentIndex];
+        statusBadge.textContent = `${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`;
+        statusBadge.title = slide.url;
+        pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+    }
+
+    function setPaused(paused) {
+        isPaused = paused;
+        pauseOverlay.classList.toggle("visible", paused);
+
+        if (paused) {
+            clearSlideTimer();
+        } else {
+            scheduleNextAdvance();
+        }
+
+        updateStatus();
+        focusShell();
+    }
+
+    function togglePause() {
+        setPaused(!isPaused);
+    }
+
     function scheduleNextAdvance() {
         clearSlideTimer();
+
         if (isPaused) return;
 
         slideTimer = setTimeout(() => {
@@ -261,27 +319,26 @@
         }, DISPLAY_MS);
     }
 
-    function normalizedIndex(index) {
-        return (index + slides.length) % slides.length;
-    }
-
     function preloadSlide(index) {
         const slide = slides[normalizedIndex(index)];
         preloader.src = slide.url;
     }
 
-    function waitForPreload(slide) {
+    function preloadAndWait(index) {
+        const slide = slides[normalizedIndex(index)];
+
         return new Promise((resolve) => {
             let done = false;
 
             const finish = () => {
                 if (done) return;
                 done = true;
+                preloader.onload = null;
                 setTimeout(resolve, slide.settleMs || 0);
             };
 
             preloader.onload = finish;
-
+            preloader.src = slide.url;
             setTimeout(finish, LOAD_TIMEOUT_MS);
         });
     }
@@ -291,28 +348,22 @@
         navLock = true;
 
         clearSlideTimer();
+        clearFallbackTimer();
 
         const nextIndex = normalizedIndex(index);
         const slide = slides[nextIndex];
 
-        // Start preloading the target page
-        preloader.src = slide.url;
-        await waitForPreload(slide);
+        await preloadAndWait(nextIndex);
 
-        // Fade out current slide
         viewer.classList.add("fade-out");
 
         setTimeout(() => {
-            // Swap in preloaded content by assigning same src
-            viewer.src = slide.url;
-            currentIndex = nextIndex;
-            updateStatus();
-
-            // Fade in
             viewer.onload = () => {
+                clearFallbackTimer();
+                viewer.onload = null;
                 viewer.classList.remove("fade-out");
-
-                // Preload the next slide in the background
+                currentIndex = nextIndex;
+                updateStatus();
                 preloadSlide(currentIndex + 1);
 
                 if (!isPaused) {
@@ -320,11 +371,16 @@
                 }
 
                 navLock = false;
+                focusShell();
             };
 
-            // Fallback in case onload is delayed or not fired as expected
-            setTimeout(() => {
+            viewer.src = slide.url;
+
+            fallbackTimer = setTimeout(() => {
+                viewer.onload = null;
                 viewer.classList.remove("fade-out");
+                currentIndex = nextIndex;
+                updateStatus();
                 preloadSlide(currentIndex + 1);
 
                 if (!isPaused) {
@@ -332,6 +388,7 @@
                 }
 
                 navLock = false;
+                focusShell();
             }, LOAD_TIMEOUT_MS);
 
         }, FADE_MS);
@@ -345,7 +402,7 @@
         goToSlide(currentIndex - 1);
     }
 
-    document.addEventListener("keydown", (event) => {
+    function handleKey(event) {
         const key = event.key;
 
         if (key === " " || key === "Spacebar") {
@@ -356,26 +413,42 @@
 
         if (key === "ArrowRight") {
             event.preventDefault();
-            prevNavResumeBehavior();
+            clearSlideTimer();
             nextSlide();
             return;
         }
 
         if (key === "ArrowLeft") {
             event.preventDefault();
-            prevNavResumeBehavior();
+            clearSlideTimer();
             prevSlide();
             return;
         }
-    });
-
-    function prevNavResumeBehavior() {
-        // Manual navigation keeps the slideshow paused if already paused.
-        // If playing, restart timer after navigation.
-        clearSlideTimer();
     }
 
-    // Initial load
+    window.addEventListener("keydown", handleKey, true);
+    document.addEventListener("keydown", handleKey, true);
+
+    prevBtn.addEventListener("click", () => {
+        clearSlideTimer();
+        prevSlide();
+        focusShell();
+    });
+
+    pauseBtn.addEventListener("click", () => {
+        togglePause();
+        focusShell();
+    });
+
+    nextBtn.addEventListener("click", () => {
+        clearSlideTimer();
+        nextSlide();
+        focusShell();
+    });
+
+    app.addEventListener("click", focusShell);
+    window.addEventListener("load", focusShell);
+
     updateStatus();
     goToSlide(0);
 </script>
