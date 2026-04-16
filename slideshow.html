@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Slideshow</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            opacity: 1;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .fade-out {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <iframe id="viewer" src=""></iframe>
+
+    <script>
+        const urls = [
+            "https://osp.balticamadeus.online/lt/duomenu-rinkiniai/sd005198?page=1",
+            "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-SURA%C5%A0YMAS",
+            "https://osp.balticamadeus.online/lt/duomenu-rinkiniai?categoryType=LT_ENVI&categoryType=LT_ENVI_3EM&categoryType=LT_ENVI_4IIAE&categoryType=LT_ENVI_4TAC&categoryType=LT_ENVI_4GGAS&categoryType=LT_ENVI_2W&categoryType=LT_ENVI_3PA&categoryType=LT_ENVI_3SA&categoryType=LT_ENVI_3PS&categoryType=LT_ENVI_3SM&categoryType=LT_ENVI_4MFAC&categoryType=LT_ENVI_4MFA&categoryType=LT_ENVI_4M&categoryType=LT_ENVI_3C&categoryType=LT_ENVI_3AQ&categoryType=LT_ENVI_2WH&page=1"
+            "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-E%C5%BDERAS",
+            "https://open.geodata.gov.lt/",
+            "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=DIDEL%C4%96S-VERT%C4%96S-DUOMENYS"
+            "https://osp.stat.gov.lt/covid-dashboards"
+        ];
+
+        const INTERVAL_MS = 50000; 
+
+        let currentIndex = 0;
+        const iframe = document.getElementById('viewer');
+
+        function loadNextUrl() {
+            iframe.classList.add('fade-out');
+
+            setTimeout(() => {
+                iframe.src = urls[currentIndex];
+                
+                iframe.onload = () => {
+                    iframe.classList.remove('fade-out');
+                };
+
+                currentIndex = (currentIndex + 1) % urls.length;
+            }, 1000); 
+        }
+
+        loadNextUrl();
+
+        setInterval(loadNextUrl, INTERVAL_MS);
+    </script>
+
+</body>
+</html>
