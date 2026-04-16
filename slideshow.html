@@ -5,71 +5,380 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URL Slideshow</title>
     <style>
-        body, html {
+        html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #000;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+
+        .frame-wrap {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
 
         iframe {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             border: none;
             opacity: 1;
-            transition: opacity 1s ease-in-out;
+            transition: opacity 0.8s ease-in-out;
+            background: #000;
         }
 
-        .fade-out {
+        #viewer.fade-out {
             opacity: 0;
+        }
+
+        /* Hidden preloader iframe */
+        #preloader {
+            visibility: hidden;
+            pointer-events: none;
+            opacity: 0;
+            z-index: -1;
+        }
+
+        /* Pause overlay */
+        .pause-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 10;
+        }
+
+        .pause-overlay.visible {
+            opacity: 1;
+        }
+
+        .pause-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            color: white;
+            text-align: center;
+        }
+
+        .pause-icon {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 1.4s infinite ease-in-out;
+            box-shadow: 0 0 0 0 rgba(255,255,255,0.25);
+        }
+
+        .pause-bars {
+            display: flex;
+            gap: 10px;
+        }
+
+        .pause-bars span {
+            display: block;
+            width: 10px;
+            height: 34px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .pause-text {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .pause-hint {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .status-badge {
+            position: absolute;
+            left: 16px;
+            bottom: 16px;
+            z-index: 11;
+            color: white;
+            background: rgba(0,0,0,0.45);
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255,255,255,0.18);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 18px rgba(255,255,255,0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255,255,255,0);
+            }
         }
     </style>
 </head>
 <body>
 
+<div class="frame-wrap">
     <iframe id="viewer" src=""></iframe>
+    <iframe id="preloader" src=""></iframe>
 
-    <script>
-        const urls = [
-            "https://open.geodata.gov.lt/",
-            "https://osp.balticamadeus.online/lt/duomenu-rinkiniai/sd005198?page=1",
-            "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-SURA%C5%A0YMAS",
-            "https://osp.balticamadeus.online/lt/duomenu-rinkiniai?categoryType=LT_ENVI&categoryType=LT_ENVI_3EM&categoryType=LT_ENVI_4IIAE&categoryType=LT_ENVI_4TAC&categoryType=LT_ENVI_4GGAS&categoryType=LT_ENVI_2W&categoryType=LT_ENVI_3PA&categoryType=LT_ENVI_3SA&categoryType=LT_ENVI_3PS&categoryType=LT_ENVI_3SM&categoryType=LT_ENVI_4MFAC&categoryType=LT_ENVI_4MFA&categoryType=LT_ENVI_4M&categoryType=LT_ENVI_3C&categoryType=LT_ENVI_3AQ&categoryType=LT_ENVI_2WH&page=1",
-            "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-E%C5%BDERAS",
-            "https://open.geodata.gov.lt/",
-            "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=DIDEL%C4%96S-VERT%C4%96S-DUOMENYS",
-            "https://open.geodata.gov.lt/datasets/5c703c313e5d459783a17c70e485344b_0/explore?location=54.680704%2C25.270150%2C15",
-            "https://paslaugos.stat.gov.lt/duomenu-srautai/tarp-instituciju.html",
-            "https://open.geodata.gov.lt/datasets/873ce8253df9417286bb04f7d12c0053_0/explore?location=54.969337%2C24.622391%2C9",
-            "https://open.geodata.gov.lt/apps/5a1fa6163e274825870993aadb151b5e/explore"
-            
-        ];
+    <div id="pauseOverlay" class="pause-overlay">
+        <div class="pause-box">
+            <div class="pause-icon">
+                <div class="pause-bars">
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="pause-text">Paused</div>
+            <div class="pause-hint">Press Space to resume</div>
+        </div>
+    </div>
 
-        const INTERVAL_MS = 35000; 
+    <div id="statusBadge" class="status-badge"></div>
+</div>
 
-        let currentIndex = 0;
-        const iframe = document.getElementById('viewer');
+<script>
+    const slides = [
+        {
+            url: "https://open.geodata.gov.lt/",
+            settleMs: 3000
+        },
+        {
+            url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai/sd005198?page=1",
+            settleMs: 6000
+        },
+        {
+            url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-SURA%C5%A0YMAS",
+            settleMs: 8000
+        },
+        {
+            url: "https://osp.balticamadeus.online/lt/duomenu-rinkiniai?categoryType=LT_ENVI&categoryType=LT_ENVI_3EM&categoryType=LT_ENVI_4IIAE&categoryType=LT_ENVI_4TAC&categoryType=LT_ENVI_4GGAS&categoryType=LT_ENVI_2W&categoryType=LT_ENVI_3PA&categoryType=LT_ENVI_3SA&categoryType=LT_ENVI_3PS&categoryType=LT_ENVI_3SM&categoryType=LT_ENVI_4MFAC&categoryType=LT_ENVI_4MFA&categoryType=LT_ENVI_4M&categoryType=LT_ENVI_3C&categoryType=LT_ENVI_3AQ&categoryType=LT_ENVI_2WH&page=1",
+            settleMs: 6000
+        },
+        {
+            url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=VALSTYB%C4%96S-DUOMEN%C5%B2-E%C5%BDERAS",
+            settleMs: 8000
+        },
+        {
+            url: "https://open.geodata.gov.lt/",
+            settleMs: 3000
+        },
+        {
+            url: "https://experience.arcgis.com/experience/c45584925bb94df2a5948253c6685c1e/page/Puslapis?views=DIDEL%C4%96S-VERT%C4%96S-DUOMENYS",
+            settleMs: 8000
+        },
+        {
+            url: "https://open.geodata.gov.lt/datasets/5c703c313e5d459783a17c70e485344b_0/explore?location=54.680704%2C25.270150%2C15",
+            settleMs: 5000
+        },
+        {
+            url: "https://paslaugos.stat.gov.lt/duomenu-srautai/tarp-instituciju.html",
+            settleMs: 4000
+        },
+        {
+            url: "https://open.geodata.gov.lt/datasets/873ce8253df9417286bb04f7d12c0053_0/explore?location=54.969337%2C24.622391%2C9",
+            settleMs: 5000
+        },
+        {
+            url: "https://open.geodata.gov.lt/apps/5a1fa6163e274825870993aadb151b5e/explore",
+            settleMs: 5000
+        }
+    ];
 
-        function loadNextUrl() {
-            iframe.classList.add('fade-out');
+    const DISPLAY_MS = 35000;      // how long slide stays visible after it is shown
+    const FADE_MS = 800;           // CSS fade duration
+    const LOAD_TIMEOUT_MS = 15000; // fallback if iframe load event is slow
 
-            setTimeout(() => {
-                iframe.src = urls[currentIndex];
-                
-                iframe.onload = () => {
-                    iframe.classList.remove('fade-out');
-                };
+    let currentIndex = 0;
+    let isPaused = false;
+    let slideTimer = null;
+    let navLock = false;
 
-                currentIndex = (currentIndex + 1) % urls.length;
-            }, 1000); 
+    const viewer = document.getElementById("viewer");
+    const preloader = document.getElementById("preloader");
+    const pauseOverlay = document.getElementById("pauseOverlay");
+    const statusBadge = document.getElementById("statusBadge");
+
+    function updateStatus() {
+        const slide = slides[currentIndex];
+        statusBadge.textContent = `${isPaused ? "Paused" : "Playing"} • ${currentIndex + 1}/${slides.length}`;
+        statusBadge.title = slide.url;
+    }
+
+    function setPaused(paused) {
+        isPaused = paused;
+        pauseOverlay.classList.toggle("visible", paused);
+
+        if (paused) {
+            clearTimeout(slideTimer);
+            slideTimer = null;
+        } else {
+            scheduleNextAdvance();
         }
 
-        loadNextUrl();
+        updateStatus();
+    }
 
-        setInterval(loadNextUrl, INTERVAL_MS);
-    </script>
+    function togglePause() {
+        setPaused(!isPaused);
+    }
+
+    function clearSlideTimer() {
+        if (slideTimer) {
+            clearTimeout(slideTimer);
+            slideTimer = null;
+        }
+    }
+
+    function scheduleNextAdvance() {
+        clearSlideTimer();
+        if (isPaused) return;
+
+        slideTimer = setTimeout(() => {
+            goToSlide(currentIndex + 1);
+        }, DISPLAY_MS);
+    }
+
+    function normalizedIndex(index) {
+        return (index + slides.length) % slides.length;
+    }
+
+    function preloadSlide(index) {
+        const slide = slides[normalizedIndex(index)];
+        preloader.src = slide.url;
+    }
+
+    function waitForPreload(slide) {
+        return new Promise((resolve) => {
+            let done = false;
+
+            const finish = () => {
+                if (done) return;
+                done = true;
+                setTimeout(resolve, slide.settleMs || 0);
+            };
+
+            preloader.onload = finish;
+
+            setTimeout(finish, LOAD_TIMEOUT_MS);
+        });
+    }
+
+    async function goToSlide(index) {
+        if (navLock) return;
+        navLock = true;
+
+        clearSlideTimer();
+
+        const nextIndex = normalizedIndex(index);
+        const slide = slides[nextIndex];
+
+        // Start preloading the target page
+        preloader.src = slide.url;
+        await waitForPreload(slide);
+
+        // Fade out current slide
+        viewer.classList.add("fade-out");
+
+        setTimeout(() => {
+            // Swap in preloaded content by assigning same src
+            viewer.src = slide.url;
+            currentIndex = nextIndex;
+            updateStatus();
+
+            // Fade in
+            viewer.onload = () => {
+                viewer.classList.remove("fade-out");
+
+                // Preload the next slide in the background
+                preloadSlide(currentIndex + 1);
+
+                if (!isPaused) {
+                    scheduleNextAdvance();
+                }
+
+                navLock = false;
+            };
+
+            // Fallback in case onload is delayed or not fired as expected
+            setTimeout(() => {
+                viewer.classList.remove("fade-out");
+                preloadSlide(currentIndex + 1);
+
+                if (!isPaused) {
+                    scheduleNextAdvance();
+                }
+
+                navLock = false;
+            }, LOAD_TIMEOUT_MS);
+
+        }, FADE_MS);
+    }
+
+    function nextSlide() {
+        goToSlide(currentIndex + 1);
+    }
+
+    function prevSlide() {
+        goToSlide(currentIndex - 1);
+    }
+
+    document.addEventListener("keydown", (event) => {
+        const key = event.key;
+
+        if (key === " " || key === "Spacebar") {
+            event.preventDefault();
+            togglePause();
+            return;
+        }
+
+        if (key === "ArrowRight") {
+            event.preventDefault();
+            prevNavResumeBehavior();
+            nextSlide();
+            return;
+        }
+
+        if (key === "ArrowLeft") {
+            event.preventDefault();
+            prevNavResumeBehavior();
+            prevSlide();
+            return;
+        }
+    });
+
+    function prevNavResumeBehavior() {
+        // Manual navigation keeps the slideshow paused if already paused.
+        // If playing, restart timer after navigation.
+        clearSlideTimer();
+    }
+
+    // Initial load
+    updateStatus();
+    goToSlide(0);
+</script>
 
 </body>
 </html>
