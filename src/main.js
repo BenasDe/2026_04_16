@@ -29,6 +29,9 @@ const gameState = {
 const engine = new GameEngine('webgl-canvas');
 gameState.board = engine.buildBoard(gameState.gridSize, window.ANOMALY_DATABASE);
 
+// Snap player and camera to the initial start tile (0, 0) on initial load
+engine.setPlayerGridPosition(gameState.player.gridX, gameState.player.gridY, gameState.gridSize);
+
 // Initialize Battle Manager with resolution callback
 const battleSystem = new BattleSystem(engine, gameState, (won, enemy) => {
   if (won) {

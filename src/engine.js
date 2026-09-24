@@ -240,6 +240,27 @@ class GameEngine {
   }
 
   /**
+   * Immediately snaps player and camera to the specified grid coordinates without animation.
+   * @param {number} gridX
+   * @param {number} gridY
+   * @param {number} gridSize
+   */
+  setPlayerGridPosition(gridX, gridY, gridSize) {
+    const offset = ((gridSize - 1) * this.GRID_SPACING) / 2;
+    const targetX = gridX * this.GRID_SPACING - offset;
+    const targetZ = gridY * this.GRID_SPACING - offset;
+
+    this.playerGroup.position.set(targetX, 0, targetZ);
+    this.pointLight.position.set(targetX, 4, targetZ);
+    this.camera.position.set(
+      targetX + this.cameraOffset.x,
+      this.cameraOffset.y,
+      targetZ + this.cameraOffset.z
+    );
+    this.camera.lookAt(targetX, 0, targetZ);
+  }
+
+  /**
    * Removes an interactive 3D prop at the specified grid coordinate.
    * @param {number} gridX
    * @param {number} gridY
