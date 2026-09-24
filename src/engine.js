@@ -1,6 +1,7 @@
 /**
  * @file engine.js
- * @description Three.js 2.5D Isometric Rendering Engine, Grid generation, Meshes, and Animations.
+ * @description Three.js 2.5D Isometric Rendering Engine with Pure Black & White Monochrome Aesthetics.
+ * Marks enemy locations with 3D Hexagonal structures.
  */
 
 class GameEngine {
@@ -20,12 +21,12 @@ class GameEngine {
   }
 
   /**
-   * Initializes Three.js Scene, Renderer, and Isometric Perspective Camera.
+   * Initializes Three.js Scene, Renderer, and Isometric Perspective Camera in B&W.
    */
   initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0e14);
-    this.scene.fog = new THREE.FogExp2(0x0a0e14, 0.04);
+    this.scene.background = new THREE.Color(0x000000);
+    this.scene.fog = new THREE.FogExp2(0x000000, 0.04);
 
     this.camera = new THREE.PerspectiveCamera(
       45,
@@ -48,68 +49,68 @@ class GameEngine {
   }
 
   /**
-   * Configures environmental lighting (Ambient, Directional with shadow, PointLight on player).
+   * Configures environmental lighting in pure monochrome white.
    */
   initLighting() {
-    const ambientLight = new THREE.AmbientLight(0xd0e0ff, 0.65);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     this.scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
     dirLight.position.set(15, 30, 20);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 1024;
     dirLight.shadow.mapSize.height = 1024;
     this.scene.add(dirLight);
 
-    this.pointLight = new THREE.PointLight(0x58a6ff, 1.2, 25);
+    this.pointLight = new THREE.PointLight(0xffffff, 1.4, 25);
     this.pointLight.position.set(0, 5, 0);
     this.scene.add(this.pointLight);
   }
 
   /**
-   * Constructs the 3D low-poly developer character model with a glowing laptop screen.
+   * Constructs the 3D low-poly developer character model with monochrome finish and glowing white laptop.
    */
   initPlayerMesh() {
     this.playerGroup = new THREE.Group();
 
-    // Body
+    // Body (Matte Black)
     const bodyGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.9, 16);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x24292e, roughness: 0.3 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.3 });
     const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
     bodyMesh.position.y = 0.55;
     bodyMesh.castShadow = true;
     this.playerGroup.add(bodyMesh);
 
-    // Head
+    // Head (Light Silver/White)
     const headGeo = new THREE.SphereGeometry(0.28, 16, 16);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xf6d8b8 });
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.5 });
     const headMesh = new THREE.Mesh(headGeo, headMat);
     headMesh.position.y = 1.2;
     headMesh.castShadow = true;
     this.playerGroup.add(headMesh);
 
-    // Hair
+    // Hair / Cap (Solid Black)
     const hairGeo = new THREE.BoxGeometry(0.38, 0.15, 0.38);
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1f2328 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x050505 });
     const hairMesh = new THREE.Mesh(hairGeo, hairMat);
     hairMesh.position.y = 1.38;
     this.playerGroup.add(hairMesh);
 
-    // Glowing Laptop Screen
+    // Glowing Laptop Screen (Crisp White)
     const laptopGeo = new THREE.BoxGeometry(0.35, 0.04, 0.28);
     const laptopMat = new THREE.MeshStandardMaterial({
-      color: 0x58a6ff,
-      emissive: 0x1f6feb,
-      emissiveIntensity: 0.8
+      color: 0xffffff,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.95
     });
     const laptopMesh = new THREE.Mesh(laptopGeo, laptopMat);
     laptopMesh.position.set(0, 0.7, 0.4);
     laptopMesh.rotation.x = 0.2;
     this.playerGroup.add(laptopMesh);
 
-    // Glowing Target Ring under player feet
+    // Glowing Target Ring under player feet (Solid White)
     const ringGeo = new THREE.RingGeometry(0.45, 0.55, 32);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x58a6ff, side: THREE.DoubleSide });
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     ringMesh.rotation.x = -Math.PI / 2;
     ringMesh.position.y = 0.05;
@@ -138,7 +139,7 @@ class GameEngine {
   }
 
   /**
-   * Builds the 2.5D Isometric Grid and spawns 3D anomaly and coffee props.
+   * Builds the 2.5D Isometric Grid with Hexagonal Enemy Markers in pure B&W.
    * @param {number} gridSize - Grid width and height (e.g. 5x5).
    * @param {Array} anomalies - Array of anomaly database entries.
    * @returns {Array<Array<Object>>} Board 2D matrix data.
@@ -165,15 +166,15 @@ class GameEngine {
 
         board[x][y] = { type, data, cleared: false };
 
-        // 3D Tile Geometry & Shader
+        // 3D Grid Tile Geometry (Monochrome Dark Slate)
         const tileGeo = new THREE.BoxGeometry(this.GRID_SPACING * 0.9, 0.2, this.GRID_SPACING * 0.9);
-        let tileColor = 0x161b22;
-        if (type === 'start') tileColor = 0x1f6feb;
-        else if (type === 'coffee') tileColor = 0xd29922;
+        let tileColor = 0x0c0c0c;
+        if (type === 'start') tileColor = 0x242424;
+        else if (type === 'coffee') tileColor = 0x181818;
 
         const tileMat = new THREE.MeshStandardMaterial({
           color: tileColor,
-          roughness: 0.4,
+          roughness: 0.5,
           metalness: 0.1
         });
         const tileMesh = new THREE.Mesh(tileGeo, tileMat);
@@ -183,50 +184,70 @@ class GameEngine {
         this.scene.add(tileMesh);
         this.tileMeshes.push(tileMesh);
 
-        // Cyber Grid Lines
+        // Crisp White/Gray Grid Border Lines
         const wireGeo = new THREE.EdgesGeometry(tileGeo);
-        const wireMat = new THREE.LineBasicMaterial({ color: 0x30363d, linewidth: 1 });
+        const wireMat = new THREE.LineBasicMaterial({
+          color: type === 'start' ? 0xffffff : 0x333333,
+          linewidth: 1
+        });
         const wireMesh = new THREE.LineSegments(wireGeo, wireMat);
         tileMesh.add(wireMesh);
 
-        // Spawn 3D Props on the tile
+        // =====================================================================
+        // SPAWN 3D HEXAGONAL ENEMY MARKER
+        // =====================================================================
         if (type === 'enemy' && data) {
           const enemyGroup = new THREE.Group();
-          const geom = new THREE.OctahedronGeometry(0.45, 0);
-          const mat = new THREE.MeshStandardMaterial({
-            color: data.meshColor,
-            emissive: data.meshColor,
-            emissiveIntensity: 0.5,
+
+          // 3D Hexagonal Prism (6-sided Cylinder)
+          const hexPrismGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.35, 6);
+          const hexMat = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            emissive: 0xffffff,
+            emissiveIntensity: 0.25,
             roughness: 0.2
           });
-          const enemyMesh = new THREE.Mesh(geom, mat);
-          enemyMesh.position.y = 0.85;
-          enemyMesh.castShadow = true;
-          enemyGroup.add(enemyMesh);
+          const hexMesh = new THREE.Mesh(hexPrismGeo, hexMat);
+          hexMesh.position.y = 0.8;
+          hexMesh.castShadow = true;
+          enemyGroup.add(hexMesh);
 
-          // Glowing danger ring
-          const warnRingGeo = new THREE.RingGeometry(0.3, 0.4, 16);
-          const warnRingMat = new THREE.MeshBasicMaterial({ color: data.meshColor, side: THREE.DoubleSide });
-          const warnRing = new THREE.Mesh(warnRingGeo, warnRingMat);
-          warnRing.rotation.x = -Math.PI / 2;
-          warnRing.position.y = 0.05;
-          enemyGroup.add(warnRing);
+          // Crisp White Hexagonal Wireframe Outline on the Prism
+          const hexWireGeo = new THREE.EdgesGeometry(hexPrismGeo);
+          const hexWireMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+          const hexWire = new THREE.LineSegments(hexWireGeo, hexWireMat);
+          hexMesh.add(hexWire);
+
+          // Floor Marker: 2D Hexagonal Ring on Tile Surface (6 segments = Hexagon)
+          const hexFloorGeo = new THREE.RingGeometry(0.35, 0.48, 6);
+          const hexFloorMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+          const hexFloor = new THREE.Mesh(hexFloorGeo, hexFloorMat);
+          hexFloor.rotation.x = -Math.PI / 2;
+          hexFloor.rotation.z = Math.PI / 6; // Align flat hexagon edges
+          hexFloor.position.y = 0.05;
+          enemyGroup.add(hexFloor);
 
           enemyGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
-          enemyGroup.userData = { isEnemy: true, gridX: x, gridY: y, data: data, mesh: enemyMesh };
+          enemyGroup.userData = { isEnemy: true, gridX: x, gridY: y, data: data, mesh: hexMesh };
           this.scene.add(enemyGroup);
           this.interactiveObjects.push(enemyGroup);
         } else if (type === 'coffee') {
+          // Monochrome Coffee Rest Station
           const coffeeGroup = new THREE.Group();
           const cupGeo = new THREE.CylinderGeometry(0.2, 0.15, 0.35, 12);
           const cupMat = new THREE.MeshStandardMaterial({
-            color: 0xffa657,
-            emissive: 0xd29922,
-            emissiveIntensity: 0.3
+            color: 0x222222,
+            emissive: 0xffffff,
+            emissiveIntensity: 0.35
           });
           const cupMesh = new THREE.Mesh(cupGeo, cupMat);
           cupMesh.position.y = 0.35;
           coffeeGroup.add(cupMesh);
+
+          // White wireframe on cup
+          const cupWireGeo = new THREE.EdgesGeometry(cupGeo);
+          const cupWireMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+          cupMesh.add(new THREE.LineSegments(cupWireGeo, cupWireMat));
 
           coffeeGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
           coffeeGroup.userData = { isCoffee: true, gridX: x, gridY: y, mesh: cupMesh };
@@ -329,12 +350,11 @@ class GameEngine {
       requestAnimationFrame(render);
       const time = this.clock.getElapsedTime();
 
-      // Floating bob & rotation on anomaly and coffee meshes
+      // Floating bob & rotation on hexagonal anomaly and coffee meshes
       this.interactiveObjects.forEach(obj => {
         if (obj.userData.mesh) {
           obj.userData.mesh.rotation.y = time * 1.5;
-          obj.userData.mesh.rotation.x = Math.sin(time * 2) * 0.1;
-          obj.userData.mesh.position.y = 0.85 + Math.sin(time * 3) * 0.1;
+          obj.userData.mesh.position.y = 0.8 + Math.sin(time * 3) * 0.08;
         }
       });
 

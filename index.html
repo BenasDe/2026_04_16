@@ -14,7 +14,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Modular Stylesheet -->
+  <!-- Modular Stylesheet (Pure Monochrome) -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,8 +31,8 @@
         <div class="avatar-badge" id="dev-avatar">👨‍💻</div>
         <div class="dev-info">
           <h2>Data Engineer <span class="dev-rank" id="dev-rank">LVL 1 JUNIOR</span></h2>
-          <div style="font-size: 11px; color: #8b949e; font-family: 'Fira Code', monospace;">
-            Pipeline: <span id="pipeline-status" style="color: #58a6ff;">Bronze Layer (Ingestion)</span>
+          <div style="font-size: 11px; color: #888888; font-family: 'Fira Code', monospace;">
+            Pipeline: <span id="pipeline-status" style="color: #ffffff;">Bronze Layer (Ingestion)</span>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
         <!-- Health Meter -->
         <div class="meter-container">
           <div class="meter-label">
-            <span style="color: #7ee787;">❤️ HEALTH</span>
+            <span style="color: #ffffff;">❤️ HEALTH</span>
             <span id="hp-text">100 / 100</span>
           </div>
           <div class="meter-bar-outer">
@@ -53,7 +53,7 @@
         <!-- Sanity Meter -->
         <div class="meter-container">
           <div class="meter-label">
-            <span style="color: #bc8cff;">🧠 SANITY</span>
+            <span style="color: #cccccc;">🧠 SANITY</span>
             <span id="sanity-text">100 / 100</span>
           </div>
           <div class="meter-bar-outer">
@@ -64,7 +64,7 @@
         <!-- Career EXP Meter -->
         <div class="meter-container">
           <div class="meter-label">
-            <span style="color: #79c0ff;">⚡ EXP</span>
+            <span style="color: #888888;">⚡ EXP</span>
             <span id="xp-text">0 / 100</span>
           </div>
           <div class="meter-bar-outer">
@@ -77,12 +77,12 @@
       <div class="items-hud">
         <div class="hud-badge">
           <span>☕ Espresso:</span>
-          <strong id="coffee-count" style="color: #ffa657;">2</strong>
+          <strong id="coffee-count" style="color: #ffffff;">2</strong>
         </div>
         <button class="hud-btn" id="btn-drink-coffee" title="Drink coffee (+30 Sanity, +15 HP)">Drink ☕</button>
         <div class="hud-badge">
           <span>📊 Cleared:</span>
-          <strong id="cleared-count" style="color: #7ee787;">0 / 6</strong>
+          <strong id="cleared-count" style="color: #ffffff;">0 / 6</strong>
         </div>
       </div>
     </header>
@@ -103,7 +103,7 @@
         <div class="battle-title">
           <span>⚔️ ENCOUNTER: DATA ANOMALY DETECTED</span>
         </div>
-        <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffa657;">
+        <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">
           ENGINE: PySpark 3.5.0
         </div>
       </div>
@@ -112,16 +112,16 @@
         <!-- Anomaly Description & Sample Corrupted Table -->
         <div class="anomaly-card">
           <div class="anomaly-top">
-            <div class="anomaly-name" id="enemy-name">👾 DUPLICATE_ROWS_TERROR</div>
+            <div class="anomaly-name" id="enemy-name">👾 UNKNOWN_ENTITY</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:11px; font-family:'Fira Code'; color:#ff7b72;">CORRUPTION:</span>
+              <span style="font-size:11px; font-family:'Fira Code'; color:#888888;">CORRUPTION:</span>
               <div class="anomaly-hp-bar">
                 <div class="anomaly-hp-fill" id="enemy-hp-bar"></div>
               </div>
             </div>
           </div>
           <div class="anomaly-desc" id="enemy-desc">
-            Incoming batch contains duplicate records with identical customer UUIDs causing aggregation inflation!
+            Analyzing incoming partition telemetry...
           </div>
 
           <!-- Corrupted Data Table Mini-view Container -->
@@ -146,7 +146,7 @@
 
   <!-- Game Over & Victory Overlay Modal -->
   <div id="game-end-modal">
-    <h1 id="end-title" style="color: var(--warning-red);">OUT OF MEMORY (OOM)</h1>
+    <h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1>
     <p id="end-desc">Your sanity reached 0 or your pipeline crashed under dirty data tables.</p>
     <button class="btn-primary" id="btn-restart">Restart Pipeline Run</button>
   </div>

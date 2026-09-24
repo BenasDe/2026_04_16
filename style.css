@@ -1,20 +1,22 @@
 /* ==========================================================================
    PySpark Survivor: Data Lake Chronicles - Stylesheet
-   Theme: Cyberpunk / GitHub Dark IDE / Retro JRPG
+   Theme: Pure Monochrome (Black & White / High Contrast Cyber Noir)
    ========================================================================== */
 
 :root {
-  --bg: #0d1117;
-  --panel-bg: rgba(13, 17, 23, 0.92);
-  --border-color: #30363d;
-  --accent: #58a6ff;
-  --accent-pyspark: #e36209;
-  --hp-green: #2ea043;
-  --sanity-purple: #a371f7;
-  --warning-red: #f85149;
-  --text-main: #c9d1d9;
+  --bg: #000000;
+  --panel-bg: rgba(10, 10, 10, 0.95);
+  --border-color: #333333;
+  --border-bright: #ffffff;
+  --accent: #ffffff;
+  --accent-pyspark: #ffffff;
+  --hp-fill: #ffffff;
+  --sanity-fill: #cccccc;
+  --xp-fill: #666666;
+  --text-main: #b0b0b0;
   --text-bright: #ffffff;
-  --code-bg: #161b22;
+  --text-dim: #777777;
+  --code-bg: #0d0d0d;
 }
 
 * {
@@ -63,10 +65,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
-  background: linear-gradient(180deg, rgba(13, 17, 23, 0.95) 0%, rgba(13, 17, 23, 0.6) 80%, transparent 100%);
-  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-  backdrop-filter: blur(8px);
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.75) 80%, transparent 100%);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
 }
 
 .dev-profile {
@@ -78,44 +80,45 @@ body {
 .avatar-badge {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
-  background: #21262d;
-  border: 2px solid var(--accent);
+  border-radius: 4px;
+  background: #000000;
+  border: 1.5px solid var(--border-bright);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
+  font-size: 22px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
 }
 
 .dev-info h2 {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-bright);
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: 0.5px;
 }
 
 .dev-rank {
   font-size: 10px;
   padding: 2px 6px;
-  background: rgba(227, 98, 9, 0.2);
-  color: #ff9b54;
-  border-radius: 4px;
-  border: 1px solid rgba(227, 98, 9, 0.4);
+  background: #ffffff;
+  color: #000000;
+  border-radius: 2px;
+  font-weight: 700;
   font-family: 'Fira Code', monospace;
 }
 
 .stats-meters {
   display: flex;
-  gap: 20px;
+  gap: 24px;
 }
 
 .meter-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   min-width: 140px;
 }
 
@@ -125,26 +128,27 @@ body {
   font-size: 11px;
   font-family: 'Fira Code', monospace;
   font-weight: 600;
+  color: var(--text-bright);
 }
 
 .meter-bar-outer {
-  height: 10px;
-  background: #21262d;
-  border-radius: 5px;
+  height: 8px;
+  background: #111111;
+  border-radius: 2px;
   overflow: hidden;
-  border: 1px solid #30363d;
+  border: 1px solid #333333;
   position: relative;
 }
 
 .meter-bar-inner {
   height: 100%;
   width: 100%;
-  transition: width 0.3s ease, background 0.3s ease;
+  transition: width 0.3s ease;
 }
 
-.hp-fill { background: linear-gradient(90deg, #238636, #3fb950); }
-.sanity-fill { background: linear-gradient(90deg, #8957e5, #bc8cff); }
-.xp-fill { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+.hp-fill { background: #ffffff; }
+.sanity-fill { background: #bbbbbb; }
+.xp-fill { background: #666666; }
 
 .items-hud {
   display: flex;
@@ -158,27 +162,29 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #161b22;
+  background: #000000;
   padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #30363d;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  color: var(--text-bright);
 }
 
 .hud-btn {
-  background: #21262d;
-  border: 1px solid #30363d;
-  color: var(--text-bright);
-  padding: 6px 12px;
-  border-radius: 6px;
+  background: #000000;
+  border: 1px solid var(--border-bright);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 4px;
   cursor: pointer;
   font-family: 'Fira Code', monospace;
   font-size: 11px;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: all 0.15s ease;
 }
 
 .hud-btn:hover {
-  background: #30363d;
-  border-color: var(--accent);
+  background: #ffffff;
+  color: #000000;
 }
 
 /* Floating Instructions / Controls Mini-card */
@@ -188,21 +194,21 @@ body {
   left: 24px;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 4px;
+  padding: 10px 16px;
   font-size: 11px;
   font-family: 'Fira Code', monospace;
-  color: #8b949e;
+  color: #888888;
   pointer-events: auto;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
 }
 
 .controls-hint kbd {
-  background: #21262d;
-  border: 1px solid #30363d;
-  border-radius: 3px;
+  background: #1a1a1a;
+  border: 1px solid #444444;
+  border-radius: 2px;
   padding: 2px 5px;
-  color: #c9d1d9;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -213,15 +219,15 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(13, 17, 23, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(12px);
   z-index: 100;
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   pointer-events: auto;
-  animation: fadeIn 0.25s ease-out;
+  animation: fadeIn 0.2s ease-out;
 }
 
 @keyframes fadeIn {
@@ -232,19 +238,19 @@ body {
 .battle-window {
   width: 820px;
   max-width: 95vw;
-  background: #0d1117;
-  border: 2px solid var(--accent-pyspark);
-  box-shadow: 0 0 35px rgba(227, 98, 9, 0.25), 0 20px 40px rgba(0,0,0,0.8);
-  border-radius: 12px;
+  background: #000000;
+  border: 1.5px solid var(--border-bright);
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.1), 0 20px 50px rgba(0, 0, 0, 1);
+  border-radius: 6px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .battle-header {
-  background: linear-gradient(90deg, #1c1410 0%, #2b180d 100%);
-  padding: 12px 20px;
-  border-bottom: 1px solid rgba(227, 98, 9, 0.4);
+  background: #0d0d0d;
+  padding: 14px 20px;
+  border-bottom: 1px solid #333333;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -252,8 +258,8 @@ body {
 
 .battle-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: 12px;
-  color: #ffa657;
+  font-size: 11px;
+  color: #ffffff;
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
@@ -269,9 +275,9 @@ body {
 
 /* Enemy Anomaly Data Table Card */
 .anomaly-card {
-  background: #161b22;
-  border: 1px solid #30363d;
-  border-radius: 8px;
+  background: #0d0d0d;
+  border: 1px solid #282828;
+  border-radius: 4px;
   padding: 14px 18px;
   display: flex;
   flex-direction: column;
@@ -285,72 +291,74 @@ body {
 }
 
 .anomaly-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--warning-red);
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
   font-family: 'Fira Code', monospace;
+  letter-spacing: 0.5px;
 }
 
 .anomaly-hp-bar {
   width: 180px;
   height: 8px;
-  background: #21262d;
-  border-radius: 4px;
+  background: #1a1a1a;
+  border-radius: 2px;
   overflow: hidden;
-  border: 1px solid #30363d;
+  border: 1px solid #444444;
 }
 
 .anomaly-hp-fill {
   height: 100%;
   width: 100%;
-  background: var(--warning-red);
+  background: #ffffff;
   transition: width 0.3s;
 }
 
 .anomaly-desc {
-  font-size: 13px;
-  color: #8b949e;
-  line-height: 1.4;
+  font-size: 12px;
+  color: #999999;
+  line-height: 1.5;
 }
 
-/* Corrupted Mini-Table Preview */
+/* Corrupted Mini-Table Preview (High-contrast B&W) */
 .table-preview {
   width: 100%;
   border-collapse: collapse;
   font-family: 'Fira Code', monospace;
   font-size: 11px;
   margin-top: 4px;
-  background: #090d13;
-  border-radius: 4px;
+  background: #000000;
+  border-radius: 2px;
   overflow: hidden;
-  border: 1px solid #21262d;
+  border: 1px solid #333333;
 }
 
 .table-preview th {
-  background: #1c2128;
-  padding: 6px 10px;
+  background: #141414;
+  padding: 7px 10px;
   text-align: left;
-  color: #79c0ff;
-  border-bottom: 1px solid #30363d;
+  color: #ffffff;
+  border-bottom: 1px solid #333333;
+  font-weight: 700;
 }
 
 .table-preview td {
-  padding: 5px 10px;
-  border-bottom: 1px solid #161b22;
-  color: #c9d1d9;
+  padding: 6px 10px;
+  border-bottom: 1px solid #1a1a1a;
+  color: #b8b8b8;
 }
 
 .table-preview tr.glitch-row {
-  background: rgba(248, 81, 73, 0.15);
+  background: #1f1f1f;
 }
 
 .table-preview td.corrupted {
-  color: #ff7b72;
+  color: #ffffff;
   font-weight: 700;
-  text-decoration: underline wavy #f85149;
+  background: #333333;
 }
 
 /* PySpark Skill Selector */
@@ -361,11 +369,11 @@ body {
 }
 
 .skills-header {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #e36209;
+  color: #ffffff;
   font-family: 'Fira Code', monospace;
 }
 
@@ -376,9 +384,9 @@ body {
 }
 
 .skill-card {
-  background: #161b22;
-  border: 1px solid #30363d;
-  border-radius: 8px;
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
   padding: 12px 14px;
   cursor: pointer;
   display: flex;
@@ -389,34 +397,42 @@ body {
 }
 
 .skill-card:hover:not(:disabled) {
-  border-color: var(--accent-pyspark);
-  background: #1c2128;
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #000000;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(227, 98, 9, 0.2);
+}
+
+.skill-card:hover:not(:disabled) .skill-code {
+  color: #000000;
+}
+
+.skill-card:hover:not(:disabled) .skill-effect {
+  color: #333333;
 }
 
 .skill-code {
   font-family: 'Fira Code', monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #79c0ff;
+  color: #ffffff;
 }
 
 .skill-effect {
   font-size: 11px;
-  color: #8b949e;
+  color: #888888;
   line-height: 1.3;
 }
 
 .battle-log {
   height: 52px;
-  background: #090d13;
-  border-radius: 6px;
-  border: 1px solid #21262d;
+  background: #000000;
+  border-radius: 4px;
+  border: 1px solid #2a2a2a;
   padding: 8px 12px;
   font-family: 'Fira Code', monospace;
   font-size: 11px;
-  color: #7ee787;
+  color: #ffffff;
   overflow-y: auto;
   display: flex;
   flex-direction: column-reverse;
@@ -428,17 +444,17 @@ body {
   top: 80px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(13, 17, 23, 0.95);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.96);
+  border: 1.5px solid var(--border-bright);
+  border-radius: 4px;
   padding: 10px 20px;
   font-family: 'Fira Code', monospace;
-  font-size: 13px;
-  color: #58a6ff;
+  font-size: 12px;
+  color: #ffffff;
   z-index: 200;
   pointer-events: none;
   display: none;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
 }
 
 /* Game Over & Victory Overlays */
@@ -448,7 +464,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.95);
   backdrop-filter: blur(12px);
   z-index: 300;
   display: none;
@@ -462,38 +478,40 @@ body {
 
 #game-end-modal h1 {
   font-family: 'Press Start 2P', monospace;
-  font-size: 28px;
+  font-size: 26px;
   margin-bottom: 16px;
+  color: #ffffff;
 }
 
 #game-end-modal p {
-  font-size: 16px;
+  font-size: 15px;
   max-width: 500px;
   line-height: 1.6;
-  color: #8b949e;
+  color: #999999;
   margin-bottom: 24px;
 }
 
 .btn-primary {
-  background: var(--accent-pyspark);
-  color: #fff;
-  border: none;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
   font-family: 'Fira Code', monospace;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   padding: 12px 28px;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(227, 98, 9, 0.4);
   transition: all 0.2s;
 }
 
 .btn-primary:hover {
-  background: #f07019;
+  background: #000000;
+  color: #ffffff;
+  border-color: #ffffff;
   transform: translateY(-2px);
 }
 
-/* Glitch Animation when Sanity is low */
+/* Low Sanity Distortion Effect in B&W */
 body.low-sanity #webgl-canvas {
-  filter: contrast(1.3) hue-rotate(40deg);
+  filter: contrast(2) invert(0.2);
 }

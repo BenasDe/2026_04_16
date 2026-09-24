@@ -131,7 +131,7 @@ class BattleSystem {
       window.sfx.correct();
       this.enemyHpBar.style.width = '0%';
       this.battleLog.innerHTML =
-        `<div style="color:#7ee787;">[SUCCESS] ${skill.explain}</div>` +
+        `<div style="color:#ffffff; font-weight:700;">[SUCCESS] ${skill.explain}</div>` +
         this.battleLog.innerHTML;
 
       setTimeout(() => {
@@ -149,7 +149,7 @@ class BattleSystem {
       if (window.updateHUD) window.updateHUD();
 
       this.battleLog.innerHTML =
-        `<div style="color:#ff7b72;">[SYNTAX/LOGIC ERROR] ${skill.explain} (-${sanityLoss} Sanity, -${hpLoss} HP)</div>` +
+        `<div style="color:#888888;">[SYNTAX/LOGIC ERROR] ${skill.explain} (-${sanityLoss} Sanity, -${hpLoss} HP)</div>` +
         this.battleLog.innerHTML;
 
       // Check if developer crashed

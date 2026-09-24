@@ -28,6 +28,7 @@ const gameState = {
 // Initialize Engine and Systems
 const engine = new GameEngine('webgl-canvas');
 gameState.board = engine.buildBoard(gameState.gridSize, window.ANOMALY_DATABASE);
+gameState.player.totalEnemies = engine.interactiveObjects.filter(o => o.userData.isEnemy).length;
 
 // Snap player and camera to the initial start tile (0, 0) on initial load
 engine.setPlayerGridPosition(gameState.player.gridX, gameState.player.gridY, gameState.gridSize);
