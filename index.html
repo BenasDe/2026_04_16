@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>PySpark Survivor: Data Lake Chronicles</title>
   
   <!-- External Google Fonts -->
@@ -18,9 +18,15 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Three.js 2.5D WebGL Canvas -->
   <canvas id="webgl-canvas"></canvas>
+
+  <!-- UI HUD Overlay -->
   <div id="ui-layer">
+    <!-- Top Developer Status Bar -->
     <header class="top-bar">
+      <!-- Developer Profile & Title -->
       <div class="dev-profile">
         <div class="avatar-badge" id="dev-avatar">👨‍💻</div>
         <div class="dev-info">
@@ -30,26 +36,140 @@
           </div>
         </div>
       </div>
+
+      <!-- Vital Meters: Health (Pipeline Stability), Sanity (Analyst Integrity), and EXP -->
       <div class="stats-meters">
-        <div class="meter-container"><div class="meter-label"><span style="color: #ffffff;">❤️ HEALTH</span><span id="hp-text">100 / 100</span></div><div class="meter-bar-outer"><div class="meter-bar-inner hp-fill" id="hp-bar" style="width: 100%;"></div></div></div>
-        <div class="meter-container"><div class="meter-label"><span style="color: #cccccc;">🧠 SANITY</span><span id="sanity-text">100 / 100</span></div><div class="meter-bar-outer"><div class="meter-bar-inner sanity-fill" id="sanity-bar" style="width: 100%;"></div></div></div>
-        <div class="meter-container"><div class="meter-label"><span style="color: #888888;">⚡ EXP</span><span id="xp-text">0 / 100</span></div><div class="meter-bar-outer"><div class="meter-bar-inner xp-fill" id="xp-bar" style="width: 0%;"></div></div></div>
+        <!-- Health Meter -->
+        <div class="meter-container">
+          <div class="meter-label">
+            <span style="color: #ffffff;">❤️ HEALTH</span>
+            <span id="hp-text">100 / 100</span>
+          </div>
+          <div class="meter-bar-outer">
+            <div class="meter-bar-inner hp-fill" id="hp-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Sanity Meter -->
+        <div class="meter-container">
+          <div class="meter-label">
+            <span style="color: #cccccc;">🧠 SANITY</span>
+            <span id="sanity-text">100 / 100</span>
+          </div>
+          <div class="meter-bar-outer">
+            <div class="meter-bar-inner sanity-fill" id="sanity-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Career EXP Meter -->
+        <div class="meter-container">
+          <div class="meter-label">
+            <span style="color: #888888;">⚡ EXP</span>
+            <span id="xp-text">0 / 100</span>
+          </div>
+          <div class="meter-bar-outer">
+            <div class="meter-bar-inner xp-fill" id="xp-bar" style="width: 0%;"></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Items & Cleared Progress Counter -->
       <div class="items-hud">
-        <div class="hud-badge"><span>🥤 Red Bull:</span><strong id="red-bull-count" style="color: #ffffff;">2</strong></div>
-        <button class="hud-btn" id="btn-drink-red-bull" title="Drink Red Bull (+30 Sanity, +15 HP)">Drink 🥤</button>
-        <div class="hud-badge"><span>📊 Cleared:</span><strong id="cleared-count" style="color: #ffffff;">0 / 6</strong></div>
+        <div class="hud-badge">
+          <span>☕ Espresso:</span>
+          <strong id="coffee-count" style="color: #ffffff;">2</strong>
+        </div>
+        <button class="hud-btn" id="btn-drink-coffee" title="Drink coffee (+30 Sanity, +15 HP)">Drink ☕</button>
+        <div class="hud-badge">
+          <span>📊 Cleared:</span>
+          <strong id="cleared-count" style="color: #ffffff;">0 / 6</strong>
+        </div>
       </div>
     </header>
-    <aside class="controls-hint">🎮 Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles to move | <kbd>C</kbd> Drink Red Bull</aside>
+
+    <!-- Movement Controls Help Hint (Desktop) -->
+    <aside class="controls-hint">
+      🎮 Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles to move | <kbd>C</kbd> Drink Coffee
+    </aside>
+
+    <!-- Mobile On-Screen Directional D-Pad & Quick Coffee -->
+    <div id="mobile-dpad">
+      <button class="dpad-btn" id="dpad-up" aria-label="Up">▲</button>
+      <button class="dpad-btn" id="dpad-left" aria-label="Left">◀</button>
+      <button class="dpad-btn" id="dpad-coffee" aria-label="Drink Coffee">☕</button>
+      <button class="dpad-btn" id="dpad-right" aria-label="Right">▶</button>
+      <button class="dpad-btn" id="dpad-down" aria-label="Down">▼</button>
+    </div>
   </div>
+
+  <!-- Toast Notification System -->
   <div id="toast-msg"></div>
-  <div id="battle-modal"><div class="battle-window"><div class="battle-header"><div class="battle-title"><span>⚔️ ENCOUNTER: DATA ANOMALY DETECTED</span></div><div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">ENGINE: PySpark 3.5.0</div></div><div class="battle-content"><div class="anomaly-card"><div class="anomaly-top"><div class="anomaly-name" id="enemy-name">👾 UNKNOWN_ENTITY</div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; font-family:'Fira Code'; color:#888888;">CORRUPTION:</span><div class="anomaly-hp-bar"><div class="anomaly-hp-fill" id="enemy-hp-bar"></div></div></div></div><div class="anomaly-desc" id="enemy-desc">Analyzing incoming partition telemetry...</div><div id="table-preview-container"></div></div><div class="skills-section"><div class="skills-header">Select PySpark Transformation to resolve:</div><div class="skills-grid" id="skills-grid"></div></div><div class="battle-log" id="battle-log"><div>[SYSTEM] Ready for PySpark execution... Choose the correct transformation.</div></div></div></div></div>
-  <div id="game-end-modal"><h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1><p id="end-desc">Your sanity reached 0 or your pipeline crashed under dirty data tables.</p><button class="btn-primary" id="btn-restart">Restart Pipeline Run</button></div>
+
+  <!-- JRPG Turn-Based Combat Modal -->
+  <div id="battle-modal">
+    <div class="battle-window">
+      <div class="battle-header">
+        <div class="battle-title">
+          <span>⚔️ ENCOUNTER: DATA ANOMALY DETECTED</span>
+        </div>
+        <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">
+          ENGINE: PySpark 3.5.0
+        </div>
+      </div>
+
+      <div class="battle-content">
+        <!-- Anomaly Description & Sample Corrupted Table -->
+        <div class="anomaly-card">
+          <div class="anomaly-top">
+            <div class="anomaly-name" id="enemy-name">👾 UNKNOWN_ENTITY</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:11px; font-family:'Fira Code'; color:#888888;">CORRUPTION:</span>
+              <div class="anomaly-hp-bar">
+                <div class="anomaly-hp-fill" id="enemy-hp-bar"></div>
+              </div>
+            </div>
+          </div>
+          <div class="anomaly-desc" id="enemy-desc">
+            Analyzing incoming partition telemetry...
+          </div>
+
+          <!-- Corrupted Data Table Mini-view Container -->
+          <div id="table-preview-container"></div>
+        </div>
+
+        <!-- Combat Skills (PySpark Functions) Grid -->
+        <div class="skills-section">
+          <div class="skills-header">Select PySpark Transformation to resolve:</div>
+          <div class="skills-grid" id="skills-grid">
+            <!-- Dynamically populated from src/battle.js -->
+          </div>
+        </div>
+
+        <!-- Battle Output Log -->
+        <div class="battle-log" id="battle-log">
+          <div>[SYSTEM] Ready for PySpark execution... Choose the correct transformation.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over & Victory Overlay Modal -->
+  <div id="game-end-modal">
+    <h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1>
+    <p id="end-desc">Your sanity reached 0 or your pipeline crashed under dirty data tables.</p>
+    <button class="btn-primary" id="btn-restart">Restart Pipeline Run</button>
+  </div>
+
+  <!-- Modular Game Architecture Scripts (Structured by Functional Domain) -->
+  <!-- 1. Procedural Audio Synthesizer -->
   <script src="src/audio.js"></script>
+  <!-- 2. Data Engineering Anomalies & PySpark Skills Database -->
   <script src="src/data.js"></script>
+  <!-- 3. Three.js 2.5D Isometric Rendering Engine & Mesh Controls -->
   <script src="src/engine.js"></script>
+  <!-- 4. Turn-Based JRPG Combat Controller & DataFrame Validation -->
   <script src="src/battle.js"></script>
+  <!-- 5. Main Game Controller, State, Event Handlers & Orchestrator -->
   <script src="src/main.js"></script>
 </body>
 </html>
