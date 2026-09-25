@@ -21,6 +21,10 @@ const gameState = {
   inBattle: false,
   gameOver: false,
   pipelineRunning: false,
+  stats: {
+    totalScavenged: 0,
+    totalMistakes: 0
+  },
   timer: {
     startTime: null,
     elapsedMs: 0,
@@ -108,7 +112,7 @@ function loadLevel(levelIndex) {
   gameState.board = engine.buildBoard(
     gameState.gridSize,
     currentLevel.tasks,
-    currentLevel.redBullsToPlace || 3
+    currentLevel.redBullsToPlace !== undefined ? currentLevel.redBullsToPlace : 2
   );
 
   // Position Player at Start (0, 0)
@@ -190,6 +194,7 @@ function checkCurrentTile() {
   if (cell.type === 'redBull' && !cell.cleared) {
     cell.cleared = true;
     gameState.redBulls += 1;
+    if (gameState.stats) gameState.stats.totalScavenged += 1;
     if (window.sfx && window.sfx.redBull) window.sfx.redBull();
     showToast(`⚡ Scavenged Red Bull! (+1 Hotfix Fuel, Total: ${gameState.redBulls})`);
     engine.removeInteractiveObject(gameState.player.gridX, gameState.player.gridY);
@@ -245,6 +250,13 @@ async function executePipelineRun() {
   const currentLevel = levels[gameState.levelIndex];
   if (!currentLevel || gameState.pipelineRunning) return;
 
+  const totalTasks = currentLevel.tasks.length;
+  const stagedCount = Object.keys(gameState.stagedTasks).length;
+  if (stagedCount < totalTasks) {
+    showToast(`⚠️ You must stage all ${totalTasks} tasks before running the pipeline! (${stagedCount}/${totalTasks} staged)`);
+    return;
+  }
+
   gameState.pipelineRunning = true;
   updateHUD();
 
@@ -267,6 +279,7 @@ async function executePipelineRun() {
   await delay(500);
 
   let mistakesCount = 0;
+  const startLevelRb = gameState.redBulls;
   const stagedList = Object.values(gameState.stagedTasks);
 
   for (let i = 0; i < stagedList.length; i++) {
@@ -287,6 +300,7 @@ async function executePipelineRun() {
     } else {
       mistakesCount++;
       gameState.redBulls -= 1;
+      if (gameState.stats) gameState.stats.totalMistakes += 1;
       if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
       appendDiagLine('diag-warn', `  ✖ BUG DETECTED in query logic! Hotfix required.`);
       if (skill && skill.explain) {
@@ -300,6 +314,9 @@ async function executePipelineRun() {
 
   await delay(400);
 
+  // Print exact Hotfix Audit
+  appendDiagLine('diag-info', `[AUDIT] Level Starting Fuel: ${startLevelRb} | Hotfixes: -${mistakesCount} | Remaining Red Bulls: ${gameState.redBulls}`);
+
   // Resolution Evaluation
   if (gameState.redBulls < 0) {
     // CRITICAL FAILURE: Out of Red Bulls
@@ -310,6 +327,7 @@ async function executePipelineRun() {
     summaryEl.innerHTML = `<span style="color:#ef4444;">STATUS: FAILED (OOM) | Red Bulls: 0</span>`;
     actionBtn.innerText = 'ABORT & RESTART';
     actionBtn.onclick = () => {
+      actionBtn.onclick = null;
       modal.style.display = 'none';
       gameState.pipelineRunning = false;
       triggerGameOver();
@@ -326,6 +344,7 @@ async function executePipelineRun() {
     actionBtn.innerText = isLastLevel ? '👑 CLAIM PRODUCTION VICTORY' : '➔ NEXT LEVEL PIPELINE';
 
     actionBtn.onclick = () => {
+      actionBtn.onclick = null;
       modal.style.display = 'none';
       gameState.pipelineRunning = false;
       if (isLastLevel) {
@@ -391,13 +410,20 @@ function triggerVictory() {
   document.getElementById('victory-time-val').innerText = finalFormatted;
   document.getElementById('victory-rb-val').innerText = gameState.redBulls;
 
+  const auditEl = document.getElementById('victory-audit-breakdown');
+  if (auditEl) {
+    const scavenged = gameState.stats ? gameState.stats.totalScavenged : gameState.redBulls;
+    const mistakes = gameState.stats ? gameState.stats.totalMistakes : 0;
+    auditEl.innerHTML = `Audit: Scavenged <strong>${scavenged}</strong> cans − <strong>${mistakes}</strong> hotfixes = <strong>${gameState.redBulls}</strong> remaining`;
+  }
+
   modal.style.display = 'flex';
 }
 
 // =============================================================================
 // LEADERBOARD SUBSYSTEM (LOCALSTORAGE)
 // =============================================================================
-const LEADERBOARD_KEY = 'pyspark_survivor_leaderboard';
+const LEADERBOARD_KEY = 'https://pyspark-survivor-default-rtdb.europe-west1.firebasedatabase.app/';
 
 function getLeaderboard() {
   try {
@@ -505,6 +531,7 @@ function startGame() {
 
   // Reset Game State
   gameState.redBulls = 0; // Starts strictly at 0
+  gameState.stats = { totalScavenged: 0, totalMistakes: 0 };
   gameState.gameOver = false;
   gameState.pipelineRunning = false;
   resetTimer();

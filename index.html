@@ -221,9 +221,12 @@
       
       <!-- Victory Score Submission Box -->
       <div id="victory-score-entry" style="display: none; margin-bottom: 20px;">
-        <div class="stat-highlight">
-          <div>Final Time: <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
-          <div>Red Bulls Preserved: <strong id="victory-rb-val" style="color:#ffffff;">0</strong></div>
+        <div class="stat-highlight" style="flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-around; width: 100%;">
+            <div>Final Time: <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
+            <div>Red Bulls Preserved: <strong id="victory-rb-val" style="color:#ffffff;">0</strong></div>
+          </div>
+          <div id="victory-audit-breakdown" style="font-size:11px; color:#888888; border-top:1px solid #222; padding-top:4px; margin-top:2px;"></div>
         </div>
         <label for="player-name-input" style="font-family:'Fira Code', monospace; font-size:12px; display:block; margin: 12px 0 6px;">ENTER ENGINEER CALLSIGN:</label>
         <input type="text" id="player-name-input" maxlength="15" value="DE_HERO" class="player-input">

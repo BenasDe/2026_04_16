@@ -16,7 +16,7 @@ window.GAME_LEVELS = [
     name: "Bronze Layer (Raw Ingestion)",
     engine: "PySpark 3.5.0",
     description: "Sanitize raw ingestion tables from Kafka & S3 landing buckets before bronze tables corrupt downstream schemas.",
-    redBullsToPlace: 3,
+    redBullsToPlace: 2,
     tasks: [
       {
         id: "b_chimera",
@@ -224,7 +224,7 @@ window.GAME_LEVELS = [
     name: "Silver Layer (SQL Transformations)",
     engine: "Spark SQL / ANSI SQL",
     description: "Write rigorous analytical SQL transformations to produce clean dimensional models and aggregated feature sets.",
-    redBullsToPlace: 3,
+    redBullsToPlace: 2,
     tasks: [
       {
         id: "s_window",
@@ -432,7 +432,7 @@ window.GAME_LEVELS = [
     name: "Gold Layer (Production Optimization)",
     engine: "Delta Lake & Spark Catalyst",
     description: "Architect high-performance enterprise pipelines. Eliminate shuffle skews, broadcast lookup dimensions, and execute Delta Lake merges.",
-    redBullsToPlace: 3,
+    redBullsToPlace: 2,
     tasks: [
       {
         id: "g_broadcast",

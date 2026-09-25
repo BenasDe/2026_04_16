@@ -209,7 +209,7 @@ class GameEngine {
    * @param {number} redBullsToPlace - Number of Red Bull pickups to generate.
    * @returns {Array<Array<Object>>} Board 2D matrix data.
    */
-  buildBoard(gridSize, tasks, redBullsToPlace = 3) {
+  buildBoard(gridSize, tasks, redBullsToPlace = 2) {
     this.clearBoard();
 
     const offset = ((gridSize - 1) * this.GRID_SPACING) / 2;
