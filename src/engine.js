@@ -84,50 +84,8 @@ class GameEngine {
    * Constructs the 3D low-poly developer character model with high contrast and glowing screen.
    */
   initPlayerMesh() {
-    this.playerGroup = new THREE.Group();
-
-    // Body (Matte Black Hoodie)
-    const bodyGeo = new THREE.CylinderGeometry(0.35, 0.42, 0.9, 16);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1c2128, roughness: 0.3 });
-    const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-    bodyMesh.position.y = 0.55;
-    bodyMesh.castShadow = true;
-    this.playerGroup.add(bodyMesh);
-
-    // Head (Light Ivory/Silver)
-    const headGeo = new THREE.SphereGeometry(0.28, 16, 16);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xe6edf3, roughness: 0.4 });
-    const headMesh = new THREE.Mesh(headGeo, headMat);
-    headMesh.position.y = 1.2;
-    headMesh.castShadow = true;
-    this.playerGroup.add(headMesh);
-
-    // Hair / Cap (Dark Charcoal)
-    const hairGeo = new THREE.BoxGeometry(0.38, 0.15, 0.38);
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x0d1117 });
-    const hairMesh = new THREE.Mesh(hairGeo, hairMat);
-    hairMesh.position.y = 1.38;
-    this.playerGroup.add(hairMesh);
-
-    // Glowing Laptop Screen (Crisp White)
-    const laptopGeo = new THREE.BoxGeometry(0.38, 0.04, 0.3);
-    const laptopMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: 0xffffff,
-      emissiveIntensity: 1.0
-    });
-    const laptopMesh = new THREE.Mesh(laptopGeo, laptopMat);
-    laptopMesh.position.set(0, 0.7, 0.4);
-    laptopMesh.rotation.x = 0.2;
-    this.playerGroup.add(laptopMesh);
-
-    // Glowing Target Ring under player feet (Solid White)
-    const ringGeo = new THREE.RingGeometry(0.45, 0.58, 32);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh.rotation.x = -Math.PI / 2;
-    ringMesh.position.y = 0.05;
-    this.playerGroup.add(ringMesh);
+    this.playerCharacter = createPlayerCharacter();
+    this.playerGroup = this.playerCharacter.group;
 
     this.scene.add(this.playerGroup);
   }
@@ -436,6 +394,7 @@ class GameEngine {
     const targetX = gridX * this.GRID_SPACING - offset;
     const targetZ = gridY * this.GRID_SPACING - offset;
 
+    this.playerCharacter.reset();
     this.playerGroup.position.set(targetX, 0, targetZ);
     this.pointLight.position.set(targetX, 5, targetZ);
     this.camera.position.set(
@@ -503,6 +462,7 @@ class GameEngine {
 
     const startPos = this.playerGroup.position.clone();
     const endPos = new THREE.Vector3(targetX, 0, targetZ);
+    this.playerCharacter.face(targetX - startPos.x, targetZ - startPos.z);
     const startTime = performance.now();
     const duration = 200; // ms
 
@@ -510,8 +470,7 @@ class GameEngine {
       const t = Math.min((now - startTime) / duration, 1);
       const ease = t * (2 - t);
       this.playerGroup.position.lerpVectors(startPos, endPos, ease);
-      // Hop curve
-      this.playerGroup.position.y = Math.sin(ease * Math.PI) * 0.35;
+      this.playerCharacter.pose(t);
 
       this.pointLight.position.set(this.playerGroup.position.x, 5, this.playerGroup.position.z);
       this.camera.position.set(
@@ -526,6 +485,7 @@ class GameEngine {
       } else {
         this.playerGroup.position.copy(endPos);
         this.playerGroup.position.y = 0;
+        this.playerCharacter.pose();
         if (onComplete) onComplete();
       }
     };
@@ -552,7 +512,7 @@ class GameEngine {
 
       // Player idle breath
       if (!state.isMoving) {
-        this.playerGroup.position.y = Math.sin(time * 2.5) * 0.04;
+        this.playerCharacter.idle(time);
       }
 
       this.renderer.render(this.scene, this.camera);
