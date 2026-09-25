@@ -421,66 +421,130 @@ function triggerVictory() {
 }
 
 // =============================================================================
-// LEADERBOARD SUBSYSTEM (LOCALSTORAGE)
+// GLOBAL CLOUD LEADERBOARD (FIREBASE REALTIME DATABASE)
 // =============================================================================
-const LEADERBOARD_KEY = 'https://pyspark-survivor-default-rtdb.europe-west1.firebasedatabase.app/';
+// Live Global Cloud Database URL for cross-device & cross-player score sync
+const FIREBASE_DB_URL = "https://pyspark-survivor-default-rtdb.europe-west1.firebasedatabase.app".replace(/\/+$/, '');
+const LEADERBOARD_KEY = 'pyspark_survivor_leaderboard';
 
-function getLeaderboard() {
+/**
+ * Fetches scores either from Firebase Cloud (if configured) or local browser cache.
+ */
+async function getLeaderboard() {
+  // 1. Try Firebase Cloud Database
+  if (FIREBASE_DB_URL) {
+    try {
+      const response = await fetch(`${FIREBASE_DB_URL}/scores.json`, { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        if (data) {
+          const list = Object.values(data);
+          // Sort by timeMs ascending, then redBulls descending
+          list.sort((a, b) => {
+            if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
+            return b.redBulls - a.redBulls;
+          });
+          const trimmed = list.slice(0, 25);
+          // Cache in local storage for offline resilience
+          try {
+            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(trimmed));
+          } catch (e) {}
+          return trimmed;
+        } else {
+          return []; // Database is initialized but empty
+        }
+      }
+    } catch (err) {
+      console.warn('Firebase sync offline, falling back to local storage', err);
+    }
+  }
+
+  // 2. Fallback to LocalStorage
   try {
     const raw = localStorage.getItem(LEADERBOARD_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        // Purge any previously seeded demo/fake entries
-        const fakeNames = ['SATOSHI_DE', 'SPARK_WIZARD', 'DELTA_LAKE_PRO', 'SQL_CHIEF'];
-        const clean = parsed.filter(item => !fakeNames.includes(item.name));
-        if (clean.length !== parsed.length) {
-          localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(clean));
-        }
-        return clean;
+        return parsed;
       }
     }
   } catch (err) {
-    console.error('Failed to parse leaderboard from localStorage', err);
+    console.error('Failed to parse local leaderboard', err);
   }
   return [];
 }
 
-function saveLeaderboardRecord(name, timeMs, redBulls) {
-  const records = getLeaderboard();
+/**
+ * Saves a completed run to both Firebase Cloud and LocalStorage.
+ */
+async function saveLeaderboardRecord(name, timeMs, redBulls) {
   const timeFormatted = formatStopwatch(timeMs);
   const dateStr = new Date().toISOString().split('T')[0];
 
-  records.push({
+  const record = {
     name: (name || 'ANON_DE').trim().toUpperCase().substring(0, 15),
     timeMs,
     timeFormatted,
     redBulls,
-    date: dateStr
-  });
+    date: dateStr,
+    timestamp: Date.now()
+  };
 
-  // Sort by timeMs ascending, then redBulls descending
-  records.sort((a, b) => {
+  // 1. Optimistic Local Save
+  let localList = [];
+  try {
+    const raw = localStorage.getItem(LEADERBOARD_KEY);
+    if (raw) localList = JSON.parse(raw) || [];
+  } catch (e) {}
+  localList.push(record);
+  localList.sort((a, b) => {
     if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
     return b.redBulls - a.redBulls;
   });
-
-  // Keep top 20
-  const trimmed = records.slice(0, 20);
+  localList = localList.slice(0, 25);
   try {
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(trimmed));
-  } catch (err) {
-    console.error('Failed to save leaderboard', err);
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(localList));
+  } catch (e) {}
+
+  // 2. Cloud Save to Firebase Realtime Database
+  if (FIREBASE_DB_URL) {
+    try {
+      const response = await fetch(`${FIREBASE_DB_URL}/scores.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+      if (response.ok) {
+        console.log('✔ Score successfully published to Global Firebase Leaderboard');
+      } else {
+        console.error('Firebase response error:', response.status, await response.text());
+      }
+    } catch (err) {
+      console.error('Failed to publish score to Firebase Cloud', err);
+    }
   }
-  return trimmed;
+
+  return localList;
 }
 
-function renderLeaderboard() {
-  const records = getLeaderboard();
+/**
+ * Renders leaderboard rows with asynchronous cloud fetching.
+ */
+async function renderLeaderboard() {
   const tbody = document.getElementById('leaderboard-body');
   if (!tbody) return;
 
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="5" style="text-align: center; color: #888888; padding: 22px 12px; font-family: 'Fira Code', monospace;">
+        📡 Connecting to Global Leaderboard...
+      </td>
+    </tr>
+  `;
+
+  const records = await getLeaderboard();
   tbody.innerHTML = '';
+
   if (records.length === 0) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -573,12 +637,21 @@ document.getElementById('btn-restart').addEventListener('click', () => {
 });
 
 // Submit Score Button
-document.getElementById('btn-save-score').addEventListener('click', () => {
+document.getElementById('btn-save-score').addEventListener('click', async () => {
   const input = document.getElementById('player-name-input');
   const name = input ? input.value : 'ANON_DE';
-  saveLeaderboardRecord(name, gameState.timer.elapsedMs, gameState.redBulls);
+  const saveBtn = document.getElementById('btn-save-score');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'PUBLISHING...';
+  }
+  await saveLeaderboardRecord(name, gameState.timer.elapsedMs, gameState.redBulls);
   document.getElementById('victory-score-entry').style.display = 'none';
-  showToast('🏆 Score submitted to leaderboard!');
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerText = 'SUBMIT SCORE';
+  }
+  showToast('🏆 Score submitted to Global Leaderboard!');
   openLeaderboard();
 });
 
