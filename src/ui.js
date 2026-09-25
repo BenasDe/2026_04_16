@@ -99,6 +99,18 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
   }
 
   function bindButtons({ startGame, executePipelineRun, saveLeaderboardRecord, openLeaderboard, closeLeaderboard, clearLocalLeaderboard }) {
+    const musicButtons = document.querySelectorAll('[data-music-toggle]');
+    const updateMusicButtons = () => {
+      musicButtons.forEach(button => {
+        button.textContent = `Music: ${window.music.enabled ? 'On' : 'Off'}`;
+        button.setAttribute('aria-pressed', String(window.music.enabled));
+        button.title = window.music.enabled ? 'Turn background music off' : 'Turn background music on';
+      });
+    };
+    window.music.onChange = updateMusicButtons;
+    musicButtons.forEach(button => button.addEventListener('click', () => window.music.toggle()));
+    updateMusicButtons();
+
     // Start Menu Buttons
     document.getElementById('btn-start-game').addEventListener('click', startGame);
     document.getElementById('btn-menu-leaderboard').addEventListener('click', openLeaderboard);

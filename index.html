@@ -56,6 +56,7 @@
         <button id="btn-run-pipeline" class="btn-run-pipeline" disabled title="Validate & deploy all staged transformations">
           ⚡ RUN PIPELINE
         </button>
+        <button type="button" class="hud-btn" data-music-toggle aria-pressed="true">Music: On</button>
         <button class="hud-btn" id="btn-open-leaderboard" title="View Global Leaderboard">🏆 Ranks</button>
       </div>
     </header>
@@ -87,30 +88,27 @@
 
       <div class="rules-box">
         <div class="rule-item">
-          <span class="rule-icon">🗺️</span>
           <div><strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) ➔ Silver (Analytical SQL) ➔ Gold (Spark/Delta Lake Optimization).</div>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">⚡</span>
           <div><strong>Red Bull Survival:</strong> You start with <strong>0 Red Bulls</strong>. Health/Sanity bars are gone—Red Bull is your only life support! Explore the grid to scavenge cans.</div>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">❓</span>
           <div><strong>Blind Staging:</strong> You won't know if your code fixes are right or wrong until you press <strong>RUN PIPELINE</strong>.</div>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">💥</span>
           <div><strong>Deployment Hotfixes & Time Penalty:</strong> Once all tasks are staged, run the pipeline! Each mistake consumes <strong>1 Red Bull</strong> to hotfix and adds <strong>+60s penalty</strong> to your final time! Run out of cans and your pipeline crashes with an Out Of Memory error!</div>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">⏱️</span>
           <div><strong>Leaderboard Stopwatch:</strong> The timer begins the moment you press Start. Complete all 3 pipelines in record time to claim top rank on the leaderboard!</div>
         </div>
       </div>
 
+      <button type="button" class="btn-secondary" data-music-toggle aria-pressed="true">Music: On</button>
+
       <div class="menu-actions">
-        <button id="btn-start-game" class="btn-primary btn-large">🚀 START PIPELINE RUN</button>
-        <button id="btn-menu-leaderboard" class="btn-secondary">🏆 VIEW LEADERBOARD</button>
+        <button id="btn-start-game" class="btn-primary btn-large">START PIPELINE RUN</button>
+        <button id="btn-menu-leaderboard" class="btn-secondary">VIEW LEADERBOARD</button>
       </div>
     </div>
   </div>
@@ -242,6 +240,7 @@
   <script src="src/utils.js"></script>
   <!-- 1. Procedural Audio Synthesizer -->
   <script src="src/audio.js"></script>
+  <script src="src/music.js"></script>
   <!-- 2. Data Engineering Anomalies & PySpark Skills Database -->
   <script src="src/levels/bronze.js"></script>
   <script src="src/levels/silver.js"></script>

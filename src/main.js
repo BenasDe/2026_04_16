@@ -186,6 +186,7 @@ function triggerVictory() {
 // GAME START / RESET FLOW
 // =============================================================================
 function startGame() {
+  window.music.start();
   // Initialize audio synthesizer on user gesture
   if (window.sfx && window.sfx.initAudio) {
     window.sfx.initAudio();
