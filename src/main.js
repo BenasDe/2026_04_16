@@ -445,6 +445,15 @@ function triggerVictory() {
   }
 
   modal.style.display = 'flex';
+
+  // Automatically focus and select the callsign input field
+  const playerInput = document.getElementById('player-name-input');
+  if (playerInput) {
+    setTimeout(() => {
+      playerInput.focus();
+      playerInput.select();
+    }, 100);
+  }
 }
 
 // =============================================================================
@@ -684,6 +693,15 @@ document.getElementById('btn-save-score').addEventListener('click', async () => 
 
 // Keyboard Navigation
 window.addEventListener('keydown', e => {
+  // If the user is currently typing in an input field (e.g. callsign input), do not intercept keystrokes
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+    if (e.code === 'Enter' && document.activeElement?.id === 'player-name-input') {
+      const saveBtn = document.getElementById('btn-save-score');
+      if (saveBtn && !saveBtn.disabled) saveBtn.click();
+    }
+    return;
+  }
+
   if (['ArrowUp', 'KeyW'].includes(e.code)) {
     e.preventDefault();
     movePlayer(0, -1);
