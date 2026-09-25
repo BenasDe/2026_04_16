@@ -273,7 +273,7 @@ async function executePipelineRun() {
     const item = stagedList[i];
     const task = item.task;
     const skill = item.chosenSkill;
-    const isCorrect = skill && skill.isCorrect;
+    const isCorrect = !!(skill && (skill.correct === true || skill.isCorrect === true));
 
     appendDiagLine('diag-info', `─── [NODE ${i + 1}/${stagedList.length}] Checking "${task.name}"...`);
     if (window.sfx && window.sfx.pipelineBeep) window.sfx.pipelineBeep();
@@ -281,11 +281,17 @@ async function executePipelineRun() {
 
     if (isCorrect) {
       appendDiagLine('diag-pass', `  ✔ PASSED: Logic compiled cleanly. [0 Red Bulls used]`);
+      if (skill && skill.explain) {
+        appendDiagLine('diag-info', `    ${skill.explain}`);
+      }
     } else {
       mistakesCount++;
       gameState.redBulls -= 1;
       if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
       appendDiagLine('diag-warn', `  ✖ BUG DETECTED in query logic! Hotfix required.`);
+      if (skill && skill.explain) {
+        appendDiagLine('diag-info', `    Issue: ${skill.explain}`);
+      }
       appendDiagLine('diag-warn', `  ⚡ Hotfix deployed: -1 Red Bull consumed (Remaining: ${gameState.redBulls})`);
       updateHUD();
     }
