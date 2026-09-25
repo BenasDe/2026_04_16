@@ -29,7 +29,7 @@
 }
 
 body {
-  background-color: var(--bg);
+  background: radial-gradient(circle at center, #151821 0%, #0c0e13 70%, #000000 100%);
   color: var(--text-main);
   font-family:
     "Inter",
@@ -40,6 +40,22 @@ body {
   width: 100vw;
   height: 100vh;
   touch-action: none;
+}
+
+/* Background Logo Watermark */
+#bg-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 72vw);
+  max-height: 65vh;
+  object-fit: contain;
+  opacity: 0.20;
+  filter: grayscale(100%) contrast(1.15) brightness(1.25);
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
 }
 
 /* Three.js 3D/2.5D Canvas Container */

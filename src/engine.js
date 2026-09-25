@@ -26,9 +26,8 @@ class GameEngine {
    */
   initScene() {
     this.scene = new THREE.Scene();
-    // Elegant dark slate background for clear visibility and contrast
-    this.scene.background = new THREE.Color(0x12151c);
-    this.scene.fog = new THREE.FogExp2(0x12151c, 0.02);
+    // Transparent scene background to reveal background logo watermark
+    this.scene.background = null;
 
     this.camera = new THREE.PerspectiveCamera(
       42,
@@ -42,8 +41,10 @@ class GameEngine {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
+      alpha: true,
       powerPreference: 'high-performance'
     });
+    this.renderer.setClearColor(0x000000, 0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
