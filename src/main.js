@@ -69,6 +69,26 @@ function startTimer() {
   }, 41); // ~24 fps update for smooth hundredths
 }
 
+/**
+ * Adds a time penalty to the active stopwatch and flashes timer HUD red.
+ * @param {number} ms - Milliseconds to add (default 60,000 ms = 60s).
+ */
+function addTimerPenalty(ms = 60000) {
+  if (gameState.timer.startTime) {
+    gameState.timer.startTime -= ms;
+  }
+  gameState.timer.elapsedMs += ms;
+  const formatted = formatStopwatch(gameState.timer.elapsedMs);
+  const timerEl = document.getElementById('timer-display');
+  if (timerEl) {
+    timerEl.innerText = `⏱️ ${formatted}`;
+    timerEl.style.color = '#ef4444';
+    setTimeout(() => {
+      if (timerEl) timerEl.style.color = '#ffffff';
+    }, 700);
+  }
+}
+
 function stopTimer() {
   if (gameState.timer.intervalId) {
     clearInterval(gameState.timer.intervalId);
@@ -301,12 +321,13 @@ async function executePipelineRun() {
       mistakesCount++;
       gameState.redBulls -= 1;
       if (gameState.stats) gameState.stats.totalMistakes += 1;
+      addTimerPenalty(60000); // Add +60s penalty for each used Red Bull
       if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
       appendDiagLine('diag-warn', `  ✖ BUG DETECTED in query logic! Hotfix required.`);
       if (skill && skill.explain) {
         appendDiagLine('diag-info', `    Issue: ${skill.explain}`);
       }
-      appendDiagLine('diag-warn', `  ⚡ Hotfix deployed: -1 Red Bull consumed (Remaining: ${gameState.redBulls})`);
+      appendDiagLine('diag-warn', `  ⚡ Hotfix deployed: -1 Red Bull consumed [+60s TIME PENALTY] (Remaining: ${gameState.redBulls})`);
       updateHUD();
     }
     await delay(350);
@@ -315,7 +336,7 @@ async function executePipelineRun() {
   await delay(400);
 
   // Print exact Hotfix Audit
-  appendDiagLine('diag-info', `[AUDIT] Level Starting Fuel: ${startLevelRb} | Hotfixes: -${mistakesCount} | Remaining Red Bulls: ${gameState.redBulls}`);
+  appendDiagLine('diag-info', `[AUDIT] Level Starting Fuel: ${startLevelRb} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining Red Bulls: ${gameState.redBulls}`);
 
   // Resolution Evaluation
   if (gameState.redBulls < 0) {
@@ -414,7 +435,13 @@ function triggerVictory() {
   if (auditEl) {
     const scavenged = gameState.stats ? gameState.stats.totalScavenged : gameState.redBulls;
     const mistakes = gameState.stats ? gameState.stats.totalMistakes : 0;
-    auditEl.innerHTML = `Audit: Scavenged <strong>${scavenged}</strong> cans − <strong>${mistakes}</strong> hotfixes = <strong>${gameState.redBulls}</strong> remaining`;
+    const penaltySec = mistakes * 60;
+    auditEl.innerHTML = `
+      <div>Fuel: Scavenged <strong>${scavenged}</strong> cans − <strong>${mistakes}</strong> hotfixes = <strong>${gameState.redBulls}</strong> remaining</div>
+      <div style="margin-top: 3px; color: ${mistakes > 0 ? '#facc15' : '#4ade80'};">
+        ${mistakes > 0 ? `⏱️ Red Bull Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes × 60s added to final time)` : `✔ Clean Deploy: Zero hotfix penalties!`}
+      </div>
+    `;
   }
 
   modal.style.display = 'flex';
