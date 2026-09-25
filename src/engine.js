@@ -261,7 +261,9 @@ class GameEngine {
         const tileMat = new THREE.MeshStandardMaterial({
           color: tileColor,
           roughness: 0.35,
-          metalness: 0.15
+          metalness: 0.15,
+          transparent: true,
+          opacity: 0.90
         });
         const tileMesh = new THREE.Mesh(tileGeo, tileMat);
         tileMesh.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
