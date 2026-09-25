@@ -82,7 +82,7 @@ function loadLevel(levelIndex) {
   renderLevel(currentLevel, levelIndex);
 
   updateHUD();
-  showToast(`🚀 Entered ${currentLevel.name}! Collect Red Bull & stage fixes.`);
+  showToast(` Entered ${currentLevel.name}! Collect Red Bull & stage fixes.`);
 }
 
 // =============================================================================
@@ -117,7 +117,7 @@ function checkCurrentTile() {
     gameState.redBulls += 1;
     if (gameState.stats) gameState.stats.totalScavenged += 1;
     if (window.sfx && window.sfx.redBull) window.sfx.redBull();
-    showToast(`⚡ Scavenged Red Bull! (+1 Hotfix Fuel, Total: ${gameState.redBulls})`);
+    showToast(` Scavenged Red Bull! (+1 Hotfix Fuel, Total: ${gameState.redBulls})`);
     engine.removeInteractiveObject(gameState.player.gridX, gameState.player.gridY);
     updateHUD();
     return;
@@ -129,7 +129,7 @@ function checkCurrentTile() {
     const isAlreadyStaged = !!gameState.stagedTasks[cell.data.id];
 
     if (isAlreadyStaged) {
-      showToast(`📦 Task already staged into DAG. (All staged: ${Object.keys(gameState.stagedTasks).length}/${currentLevel.tasks.length})`);
+      showToast(` Task already staged into DAG. (All staged: ${Object.keys(gameState.stagedTasks).length}/${currentLevel.tasks.length})`);
     } else {
       battleSystem.startBattle(cell.data, currentLevel.engine);
     }
@@ -157,9 +157,9 @@ function handleTaskStaged(task, chosenSkill) {
 
   if (stagedCount >= totalTasks) {
     if (window.sfx && window.sfx.levelClear) window.sfx.levelClear();
-    showToast('🚀 ALL TASKS STAGED! Click "⚡ RUN PIPELINE" to execute deployment!', 3500);
+    showToast(' ALL TASKS STAGED! Click " RUN PIPELINE" to execute deployment!', 3500);
   } else {
-    showToast(`📦 Staged fix for "${task.name}" (${stagedCount} / ${totalTasks})`);
+    showToast(` Staged fix for "${task.name}" (${stagedCount} / ${totalTasks})`);
   }
 }
 
