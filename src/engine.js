@@ -285,7 +285,7 @@ class GameEngine {
           const hexFloor = new THREE.Mesh(hexFloorGeo, hexFloorMat);
           hexFloor.rotation.x = -Math.PI / 2;
           hexFloor.rotation.z = Math.PI / 6;
-          hexFloor.position.y = 0.05;
+          hexFloor.position.y = 0.115;
           enemyGroup.add(hexFloor);
 
           enemyGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
@@ -494,6 +494,32 @@ class GameEngine {
   }
 
   /**
+   * Lift nearby question markers above the helmet before the player reaches them.
+   * Distance-based positioning also handles leaving, revisiting, and level resets.
+   */
+  updateInteractiveObjects(time) {
+    this.interactiveObjects.forEach(obj => {
+      const mesh = obj.userData.mesh;
+      if (!mesh) return;
+
+      let height = 0.85;
+      if (obj.userData.isEnemy) {
+        const distance = Math.hypot(
+          obj.position.x - this.playerGroup.position.x,
+          obj.position.z - this.playerGroup.position.z
+        );
+        // Fully raised before the two silhouettes can touch, including walking poses.
+        const proximity = THREE.MathUtils.clamp((1.8 - distance) / 0.65, 0, 1);
+        const lift = proximity * proximity * (3 - 2 * proximity);
+        height += lift * 1.7;
+      }
+
+      mesh.rotation.y = time * 1.5;
+      mesh.position.y = height + Math.sin(time * 3) * 0.08;
+    });
+  }
+
+  /**
    * Main animation and render loop.
    * @param {Object} state - Current global game state.
    */
@@ -502,13 +528,7 @@ class GameEngine {
       requestAnimationFrame(render);
       const time = this.clock.getElapsedTime();
 
-      // Floating bob & rotation on hexagonal anomaly and Red Bull meshes
-      this.interactiveObjects.forEach(obj => {
-        if (obj.userData.mesh) {
-          obj.userData.mesh.rotation.y = time * 1.5;
-          obj.userData.mesh.position.y = 0.85 + Math.sin(time * 3) * 0.08;
-        }
-      });
+      this.updateInteractiveObjects(time);
 
       // Player idle breath
       if (!state.isMoving) {
