@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>PySpark Survivor: Data Lake Chronicles</title>
   
   <!-- External Google Fonts -->
@@ -87,10 +87,19 @@
       </div>
     </header>
 
-    <!-- Movement Controls Help Hint -->
+    <!-- Movement Controls Help Hint (Desktop) -->
     <aside class="controls-hint">
       🎮 Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles to move | <kbd>C</kbd> Drink Coffee
     </aside>
+
+    <!-- Mobile On-Screen Directional D-Pad & Quick Coffee -->
+    <div id="mobile-dpad">
+      <button class="dpad-btn" id="dpad-up" aria-label="Up">▲</button>
+      <button class="dpad-btn" id="dpad-left" aria-label="Left">◀</button>
+      <button class="dpad-btn" id="dpad-coffee" aria-label="Drink Coffee">☕</button>
+      <button class="dpad-btn" id="dpad-right" aria-label="Right">▶</button>
+      <button class="dpad-btn" id="dpad-down" aria-label="Down">▼</button>
+    </div>
   </div>
 
   <!-- Toast Notification System -->

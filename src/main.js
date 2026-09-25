@@ -315,6 +315,59 @@ document.getElementById('btn-restart').addEventListener('click', () => {
   window.location.reload();
 });
 
+// Mobile On-Screen D-Pad Controller Handlers
+const bindDpad = (id, action) => {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const trigger = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    action();
+  };
+  btn.addEventListener('pointerdown', trigger);
+};
+
+bindDpad('dpad-up', () => movePlayer(0, -1));
+bindDpad('dpad-down', () => movePlayer(0, 1));
+bindDpad('dpad-left', () => movePlayer(-1, 0));
+bindDpad('dpad-right', () => movePlayer(1, 0));
+bindDpad('dpad-coffee', () => drinkCoffee());
+
+// Touch Swipe Gesture Support for Canvas
+let touchStartX = 0;
+let touchStartY = 0;
+
+window.addEventListener('touchstart', e => {
+  if (gameState.inBattle || gameState.gameOver || e.target.closest('#ui-layer') || e.target.closest('#battle-modal')) return;
+  if (e.touches && e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+window.addEventListener('touchend', e => {
+  if (gameState.inBattle || gameState.gameOver || e.target.closest('#ui-layer') || e.target.closest('#battle-modal')) return;
+  if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+  const swipeThreshold = 35; // px
+
+  if (Math.max(absDx, absDy) > swipeThreshold) {
+    if (absDx > absDy) {
+      // Horizontal Swipe
+      if (dx > 0) movePlayer(1, 0);  // Swipe Right
+      else movePlayer(-1, 0);         // Swipe Left
+    } else {
+      // Vertical Swipe
+      if (dy > 0) movePlayer(0, 1);  // Swipe Down
+      else movePlayer(0, -1);         // Swipe Up
+    }
+  }
+}, { passive: true });
+
 // Start Render Loop & Initial HUD Sync
 updateHUD();
 engine.startRenderLoop(gameState);
