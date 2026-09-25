@@ -63,7 +63,7 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
 
     const finalFormatted = formatStopwatch(gameState.timer.elapsedMs);
     const modal = document.getElementById('game-end-modal');
-    document.getElementById('end-title').innerText = '🏆 GOLD PRODUCTION CERTIFIED!';
+    document.getElementById('end-title').innerText = ' GOLD PRODUCTION CERTIFIED!';
     document.getElementById('end-title').style.color = '#ffffff';
     document.getElementById('end-desc').innerText =
       'All 3 data pipeline layers (Bronze PySpark, Silver Analytical SQL, Gold Spark/Delta Optimization) successfully deployed to production!';
@@ -81,7 +81,7 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
       auditEl.innerHTML = `
         <div>Fuel: Scavenged <strong>${scavenged}</strong> cans − <strong>${mistakes}</strong> hotfixes = <strong>${gameState.redBulls}</strong> remaining</div>
         <div style="margin-top: 3px; color: ${mistakes > 0 ? '#facc15' : '#4ade80'};">
-          ${mistakes > 0 ? `⏱️ Red Bull Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes × 60s added to final time)` : `✔ Clean Deploy: Zero hotfix penalties!`}
+          ${mistakes > 0 ? ` Red Bull Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes × 60s added to final time)` : `✔ Clean Deploy: Zero hotfix penalties!`}
         </div>
       `;
     }
