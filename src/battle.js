@@ -1,58 +1,62 @@
 /**
  * @file battle.js
- * @description Turn-Based JRPG Combat Controller with PySpark Transformations.
- * Handles anomaly encounters, DataFrame rendering, skill checks, and battle resolution.
+ * @description Task Staging & Coding Challenge Controller for Pipeline Survivor.
+ * Operates in "Blind Staging" mode: records candidate queries/transformations without
+ * revealing correctness until the player executes "RUN PIPELINE".
  */
 
 class BattleSystem {
-  constructor(engine, state, onBattleEnd) {
+  constructor(engine, state, onTaskStaged) {
     this.engine = engine;
     this.state = state;
-    this.onBattleEnd = onBattleEnd;
+    this.onTaskStaged = onTaskStaged;
 
     // DOM References
     this.modal = document.getElementById('battle-modal');
     this.enemyNameEl = document.getElementById('enemy-name');
     this.enemyDescEl = document.getElementById('enemy-desc');
-    this.enemyHpBar = document.getElementById('enemy-hp-bar');
+    this.engineBadgeEl = document.getElementById('battle-engine-badge');
     this.tableContainer = document.getElementById('table-preview-container');
     this.skillsGrid = document.getElementById('skills-grid');
     this.battleLog = document.getElementById('battle-log');
   }
 
   /**
-   * Initiates a turn-based combat encounter with a corrupted data anomaly.
-   * @param {Object} enemyData - The anomaly definition object from ANOMALY_DATABASE.
+   * Initiates task view for a grid anomaly or SQL objective.
+   * @param {Object} taskData - The task definition object.
+   * @param {string} engineName - e.g. "PySpark 3.5.0" or "Spark SQL".
    */
-  startBattle(enemyData) {
+  startBattle(taskData, engineName = "PySpark 3.5.0") {
     this.state.inBattle = true;
-    this.currentEnemy = enemyData;
+    this.currentTask = taskData;
 
     window.sfx.encounter();
 
-    // Populate Anomaly Information
-    this.enemyNameEl.innerText = enemyData.name;
-    this.enemyDescEl.innerText = enemyData.desc;
-    this.enemyHpBar.style.width = '100%';
+    // Populate Task Information
+    this.enemyNameEl.innerText = taskData.name;
+    this.enemyDescEl.innerText = taskData.desc;
+    if (this.engineBadgeEl) {
+      this.engineBadgeEl.innerText = `ENGINE: ${engineName}`;
+    }
 
-    // Render Preview of Corrupted DataFrame
-    this.renderCorruptedTable(enemyData);
+    // Render Preview Table
+    this.renderCorruptedTable(taskData);
 
-    // Render Shuffled PySpark Skill Cards
-    this.renderSkillCards(enemyData);
+    // Render Shuffled Candidate Queries / PySpark Functions
+    this.renderSkillCards(taskData);
 
-    // Reset Battle Log
-    this.battleLog.innerHTML = `<div>[ENCOUNTER] ${enemyData.name} blocking the ingestion partition!</div>`;
+    // Initial log prompt
+    this.battleLog.innerHTML = `<div>[READY] Inspect the records and commit your transformation logic to the DAG...</div>`;
 
     // Show Modal
     this.modal.style.display = 'flex';
   }
 
   /**
-   * Renders the mini preview table showing sample records with highlighted corrupted rows.
-   * @param {Object} enemyData
+   * Renders the mini preview table showing sample records with highlighted anomaly rows.
+   * @param {Object} taskData
    */
-  renderCorruptedTable(enemyData) {
+  renderCorruptedTable(taskData) {
     this.tableContainer.innerHTML = '';
     const table = document.createElement('table');
     table.className = 'table-preview';
@@ -60,7 +64,7 @@ class BattleSystem {
     // Table Header
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    enemyData.tableHeaders.forEach(header => {
+    taskData.tableHeaders.forEach(header => {
       const th = document.createElement('th');
       th.innerText = header;
       headerRow.appendChild(th);
@@ -70,9 +74,9 @@ class BattleSystem {
 
     // Table Rows
     const tbody = document.createElement('tbody');
-    enemyData.tableRows.forEach((row, rIdx) => {
+    taskData.tableRows.forEach((row, rIdx) => {
       const tr = document.createElement('tr');
-      const isCorruptedRow = enemyData.glitchIndices.includes(rIdx);
+      const isCorruptedRow = taskData.glitchIndices.includes(rIdx);
       if (isCorruptedRow) {
         tr.className = 'glitch-row';
       }
@@ -80,14 +84,7 @@ class BattleSystem {
       row.forEach(cell => {
         const td = document.createElement('td');
         td.innerText = cell;
-        if (
-          isCorruptedRow &&
-          (cell.includes('NULL') ||
-            cell.includes('NaN') ||
-            cell === '' ||
-            cell.includes('-999') ||
-            cell.includes('   '))
-        ) {
+        if (isCorruptedRow) {
           td.className = 'corrupted';
         }
         tr.appendChild(td);
@@ -99,12 +96,12 @@ class BattleSystem {
   }
 
   /**
-   * Renders the PySpark skill choices as interactive cards.
-   * @param {Object} enemyData
+   * Renders the query / transformation choices as interactive cards.
+   * @param {Object} taskData
    */
-  renderSkillCards(enemyData) {
+  renderSkillCards(taskData) {
     this.skillsGrid.innerHTML = '';
-    const shuffled = [...enemyData.skills].sort(() => Math.random() - 0.5);
+    const shuffled = [...taskData.skills].sort(() => Math.random() - 0.5);
 
     shuffled.forEach(skill => {
       const btn = document.createElement('button');
@@ -113,67 +110,41 @@ class BattleSystem {
         <div class="skill-code">${skill.code}</div>
         <div class="skill-effect">${skill.label}</div>
       `;
-      btn.onclick = () => this.executeSkill(skill);
+      btn.onclick = () => this.stageSkill(skill);
       this.skillsGrid.appendChild(btn);
     });
   }
 
   /**
-   * Executes a chosen PySpark transformation and computes battle outcome.
-   * @param {Object} skill - Selected skill object.
+   * Stages the chosen transformation blindly into the pipeline DAG without revealing if it is correct.
+   * @param {Object} skill - Selected candidate skill/query.
    */
-  executeSkill(skill) {
+  stageSkill(skill) {
     const skillButtons = this.skillsGrid.querySelectorAll('.skill-card');
     skillButtons.forEach(b => (b.disabled = true));
 
-    if (skill.correct) {
-      // Correct PySpark syntax & logic chosen
-      window.sfx.correct();
-      this.enemyHpBar.style.width = '0%';
-      this.battleLog.innerHTML =
-        `<div style="color:#ffffff; font-weight:700;">[SUCCESS] ${skill.explain}</div>` +
-        this.battleLog.innerHTML;
+    // Play neutral staging sound
+    window.sfx.stageTask();
 
-      setTimeout(() => {
-        this.finishBattle(true);
-      }, 1200);
-    } else {
-      // Syntax / Logic error -> Inflict Sanity & Health penalties
-      window.sfx.wrong();
-      const sanityLoss = 18;
-      const hpLoss = 10;
-      this.state.player.sanity = Math.max(0, this.state.player.sanity - sanityLoss);
-      this.state.player.hp = Math.max(0, this.state.player.hp - hpLoss);
+    // Feedback log: Blind notification
+    this.battleLog.innerHTML =
+      `<div style="color:#ffffff; font-weight:700;">[STAGED] Logic committed to pipeline DAG. (Validation deferred to 'Run Pipeline')</div>` +
+      this.battleLog.innerHTML;
 
-      // Trigger global HUD update
-      if (window.updateHUD) window.updateHUD();
-
-      this.battleLog.innerHTML =
-        `<div style="color:#888888;">[SYNTAX/LOGIC ERROR] ${skill.explain} (-${sanityLoss} Sanity, -${hpLoss} HP)</div>` +
-        this.battleLog.innerHTML;
-
-      // Check if developer crashed
-      if (this.state.player.sanity <= 0 || this.state.player.hp <= 0) {
-        setTimeout(() => {
-          this.finishBattle(false);
-        }, 1200);
-      } else {
-        setTimeout(() => {
-          skillButtons.forEach(b => (b.disabled = false));
-        }, 800);
-      }
-    }
+    setTimeout(() => {
+      this.finishTask(skill);
+    }, 650);
   }
 
   /**
-   * Closes the combat view and triggers completion callbacks.
-   * @param {boolean} won - Whether the anomaly was resolved.
+   * Closes the task dialog and notifies main loop that this node is staged.
+   * @param {Object} chosenSkill
    */
-  finishBattle(won) {
+  finishTask(chosenSkill) {
     this.modal.style.display = 'none';
     this.state.inBattle = false;
-    if (this.onBattleEnd) {
-      this.onBattleEnd(won, this.currentEnemy);
+    if (this.onTaskStaged) {
+      this.onTaskStaged(this.currentTask, chosenSkill);
     }
   }
 }

@@ -56,74 +56,100 @@ class SoundFX {
   }
 
   /**
-   * Arpeggiated chime for correct PySpark function execution.
+   * Red Bull can pickup sound.
    */
-  correct() {
+  redBull() {
+    this.init();
+    this.playTone(880, 'sine', 0.12, 0.12);
+    setTimeout(() => this.playTone(1320, 'sine', 0.18, 0.12), 100);
+  }
+
+  /**
+   * Task encounter sound.
+   */
+  encounter() {
+    this.init();
+    this.playTone(320, 'sawtooth', 0.22, 0.12);
+  }
+
+  /**
+   * Staging confirmation chime (neutral, does not reveal if answer is right or wrong).
+   */
+  stageTask() {
+    this.init();
+    this.playTone(587.33, 'sine', 0.08, 0.08); // D5
+    setTimeout(() => this.playTone(880, 'sine', 0.14, 0.08), 80); // A5
+  }
+
+  /**
+   * Diagnostic tick / test passed sound during pipeline run.
+   */
+  pipelineBeep(pitch = 600) {
+    this.init();
+    this.playTone(pitch, 'square', 0.06, 0.06);
+  }
+
+  /**
+   * Hotfix sound when a mistake consumes a Red Bull.
+   */
+  pipelineHotfix() {
+    this.init();
+    this.playTone(440, 'sawtooth', 0.08, 0.1);
+    setTimeout(() => this.playTone(880, 'square', 0.15, 0.1), 80);
+  }
+
+  /**
+   * Pipeline success / level clear fanfare.
+   */
+  levelClear() {
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
-    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+    [440, 554.37, 659.25, 880].forEach((freq, i) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'square';
+      osc.type = 'triangle';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.08, now + i * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.15);
+      gain.gain.setValueAtTime(0.12, now + i * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.09 + 0.2);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start(now + i * 0.08);
-      osc.stop(now + i * 0.08 + 0.15);
+      osc.start(now + i * 0.09);
+      osc.stop(now + i * 0.09 + 0.2);
     });
   }
 
   /**
-   * Low buzz / dissonance sound for runtime error / wrong PySpark choice.
+   * Pipeline crash / game over buzzer.
    */
-  wrong() {
+  pipelineCrash() {
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
-    [220, 180, 130].forEach((freq, i) => {
+    [260, 220, 164, 110].forEach((freq, i) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.12, now + i * 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.18);
+      gain.gain.setValueAtTime(0.15, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.24);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start(now + i * 0.1);
-      osc.stop(now + i * 0.1 + 0.18);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.24);
     });
   }
 
   /**
-   * Red Bull sip sound for restoring Sanity and Health.
-   */
-  redBull() {
-    this.init();
-    this.playTone(880, 'sine', 0.15, 0.1);
-    setTimeout(() => this.playTone(1320, 'sine', 0.2, 0.1), 120);
-  }
-
-  /**
-   * Battle encounter trigger sound.
-   */
-  encounter() {
-    this.init();
-    this.playTone(300, 'sawtooth', 0.3, 0.15);
-  }
-
-  /**
-   * Victory fanfare & celebratory confetti.
+   * Final Victory fanfare & confetti.
    */
   victory() {
     this.init();
     if (window.confetti) {
-      window.confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+      window.confetti({ particleCount: 120, spread: 85, origin: { y: 0.6 } });
     }
   }
 }
 
-// Export a singleton sound manager instance
+// Export singleton sound instance
 window.sfx = new SoundFX();

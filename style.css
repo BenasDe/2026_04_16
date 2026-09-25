@@ -209,6 +209,18 @@ body {
   white-space: nowrap;
 }
 
+.timer-badge {
+  border-color: #555555;
+  background: #0d0d0d;
+}
+
+#timer-display {
+  font-family: "Fira Code", monospace;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
 .hud-btn {
   background: #000000;
   border: 1px solid var(--border-bright);
@@ -227,6 +239,47 @@ body {
 .hud-btn:active {
   background: #ffffff;
   color: #000000;
+}
+
+/* Run Pipeline Button (Disabled vs Pulsing Ready) */
+.btn-run-pipeline {
+  background: #141414;
+  border: 1.5px solid #444444;
+  color: #666666;
+  font-family: "Fira Code", monospace;
+  font-weight: 700;
+  font-size: clamp(10px, 1.3vw, 12px);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-run-pipeline.ready {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  animation: pulseGlow 1.5s infinite ease-in-out;
+}
+
+.btn-run-pipeline.ready:hover {
+  background: #e6e6e6;
+  transform: translateY(-1px);
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 255, 255, 0.95);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  }
 }
 
 /* Floating Instructions / Controls Mini-card */
@@ -587,51 +640,39 @@ body {
   text-align: center;
 }
 
-/* Game End Modal */
-#game-end-modal {
+/* =========================================================================
+   GENERIC MODAL BACKDROP & BUTTONS
+   ========================================================================= */
+.modal-backdrop {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.94);
+  backdrop-filter: blur(14px);
   z-index: 300;
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   pointer-events: auto;
-  text-align: center;
-  padding: 20px;
-}
-
-#game-end-modal h1 {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(16px, 3.5vw, 26px);
-  margin-bottom: 14px;
-  color: #ffffff;
-}
-
-#game-end-modal p {
-  font-size: clamp(12px, 1.8vw, 15px);
-  max-width: 480px;
-  line-height: 1.6;
-  color: #999999;
-  margin-bottom: 20px;
+  padding: clamp(12px, 2.5vh, 24px);
+  animation: fadeIn 0.2s ease-out;
 }
 
 .btn-primary {
   background: #ffffff;
   color: #000000;
-  border: 1px solid #ffffff;
+  border: 1.5px solid #ffffff;
   font-family: "Fira Code", monospace;
   font-weight: 700;
-  font-size: clamp(11px, 1.5vw, 13px);
-  padding: 10px 24px;
+  font-size: clamp(11px, 1.4vw, 13px);
+  padding: 10px 22px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.18s ease;
+  white-space: nowrap;
 }
 
 .btn-primary:hover,
@@ -641,9 +682,353 @@ body {
   border-color: #ffffff;
 }
 
-/* Low Sanity Distortion Effect in B&W */
-body.low-sanity #webgl-canvas {
-  filter: contrast(2) invert(0.2);
+.btn-secondary {
+  background: transparent;
+  color: #ffffff;
+  border: 1.5px solid #555555;
+  font-family: "Fira Code", monospace;
+  font-weight: 600;
+  font-size: clamp(11px, 1.4vw, 13px);
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover,
+.btn-secondary:active {
+  border-color: #ffffff;
+  background: #1a1a1a;
+}
+
+.btn-large {
+  font-size: clamp(12px, 1.6vw, 15px);
+  padding: 12px 28px;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #888888;
+  font-family: "Fira Code", monospace;
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 6px;
+}
+
+.btn-text:hover {
+  color: #ffffff;
+}
+
+.close-x {
+  background: transparent;
+  border: none;
+  color: #aaaaaa;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.close-x:hover {
+  color: #ffffff;
+}
+
+/* =========================================================================
+   START MENU MODAL
+   ========================================================================= */
+.menu-window {
+  width: min(680px, 94vw);
+  background: #0d0d0d;
+  border: 1.5px solid var(--border-bright);
+  border-radius: 6px;
+  padding: clamp(18px, 3vh, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.12);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.menu-badge {
+  font-family: "Fira Code", monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  background: #ffffff;
+  color: #000000;
+  padding: 2px 8px;
+  font-weight: 700;
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+
+.menu-title {
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(15px, 3.2vw, 22px);
+  color: #ffffff;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.menu-subtitle {
+  font-size: clamp(12px, 1.6vw, 14px);
+  color: #999999;
+  margin-bottom: 20px;
+  font-family: "Fira Code", monospace;
+}
+
+.rules-box {
+  background: #000000;
+  border: 1px solid #282828;
+  border-radius: 4px;
+  padding: clamp(12px, 2vh, 18px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  font-size: clamp(11px, 1.3vw, 12.5px);
+  line-height: 1.5;
+  color: #b0b0b0;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.rule-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.rule-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.rule-item strong {
+  color: #ffffff;
+}
+
+.menu-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* =========================================================================
+   PIPELINE DIAGNOSTIC TERMINAL MODAL
+   ========================================================================= */
+.diagnostic-window {
+  width: min(720px, 94vw);
+  background: #000000;
+  border: 1.5px solid var(--border-bright);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.15);
+}
+
+.diagnostic-header {
+  background: #111111;
+  padding: 12px 18px;
+  border-bottom: 1px solid #333333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.diagnostic-title {
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(9px, 1.2vw, 11px);
+  color: #ffffff;
+}
+
+.diagnostic-terminal {
+  background: #050505;
+  padding: 16px;
+  font-family: "Fira Code", monospace;
+  font-size: clamp(10px, 1.3vw, 12px);
+  min-height: 220px;
+  max-height: 380px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diag-line {
+  line-height: 1.45;
+}
+
+.diag-info {
+  color: #aaaaaa;
+}
+
+.diag-pass {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.diag-warn {
+  color: #facc15;
+  font-weight: 600;
+}
+
+.diag-fail {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.diagnostic-footer {
+  background: #111111;
+  padding: 12px 18px;
+  border-top: 1px solid #333333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.diagnostic-summary {
+  font-family: "Fira Code", monospace;
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* =========================================================================
+   LEADERBOARD MODAL
+   ========================================================================= */
+.leaderboard-window {
+  width: min(720px, 94vw);
+  background: #0d0d0d;
+  border: 1.5px solid var(--border-bright);
+  border-radius: 6px;
+  padding: clamp(16px, 2.5vh, 24px);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.leaderboard-header h2 {
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(11px, 1.8vw, 14px);
+  color: #ffffff;
+}
+
+.leaderboard-table-container {
+  overflow-x: auto;
+  border: 1px solid #282828;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Fira Code", monospace;
+  font-size: clamp(10px, 1.2vw, 12px);
+  text-align: left;
+}
+
+.leaderboard-table th {
+  background: #181818;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-bottom: 1px solid #333333;
+  font-weight: 700;
+}
+
+.leaderboard-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a1a1a;
+  color: #cccccc;
+}
+
+.leaderboard-table tr:nth-child(even) {
+  background: #090909;
+}
+
+.leaderboard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* =========================================================================
+   GAME END / VICTORY OVERLAY
+   ========================================================================= */
+.end-window {
+  background: #0d0d0d;
+  border: 1.5px solid var(--border-bright);
+  border-radius: 6px;
+  padding: clamp(20px, 3vh, 32px);
+  width: min(540px, 92vw);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.end-window h1 {
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(15px, 3vw, 22px);
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.end-window p {
+  font-size: clamp(11px, 1.4vw, 13px);
+  line-height: 1.6;
+  color: #999999;
+  margin-bottom: 18px;
+}
+
+.stat-highlight {
+  background: #000000;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-around;
+  font-family: "Fira Code", monospace;
+  font-size: 12px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.player-input {
+  background: #000000;
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  font-family: "Fira Code", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  width: 220px;
+}
+
+.player-input:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
 /* =========================================================================
@@ -653,11 +1038,11 @@ body.low-sanity #webgl-canvas {
 /* Tablets & Small Laptops (max-width: 900px) */
 @media (max-width: 900px) {
   .top-bar {
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 8px;
   }
-  .stats-meters {
-    justify-content: center;
+  .items-hud {
+    justify-content: flex-end;
   }
   .controls-hint {
     font-size: 10px;
@@ -668,28 +1053,31 @@ body.low-sanity #webgl-canvas {
 /* Mobile Phones (max-width: 680px) */
 @media (max-width: 680px) {
   .top-bar {
-    padding: 8px 12px;
+    padding: 6px 10px;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
   }
 
   .dev-profile {
     justify-content: space-between;
   }
 
-  .stats-meters {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-  }
-
-  .meter-container {
-    min-width: 0;
-  }
-
   .items-hud {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
+    gap: 6px;
+  }
+
+  .items-hud .hud-badge {
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .btn-run-pipeline {
+    padding: 5px 10px;
+    font-size: 10px;
   }
 
   .skills-grid {
@@ -707,7 +1095,7 @@ body.low-sanity #webgl-canvas {
 
 /* Very Small Phones (max-width: 380px) */
 @media (max-width: 380px) {
-  .stats-meters {
-    grid-template-columns: 1fr;
+  .items-hud {
+    justify-content: center;
   }
 }

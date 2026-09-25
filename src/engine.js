@@ -187,12 +187,31 @@ class GameEngine {
   }
 
   /**
-   * Builds the 2.5D Grid with UNIFORM procedural enemy distribution across all rows and columns.
+  /**
+   * Cleans up all previous level tiles and 3D objects from the Three.js scene.
+   */
+  clearBoard() {
+    this.tileMeshes.forEach(mesh => {
+      this.scene.remove(mesh);
+      if (mesh.geometry) mesh.geometry.dispose();
+    });
+    this.interactiveObjects.forEach(obj => {
+      this.scene.remove(obj);
+    });
+    this.tileMeshes = [];
+    this.interactiveObjects = [];
+  }
+
+  /**
+   * Builds the 2.5D Grid with UNIFORM procedural distribution for the active level.
    * @param {number} gridSize - Grid width and height (e.g. 5x5).
-   * @param {Array} anomalies - Array of anomaly database entries.
+   * @param {Array} tasks - Array of level tasks (PySpark or SQL).
+   * @param {number} redBullsToPlace - Number of Red Bull pickups to generate.
    * @returns {Array<Array<Object>>} Board 2D matrix data.
    */
-  buildBoard(gridSize, anomalies) {
+  buildBoard(gridSize, tasks, redBullsToPlace = 3) {
+    this.clearBoard();
+
     const offset = ((gridSize - 1) * this.GRID_SPACING) / 2;
     const board = [];
 
@@ -200,53 +219,45 @@ class GameEngine {
     for (let x = 0; x < gridSize; x++) {
       board[x] = [];
       for (let y = 0; y < gridSize; y++) {
-        board[x][y] = { type: 'empty', data: null, cleared: false };
+        board[x][y] = { type: 'empty', data: null, staged: false };
       }
     }
 
     // 2. Set Start Tile at (0, 0)
     board[0][0].type = 'start';
 
-    // 3. Set Red Bull pickups evenly across quadrants
-    const redBullLocations = [
-      { x: 2, y: 1 },
-      { x: 1, y: 3 },
-      { x: 4, y: 4 }
-    ];
-    redBullLocations.forEach(c => {
-      if (c.x < gridSize && c.y < gridSize) {
-        board[c.x][c.y].type = 'redBull';
-      }
-    });
-
-    // 4. Collect all remaining valid coordinates for uniform enemy placement
+    // 3. Collect candidate coordinates (excluding start 0,0)
     const candidateCoords = [];
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
-        if (board[x][y].type === 'empty') {
+        if (x !== 0 || y !== 0) {
           candidateCoords.push({ x, y });
         }
       }
     }
 
-    // Fisher-Yates shuffle to guarantee unbiased distribution across ALL rows (0, 1, 2, 3, 4)
+    // Fisher-Yates shuffle to guarantee uniform distribution across all rows
     for (let i = candidateCoords.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [candidateCoords[i], candidateCoords[j]] = [candidateCoords[j], candidateCoords[i]];
     }
 
-    // Place 7-8 enemies uniformly across the randomized candidate coordinates
-    const enemiesToPlace = Math.min(candidateCoords.length, 7);
-    const shuffledAnomalies = [...anomalies].sort(() => Math.random() - 0.5);
-
-    for (let i = 0; i < enemiesToPlace; i++) {
-      const coord = candidateCoords[i];
-      const anomalyData = shuffledAnomalies[i % shuffledAnomalies.length];
-      board[coord.x][coord.y].type = 'enemy';
-      board[coord.x][coord.y].data = anomalyData;
+    // 4. Place Red Bull pickups
+    let coordIdx = 0;
+    for (let i = 0; i < redBullsToPlace && coordIdx < candidateCoords.length; i++) {
+      const c = candidateCoords[coordIdx++];
+      board[c.x][c.y].type = 'redBull';
     }
 
-    // 5. Construct 3D Visual Mesh Objects for every tile
+    // 5. Place Tasks (PySpark / SQL)
+    const shuffledTasks = [...tasks].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < shuffledTasks.length && coordIdx < candidateCoords.length; i++) {
+      const c = candidateCoords[coordIdx++];
+      board[c.x][c.y].type = 'enemy';
+      board[c.x][c.y].data = shuffledTasks[i];
+    }
+
+    // 6. Construct 3D Visual Mesh Objects for every tile
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         const cell = board[x][y];
@@ -443,6 +454,34 @@ class GameEngine {
     if (idx !== -1) {
       this.scene.remove(this.interactiveObjects[idx]);
       this.interactiveObjects.splice(idx, 1);
+    }
+  }
+
+  /**
+   * Visually highlights an interactive anomaly node as STAGED into the pipeline DAG.
+   * @param {number} gridX
+   * @param {number} gridY
+   */
+  markTaskAsStaged(gridX, gridY) {
+    const obj = this.interactiveObjects.find(
+      o => o.userData.gridX === gridX && o.userData.gridY === gridY
+    );
+    if (obj) {
+      obj.userData.staged = true;
+      obj.traverse(child => {
+        if (child.isMesh && child.material) {
+          if (child.material.emissive) {
+            child.material.emissive.setHex(0x22c55e);
+            child.material.emissiveIntensity = 0.55;
+          }
+          if (child.material.color && !child.material.map) {
+            child.material.color.setHex(0x15803d);
+          }
+        }
+        if (child.isLineSegments && child.material) {
+          child.material.color.setHex(0x4ade80);
+        }
+      });
     }
   }
 

@@ -33,73 +33,43 @@
       <div class="dev-profile">
         <div class="avatar-badge" id="dev-avatar">👨‍💻</div>
         <div class="dev-info">
-          <h2>Data Engineer <span class="dev-rank" id="dev-rank">LVL 1 JUNIOR</span></h2>
+          <h2><span class="dev-rank" id="dev-rank">LEVEL 1</span> <span id="pipeline-status">Bronze Layer (Ingestion)</span></h2>
           <div style="font-size: 11px; color: #888888; font-family: 'Fira Code', monospace;">
-            Pipeline: <span id="pipeline-status" style="color: #ffffff;">Bronze Layer (Ingestion)</span>
+            Engine: <span id="pipeline-engine-text" style="color: #ffffff;">PySpark 3.5.0</span>
           </div>
         </div>
       </div>
 
-      <!-- Vital Meters: Health (Pipeline Stability), Sanity (Analyst Integrity), and EXP -->
-      <div class="stats-meters">
-        <!-- Health Meter -->
-        <div class="meter-container">
-          <div class="meter-label">
-            <span style="color: #ffffff;">❤️ HEALTH</span>
-            <span id="hp-text">100 / 100</span>
-          </div>
-          <div class="meter-bar-outer">
-            <div class="meter-bar-inner hp-fill" id="hp-bar" style="width: 100%;"></div>
-          </div>
-        </div>
-
-        <!-- Sanity Meter -->
-        <div class="meter-container">
-          <div class="meter-label">
-            <span style="color: #cccccc;">🧠 SANITY</span>
-            <span id="sanity-text">100 / 100</span>
-          </div>
-          <div class="meter-bar-outer">
-            <div class="meter-bar-inner sanity-fill" id="sanity-bar" style="width: 100%;"></div>
-          </div>
-        </div>
-
-        <!-- Career EXP Meter -->
-        <div class="meter-container">
-          <div class="meter-label">
-            <span style="color: #888888;">⚡ EXP</span>
-            <span id="xp-text">0 / 100</span>
-          </div>
-          <div class="meter-bar-outer">
-            <div class="meter-bar-inner xp-fill" id="xp-bar" style="width: 0%;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Items & Cleared Progress Counter -->
+      <!-- Items & Session Status Counters -->
       <div class="items-hud">
-        <div class="hud-badge">
+        <div class="hud-badge timer-badge" title="Elapsed Time">
+          <span id="timer-display">⏱️ 00:00.00</span>
+        </div>
+        <div class="hud-badge redbull-badge" title="Red Bulls available for Hotfixes">
           <span>⚡ Red Bull:</span>
-          <strong id="red-bull-count" style="color: #ffffff;">2</strong>
+          <strong id="red-bull-count" style="color: #ffffff;">0</strong>
         </div>
-        <button class="hud-btn" id="btn-drink-red-bull" title="Drink Red Bull (+30 Sanity, +15 HP)">Drink ⚡</button>
-        <div class="hud-badge">
-          <span>📊 Cleared:</span>
-          <strong id="cleared-count" style="color: #ffffff;">0 / 6</strong>
+        <div class="hud-badge staged-badge" title="Anomalies Staged into DAG">
+          <span>📦 Staged:</span>
+          <strong id="staged-count" style="color: #ffffff;">0 / 5</strong>
         </div>
+        <button id="btn-run-pipeline" class="btn-run-pipeline" disabled title="Validate & deploy all staged transformations">
+          ⚡ RUN PIPELINE
+        </button>
+        <button class="hud-btn" id="btn-open-leaderboard" title="View Global Leaderboard">🏆 Ranks</button>
       </div>
     </header>
 
     <!-- Movement Controls Help Hint (Desktop) -->
     <aside class="controls-hint">
-      🎮 Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles to move | <kbd>C</kbd> Drink Red Bull
+      🎮 Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles | Collect ⚡ Red Bull cans to survive deployment bugs!
     </aside>
 
-    <!-- Mobile On-Screen Directional D-Pad & Quick Red Bull -->
+    <!-- Mobile On-Screen Directional D-Pad -->
     <div id="mobile-dpad">
       <button class="dpad-btn" id="dpad-up" aria-label="Up">▲</button>
       <button class="dpad-btn" id="dpad-left" aria-label="Left">◀</button>
-      <button class="dpad-btn" id="dpad-red-bull" aria-label="Drink Red Bull">⚡</button>
+      <button class="dpad-btn" id="dpad-center-run" aria-label="Run Pipeline">⚡</button>
       <button class="dpad-btn" id="dpad-right" aria-label="Right">▶</button>
       <button class="dpad-btn" id="dpad-down" aria-label="Down">▼</button>
     </div>
@@ -108,6 +78,43 @@
   <!-- Toast Notification System -->
   <div id="toast-msg"></div>
 
+  <!-- Start Menu Modal -->
+  <div id="start-menu-modal" class="modal-backdrop">
+    <div class="menu-window">
+      <div class="menu-badge">HOUSTON WE HAVE DATA</div>
+      <h1 class="menu-title">DATA PIPELINE SURVIVOR</h1>
+      <p class="menu-subtitle">Zero to Production: A Data Engineering Roguelike</p>
+
+      <div class="rules-box">
+        <div class="rule-item">
+          <span class="rule-icon">🗺️</span>
+          <div><strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) ➔ Silver (Analytical SQL) ➔ Gold (Spark/Delta Lake Optimization).</div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">⚡</span>
+          <div><strong>Red Bull Survival:</strong> You start with <strong>0 Red Bulls</strong>. Health/Sanity bars are gone—Red Bull is your only life support! Explore the grid to scavenge cans.</div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">❓</span>
+          <div><strong>Blind Staging:</strong> You won't know if your code fixes are right or wrong until you press <strong>RUN PIPELINE</strong>.</div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">💥</span>
+          <div><strong>Deployment Hotfixes:</strong> Once all tasks are staged, run the pipeline! Each mistake consumes <strong>1 Red Bull</strong> to hotfix. Run out of cans and your pipeline crashes with an Out Of Memory error!</div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">⏱️</span>
+          <div><strong>Leaderboard Stopwatch:</strong> The timer begins the moment you press Start. Complete all 3 pipelines in record time to claim top rank on the leaderboard!</div>
+        </div>
+      </div>
+
+      <div class="menu-actions">
+        <button id="btn-start-game" class="btn-primary btn-large">🚀 START PIPELINE RUN</button>
+        <button id="btn-menu-leaderboard" class="btn-secondary">🏆 VIEW LEADERBOARD</button>
+      </div>
+    </div>
+  </div>
+
   <!-- JRPG Turn-Based Combat Modal -->
   <div id="battle-modal">
     <div class="battle-window">
@@ -115,7 +122,7 @@
         <div class="battle-title">
           <span>⚔️ ENCOUNTER: DATA ANOMALY DETECTED</span>
         </div>
-        <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">
+        <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;" id="battle-engine-badge">
           ENGINE: PySpark 3.5.0
         </div>
       </div>
@@ -125,12 +132,6 @@
         <div class="anomaly-card">
           <div class="anomaly-top">
             <div class="anomaly-name" id="enemy-name">👾 UNKNOWN_ENTITY</div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:11px; font-family:'Fira Code'; color:#888888;">CORRUPTION:</span>
-              <div class="anomaly-hp-bar">
-                <div class="anomaly-hp-fill" id="enemy-hp-bar"></div>
-              </div>
-            </div>
           </div>
           <div class="anomaly-desc" id="enemy-desc">
             Analyzing incoming partition telemetry...
@@ -140,9 +141,9 @@
           <div id="table-preview-container"></div>
         </div>
 
-        <!-- Combat Skills (PySpark Functions) Grid -->
+        <!-- Combat Skills (PySpark / SQL Functions) Grid -->
         <div class="skills-section">
-          <div class="skills-header">Select PySpark Transformation to resolve:</div>
+          <div class="skills-header">Select Transformation to stage into DAG:</div>
           <div class="skills-grid" id="skills-grid">
             <!-- Dynamically populated from src/battle.js -->
           </div>
@@ -150,17 +151,87 @@
 
         <!-- Battle Output Log -->
         <div class="battle-log" id="battle-log">
-          <div>[SYSTEM] Ready for PySpark execution... Choose the correct transformation.</div>
+          <div>[SYSTEM] Ready for staging... Choose the transformation to commit to the pipeline DAG.</div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Pipeline Run Diagnostic Modal -->
+  <div id="pipeline-diagnostic-modal" class="modal-backdrop">
+    <div class="diagnostic-window">
+      <div class="diagnostic-header">
+        <div class="diagnostic-title">
+          <span>⚡ PIPELINE COMPILATION & EXECUTION</span>
+        </div>
+        <div id="diagnostic-level-label" style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">
+          TARGET: BRONZE_INGESTION_DAG
+        </div>
+      </div>
+
+      <div class="diagnostic-terminal" id="diagnostic-terminal">
+        <!-- Lines appended dynamically by diagnostic runner -->
+      </div>
+
+      <div class="diagnostic-footer" id="diagnostic-footer" style="display:none;">
+        <div id="diagnostic-status-summary" class="diagnostic-summary"></div>
+        <button id="btn-diagnostic-action" class="btn-primary">CONTINUE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-modal" class="modal-backdrop">
+    <div class="leaderboard-window">
+      <div class="leaderboard-header">
+        <h2>🏆 PRODUCTION PIPELINE LEADERBOARD</h2>
+        <button id="btn-close-leaderboard" class="close-x">&times;</button>
+      </div>
+      <p style="font-size:12px; color:#888888; margin-bottom:12px;">Fastest engineers to deploy Bronze, Silver, & Gold layers to production.</p>
+      
+      <div class="leaderboard-table-container">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ENGINEER</th>
+              <th>TIME</th>
+              <th>REMAINING RED BULLS</th>
+              <th>DATE</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <!-- Populated from localStorage -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="leaderboard-actions">
+        <button id="btn-clear-leaderboard" class="btn-text">Clear Local Records</button>
+        <button id="btn-close-leaderboard-btn" class="btn-secondary">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Game Over & Victory Overlay Modal -->
-  <div id="game-end-modal">
-    <h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1>
-    <p id="end-desc">Your sanity reached 0 or your pipeline crashed under dirty data tables.</p>
-    <button class="btn-primary" id="btn-restart">Restart Pipeline Run</button>
+  <div id="game-end-modal" class="modal-backdrop">
+    <div class="end-window">
+      <h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1>
+      <p id="end-desc">Your pipeline crashed under dirty data tables.</p>
+      
+      <!-- Victory Score Submission Box -->
+      <div id="victory-score-entry" style="display: none; margin-bottom: 20px;">
+        <div class="stat-highlight">
+          <div>Final Time: <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
+          <div>Red Bulls Preserved: <strong id="victory-rb-val" style="color:#ffffff;">0</strong></div>
+        </div>
+        <label for="player-name-input" style="font-family:'Fira Code', monospace; font-size:12px; display:block; margin: 12px 0 6px;">ENTER ENGINEER CALLSIGN:</label>
+        <input type="text" id="player-name-input" maxlength="15" value="DE_HERO" class="player-input">
+        <button class="btn-primary" id="btn-save-score" style="margin-top:10px;">SUBMIT SCORE</button>
+      </div>
+
+      <button class="btn-secondary" id="btn-restart">PLAY AGAIN</button>
+    </div>
   </div>
 
   <!-- Modular Game Architecture Scripts (Structured by Functional Domain) -->
