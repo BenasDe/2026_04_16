@@ -35,6 +35,7 @@ const gameState = {
 // Create subsystems with explicit dependencies. Callbacks run after initialization.
 const { formatStopwatch, startTimer, stopTimer, resetTimer, addTimerPenalty } = createGameTimer(gameState);
 const { saveLeaderboardRecord, openLeaderboard, closeLeaderboard, clearLocalLeaderboard } = createLeaderboard(formatStopwatch);
+const { renderLevel, updateHUD, showGameOver, showVictory, showToast, setStartMenuVisible, bindButtons } = createGameUI({ gameState, formatStopwatch });
 const { executePipelineRun } = createPipelineRunner({
   gameState, updateHUD, showToast, addTimerPenalty, triggerGameOver, triggerVictory, loadLevel
 });
@@ -78,50 +79,10 @@ function loadLevel(levelIndex) {
   // Position Player at Start (0, 0)
   engine.setPlayerGridPosition(0, 0, gameState.gridSize);
 
-  // Update Top Bar HUD Info
-  const rankEl = document.getElementById('dev-rank');
-  const statusEl = document.getElementById('pipeline-status');
-  const engineEl = document.getElementById('pipeline-engine-text');
-  if (rankEl) rankEl.innerText = `LEVEL ${levelIndex + 1}`;
-  if (statusEl) statusEl.innerText = currentLevel.name;
-  if (engineEl) engineEl.innerText = currentLevel.engine;
-
-  // Reset Run Pipeline Button
-  const btnRun = document.getElementById('btn-run-pipeline');
-  if (btnRun) {
-    btnRun.disabled = true;
-    btnRun.classList.remove('ready');
-  }
+  renderLevel(currentLevel, levelIndex);
 
   updateHUD();
   showToast(`🚀 Entered ${currentLevel.name}! Collect Red Bull & stage fixes.`);
-}
-
-function updateHUD() {
-  const levels = window.GAME_LEVELS || [];
-  const currentLevel = levels[gameState.levelIndex];
-  const totalTasks = currentLevel ? currentLevel.tasks.length : 5;
-  const stagedCount = Object.keys(gameState.stagedTasks).length;
-
-  // Red Bull Count
-  const rbEl = document.getElementById('red-bull-count');
-  if (rbEl) rbEl.innerText = gameState.redBulls;
-
-  // Staged Count
-  const stagedEl = document.getElementById('staged-count');
-  if (stagedEl) stagedEl.innerText = `${stagedCount} / ${totalTasks}`;
-
-  // Run Pipeline Button State
-  const btnRun = document.getElementById('btn-run-pipeline');
-  if (btnRun) {
-    if (stagedCount >= totalTasks && !gameState.pipelineRunning) {
-      btnRun.disabled = false;
-      btnRun.classList.add('ready');
-    } else {
-      btnRun.disabled = true;
-      btnRun.classList.remove('ready');
-    }
-  }
 }
 
 // =============================================================================
@@ -210,13 +171,7 @@ function triggerGameOver() {
   gameState.gameOver = true;
   if (window.sfx && window.sfx.wrong) window.sfx.wrong();
 
-  const modal = document.getElementById('game-end-modal');
-  document.getElementById('end-title').innerText = '💥 PIPELINE CRASHED (OOM)';
-  document.getElementById('end-title').style.color = '#ef4444';
-  document.getElementById('end-desc').innerText =
-    'Your pipeline ran out of Red Bull while attempting to patch faulty queries. Critical deadlock reached.';
-  document.getElementById('victory-score-entry').style.display = 'none';
-  modal.style.display = 'flex';
+  showGameOver();
 }
 
 function triggerVictory() {
@@ -224,46 +179,7 @@ function triggerVictory() {
   gameState.gameOver = true;
   if (window.sfx && window.sfx.victory) window.sfx.victory();
 
-  // Trigger celebration confetti
-  if (window.confetti) {
-    window.confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-  }
-
-  const finalFormatted = formatStopwatch(gameState.timer.elapsedMs);
-  const modal = document.getElementById('game-end-modal');
-  document.getElementById('end-title').innerText = '🏆 GOLD PRODUCTION CERTIFIED!';
-  document.getElementById('end-title').style.color = '#ffffff';
-  document.getElementById('end-desc').innerText =
-    'All 3 data pipeline layers (Bronze PySpark, Silver Analytical SQL, Gold Spark/Delta Optimization) successfully deployed to production!';
-
-  const victoryEntry = document.getElementById('victory-score-entry');
-  victoryEntry.style.display = 'block';
-  document.getElementById('victory-time-val').innerText = finalFormatted;
-  document.getElementById('victory-rb-val').innerText = gameState.redBulls;
-
-  const auditEl = document.getElementById('victory-audit-breakdown');
-  if (auditEl) {
-    const scavenged = gameState.stats ? gameState.stats.totalScavenged : gameState.redBulls;
-    const mistakes = gameState.stats ? gameState.stats.totalMistakes : 0;
-    const penaltySec = mistakes * 60;
-    auditEl.innerHTML = `
-      <div>Fuel: Scavenged <strong>${scavenged}</strong> cans − <strong>${mistakes}</strong> hotfixes = <strong>${gameState.redBulls}</strong> remaining</div>
-      <div style="margin-top: 3px; color: ${mistakes > 0 ? '#facc15' : '#4ade80'};">
-        ${mistakes > 0 ? `⏱️ Red Bull Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes × 60s added to final time)` : `✔ Clean Deploy: Zero hotfix penalties!`}
-      </div>
-    `;
-  }
-
-  modal.style.display = 'flex';
-
-  // Automatically focus and select the callsign input field
-  const playerInput = document.getElementById('player-name-input');
-  if (playerInput) {
-    setTimeout(() => {
-      playerInput.focus();
-      playerInput.select();
-    }, 100);
-  }
+  showVictory();
 }
 
 // =============================================================================
@@ -276,8 +192,7 @@ function startGame() {
   }
 
   // Close Start Menu
-  const startModal = document.getElementById('start-menu-modal');
-  if (startModal) startModal.style.display = 'none';
+  setStartMenuVisible(false);
 
   // Reset Game State
   gameState.redBulls = 0; // Starts strictly at 0
@@ -295,68 +210,12 @@ function startGame() {
 // EVENT LISTENERS & USER INPUT
 // =============================================================================
 
-// Start Menu Buttons
-document.getElementById('btn-start-game').addEventListener('click', startGame);
-document.getElementById('btn-menu-leaderboard').addEventListener('click', openLeaderboard);
-
-// Leaderboard Modal Buttons
-document.getElementById('btn-open-leaderboard').addEventListener('click', openLeaderboard);
-document.getElementById('btn-close-leaderboard').addEventListener('click', closeLeaderboard);
-document.getElementById('btn-close-leaderboard-btn').addEventListener('click', closeLeaderboard);
-document.getElementById('btn-clear-leaderboard').addEventListener('click', () => {
-  if (confirm('Clear local leaderboard records?')) {
-    clearLocalLeaderboard();
-  }
-});
-
-// Run Pipeline Button
-document.getElementById('btn-run-pipeline').addEventListener('click', () => {
-  executePipelineRun();
-});
-
-// Restart Game Button
-document.getElementById('btn-restart').addEventListener('click', () => {
-  const endModal = document.getElementById('game-end-modal');
-  if (endModal) endModal.style.display = 'none';
-  startGame();
-});
-
-// Submit Score Button
-document.getElementById('btn-save-score').addEventListener('click', async () => {
-  const input = document.getElementById('player-name-input');
-  const name = input ? input.value : 'ANON_DE';
-  const saveBtn = document.getElementById('btn-save-score');
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.innerText = 'PUBLISHING...';
-  }
-  await saveLeaderboardRecord(name, gameState.timer.elapsedMs, gameState.redBulls);
-  document.getElementById('victory-score-entry').style.display = 'none';
-  if (saveBtn) {
-    saveBtn.disabled = false;
-    saveBtn.innerText = 'SUBMIT SCORE';
-  }
-  showToast('🏆 Score submitted to Global Leaderboard!');
-  openLeaderboard();
+bindButtons({
+  startGame, executePipelineRun, saveLeaderboardRecord,
+  openLeaderboard, closeLeaderboard, clearLocalLeaderboard
 });
 
 bindGameControls({ gameState, engine, movePlayer, executePipelineRun, showToast });
-
-/**
- * Toast Notification Display (delegates to Utils)
- */
-function showToast(msg, duration = 2500) {
-  if (window.Utils) {
-    window.Utils.showToast(msg, duration);
-  } else {
-    const toast = document.getElementById('toast-msg');
-    if (!toast) return;
-    toast.innerHTML = msg;
-    toast.style.display = 'block';
-    clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => { toast.style.display = 'none'; }, duration);
-  }
-}
 
 // =============================================================================
 // INITIAL STARTUP: SHOW START MENU & START 3D RENDER LOOP
@@ -365,10 +224,7 @@ function showToast(msg, duration = 2500) {
 loadLevel(0);
 
 // Display Start Menu Modal initially
-const initialStartModal = document.getElementById('start-menu-modal');
-if (initialStartModal) {
-  initialStartModal.style.display = 'flex';
-}
+setStartMenuVisible(true);
 
 // Start Three.js Animation Loop
 engine.startRenderLoop(gameState);
