@@ -206,15 +206,15 @@ class GameEngine {
     // 2. Set Start Tile at (0, 0)
     board[0][0].type = 'start';
 
-    // 3. Set Coffee Rest Stations evenly across quadrants
-    const coffeeLocations = [
+    // 3. Set Red Bull pickups evenly across quadrants
+    const redBullLocations = [
       { x: 2, y: 1 },
       { x: 1, y: 3 },
       { x: 4, y: 4 }
     ];
-    coffeeLocations.forEach(c => {
+    redBullLocations.forEach(c => {
       if (c.x < gridSize && c.y < gridSize) {
-        board[c.x][c.y].type = 'coffee';
+        board[c.x][c.y].type = 'redBull';
       }
     });
 
@@ -255,7 +255,7 @@ class GameEngine {
         
         let tileColor = 0x1c2128; // Clear visible dark slate
         if (cell.type === 'start') tileColor = 0x30363d;
-        else if (cell.type === 'coffee') tileColor = 0x21262d;
+        else if (cell.type === 'redBull') tileColor = 0x21262d;
 
         const tileMat = new THREE.MeshStandardMaterial({
           color: tileColor,
@@ -316,33 +316,95 @@ class GameEngine {
           enemyGroup.userData = { isEnemy: true, gridX: x, gridY: y, data: cell.data, mesh: hexMesh };
           this.scene.add(enemyGroup);
           this.interactiveObjects.push(enemyGroup);
-        } else if (cell.type === 'coffee') {
-          // Monochrome Coffee Station
-          const coffeeGroup = new THREE.Group();
-          const cupGeo = new THREE.CylinderGeometry(0.22, 0.16, 0.38, 16);
-          const cupMat = new THREE.MeshStandardMaterial({
-            color: 0x2d333b,
-            emissive: 0xffffff,
-            emissiveIntensity: 0.45
-          });
-          const cupMesh = new THREE.Mesh(cupGeo, cupMat);
-          cupMesh.position.y = 0.38;
-          coffeeGroup.add(cupMesh);
+        } else if (cell.type === 'redBull') {
+          // Red Bull pickup
+          const redBullGroup = new THREE.Group();
+          const canMesh = this.createRedBullCan();
+          canMesh.position.y = 0.85;
+          redBullGroup.add(canMesh);
 
-          // White wireframe
-          const cupWireGeo = new THREE.EdgesGeometry(cupGeo);
-          const cupWireMat = new THREE.LineBasicMaterial({ color: 0xffffff });
-          cupMesh.add(new THREE.LineSegments(cupWireGeo, cupWireMat));
-
-          coffeeGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
-          coffeeGroup.userData = { isCoffee: true, gridX: x, gridY: y, mesh: cupMesh };
-          this.scene.add(coffeeGroup);
-          this.interactiveObjects.push(coffeeGroup);
+          redBullGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
+          redBullGroup.userData = { isRedBull: true, gridX: x, gridY: y, mesh: canMesh };
+          this.scene.add(redBullGroup);
+          this.interactiveObjects.push(redBullGroup);
         }
       }
     }
 
     return board;
+  }
+
+  /**
+   * Creates a blue-and-silver Red Bull can using a locally drawn label.
+   * @returns {THREE.Mesh} Can body with metallic rims and a pull tab.
+   */
+  createRedBullCan() {
+    const label = document.createElement('canvas');
+    label.width = 256;
+    label.height = 256;
+    const ctx = label.getContext('2d');
+
+    // Silver base with alternating blue panels.
+    ctx.fillStyle = '#cbd0d8';
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = '#173fa5';
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillRect(128, 128, 128, 128);
+
+    // Repeat the name on opposite sides so it remains visible while rotating.
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 30px Arial, sans-serif';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.fillStyle = '#df1634';
+    [64, 192].forEach(x => {
+      ctx.strokeText('Red Bull', x, 128);
+      ctx.fillText('Red Bull', x, 128);
+    });
+
+    const labelTexture = new THREE.CanvasTexture(label);
+    labelTexture.encoding = THREE.sRGBEncoding;
+    const bodyMat = new THREE.MeshStandardMaterial({
+      map: labelTexture,
+      metalness: 0.35,
+      roughness: 0.35
+    });
+    const silverMat = new THREE.MeshStandardMaterial({
+      color: 0xd9dce2,
+      metalness: 0.65,
+      roughness: 0.25
+    });
+
+    // Tall, narrow cylinder shaped like an energy-drink can.
+    const canMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.2, 0.7, 24),
+      [bodyMat, silverMat, silverMat]
+    );
+    canMesh.castShadow = true;
+
+    // Raised metallic rims at the top and bottom.
+    [0.35, -0.35].forEach(y => {
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.19, 0.018, 6, 24),
+        silverMat
+      );
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = y;
+      canMesh.add(rim);
+    });
+
+    // Small pull tab on the lid.
+    const pullTab = new THREE.Mesh(
+      new THREE.TorusGeometry(0.045, 0.012, 6, 12),
+      silverMat
+    );
+    pullTab.rotation.x = Math.PI / 2;
+    pullTab.scale.y = 1.5;
+    pullTab.position.set(0, 0.37, 0.025);
+    canMesh.add(pullTab);
+
+    return canMesh;
   }
 
   /**
@@ -434,7 +496,7 @@ class GameEngine {
       requestAnimationFrame(render);
       const time = this.clock.getElapsedTime();
 
-      // Floating bob & rotation on hexagonal anomaly and coffee meshes
+      // Floating bob & rotation on hexagonal anomaly and Red Bull meshes
       this.interactiveObjects.forEach(obj => {
         if (obj.userData.mesh) {
           obj.userData.mesh.rotation.y = time * 1.5;
