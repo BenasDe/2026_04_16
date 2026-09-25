@@ -396,17 +396,22 @@ const LEADERBOARD_KEY = 'pyspark_survivor_leaderboard';
 function getLeaderboard() {
   try {
     const raw = localStorage.getItem(LEADERBOARD_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        // Purge any previously seeded demo/fake entries
+        const fakeNames = ['SATOSHI_DE', 'SPARK_WIZARD', 'DELTA_LAKE_PRO', 'SQL_CHIEF'];
+        const clean = parsed.filter(item => !fakeNames.includes(item.name));
+        if (clean.length !== parsed.length) {
+          localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(clean));
+        }
+        return clean;
+      }
+    }
   } catch (err) {
     console.error('Failed to parse leaderboard from localStorage', err);
   }
-  // Default benchmark records if empty
-  return [
-    { name: 'SATOSHI_DE', timeMs: 95400, timeFormatted: '01:35.40', redBulls: 4, date: '2026-04-10' },
-    { name: 'SPARK_WIZARD', timeMs: 122100, timeFormatted: '02:02.10', redBulls: 3, date: '2026-04-12' },
-    { name: 'DELTA_LAKE_PRO', timeMs: 148500, timeFormatted: '02:28.50', redBulls: 2, date: '2026-04-14' },
-    { name: 'SQL_CHIEF', timeMs: 185000, timeFormatted: '03:05.00', redBulls: 1, date: '2026-04-15' }
-  ];
+  return [];
 }
 
 function saveLeaderboardRecord(name, timeMs, redBulls) {
@@ -444,6 +449,17 @@ function renderLeaderboard() {
   if (!tbody) return;
 
   tbody.innerHTML = '';
+  if (records.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td colspan="5" style="text-align: center; color: #777777; padding: 28px 12px; font-style: italic; font-family: 'Fira Code', monospace;">
+        No completed pipeline runs yet. Deploy Bronze, Silver, & Gold to claim #1!
+      </td>
+    `;
+    tbody.appendChild(tr);
+    return;
+  }
+
   records.forEach((rec, idx) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
