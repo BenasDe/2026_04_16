@@ -5,33 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>PySpark Survivor: Data Lake Chronicles</title>
   
-  <!-- External Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   
-  <!-- External 3D & Particle Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Modular Stylesheet (Pure Monochrome) -->
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style-battle.css">
+  <link rel="stylesheet" href="style-modals.css">
+  <link rel="stylesheet" href="style-responsive.css">
 </head>
 <body>
 
-  <!-- Background Logo Watermark -->
   <img src="logo.png" id="bg-logo" alt="Houston We Have Data">
 
-  <!-- Three.js 2.5D WebGL Canvas -->
   <canvas id="webgl-canvas"></canvas>
 
-  <!-- UI HUD Overlay -->
   <div id="ui-layer">
-    <!-- Top Developer Status Bar -->
     <header class="top-bar">
-      <!-- Developer Profile & Title -->
       <div class="dev-profile">
-        <div class="avatar-badge" id="dev-avatar">👨‍💻</div>
+        <div class="avatar-badge" id="dev-avatar">DE</div>
         <div class="dev-info">
           <h2><span class="dev-rank" id="dev-rank">LEVEL 1</span> <span id="pipeline-status">Bronze Layer (Ingestion)</span></h2>
           <div style="font-size: 11px; color: #888888; font-family: 'Fira Code', monospace;">
@@ -40,46 +35,42 @@
         </div>
       </div>
 
-      <!-- Items & Session Status Counters -->
       <div class="items-hud">
         <div class="hud-badge timer-badge" title="Elapsed Time">
-          <span id="timer-display">⏱️ 00:00.00</span>
+          <span id="timer-display">00:00.00</span>
         </div>
         <div class="hud-badge redbull-badge" title="Red Bulls available for Hotfixes">
-          <span> Red Bull:</span>
+          <span>Red Bull:</span>
           <strong id="red-bull-count" style="color: #ffffff;">0</strong>
         </div>
         <div class="hud-badge staged-badge" title="Anomalies Staged into DAG">
-          <span> Staged:</span>
+          <span>Staged:</span>
           <strong id="staged-count" style="color: #ffffff;">0 / 5</strong>
         </div>
-        <button id="btn-run-pipeline" class="btn-run-pipeline" disabled title="Validate & deploy all staged transformations">
-           RUN PIPELINE
+        <button id="btn-run-pipeline" class="btn-run-pipeline" disabled title="Validate and deploy all staged transformations">
+          RUN PIPELINE
         </button>
         <button type="button" class="hud-btn" data-music-toggle aria-pressed="true">Music: On</button>
-        <button class="hud-btn" id="btn-open-leaderboard" title="View Global Leaderboard">🏆 Ranks</button>
+        <button class="hud-btn" id="btn-open-leaderboard" title="View Global Leaderboard">Leaderboard</button>
       </div>
     </header>
 
-    <!-- Movement Controls Help Hint (Desktop) -->
     <aside class="controls-hint">
-       Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles | Collect ⚡ Red Bull cans to survive deployment bugs!
+      Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles | Collect Red Bull cans to survive deployment bugs
     </aside>
 
-    <!-- Mobile On-Screen Directional D-Pad -->
     <div id="mobile-dpad">
       <button class="dpad-btn" id="dpad-up" aria-label="Up">▲</button>
       <button class="dpad-btn" id="dpad-left" aria-label="Left">◀</button>
-      <button class="dpad-btn" id="dpad-center-run" aria-label="Run Pipeline">⚡</button>
+      <button class="dpad-btn" id="dpad-center-run" aria-label="Run Pipeline">RUN</button>
       <button class="dpad-btn" id="dpad-right" aria-label="Right">▶</button>
       <button class="dpad-btn" id="dpad-down" aria-label="Down">▼</button>
     </div>
   </div>
 
-  <!-- Toast Notification System -->
   <div id="toast-msg"></div>
 
-  <!-- Start Menu Modal -->
+  <!-- Start Menu -->
   <div id="start-menu-modal" class="modal-backdrop">
     <div class="menu-window">
       <div class="menu-badge">HOUSTON WE HAVE DATA</div>
@@ -88,37 +79,37 @@
 
       <div class="rules-box">
         <div class="rule-item">
-          <div><strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) ➔ Silver (Analytical SQL) ➔ Gold (Spark/Delta Lake Optimization).</div>
+          <div><strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) -> Silver (Analytical SQL) -> Gold (Spark/Delta Lake Optimization).</div>
         </div>
         <div class="rule-item">
-          <div><strong>Red Bull Survival:</strong> You start with <strong>0 Red Bulls</strong>. Health/Sanity bars are gone—Red Bull is your only life support! Explore the grid to scavenge cans.</div>
+          <div><strong>Red Bull Survival:</strong> You start with <strong>0 Red Bulls</strong>. Collect cans across the grid to fuel hotfixes when bugs occur.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Blind Staging:</strong> You won't know if your code fixes are right or wrong until you press <strong>RUN PIPELINE</strong>.</div>
+          <div><strong>Blind Staging:</strong> Code correctness is validated only when executing <strong>RUN PIPELINE</strong>.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Deployment Hotfixes & Time Penalty:</strong> Once all tasks are staged, run the pipeline! Each mistake consumes <strong>1 Red Bull</strong> to hotfix and adds <strong>+60s penalty</strong> to your final time! Run out of cans and your pipeline crashes with an Out Of Memory error!</div>
+          <div><strong>Hotfixes & Penalties:</strong> Each bug consumes <strong>1 Red Bull</strong> and adds <strong>+60s penalty</strong> to your final time. Running out of fuel causes an OOM crash.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Leaderboard Stopwatch:</strong> The timer begins the moment you press Start. Complete all 3 pipelines in record time to claim top rank on the leaderboard!</div>
+          <div><strong>Leaderboard:</strong> The timer tracks deployment speed from launch to Gold certification.</div>
         </div>
       </div>
 
       <button type="button" class="btn-secondary" data-music-toggle aria-pressed="true">Music: On</button>
 
-      <div class="menu-actions">
+      <div class="menu-actions" style="margin-top: 14px;">
         <button id="btn-start-game" class="btn-primary btn-large">START PIPELINE RUN</button>
         <button id="btn-menu-leaderboard" class="btn-secondary">VIEW LEADERBOARD</button>
       </div>
     </div>
   </div>
 
-  <!-- JRPG Turn-Based Combat Modal -->
+  <!-- Task Inspector Modal -->
   <div id="battle-modal">
     <div class="battle-window">
       <div class="battle-header">
         <div class="battle-title">
-          <span>⚔️ ENCOUNTER: DATA ANOMALY DETECTED</span>
+          <span>ANOMALY INSPECTOR</span>
         </div>
         <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;" id="battle-engine-badge">
           ENGINE: PySpark 3.5.0
@@ -126,50 +117,41 @@
       </div>
 
       <div class="battle-content">
-        <!-- Anomaly Description & Sample Corrupted Table -->
         <div class="anomaly-card">
           <div class="anomaly-top">
-            <div class="anomaly-name" id="enemy-name">👾 UNKNOWN_ENTITY</div>
+            <div class="anomaly-name" id="enemy-name">ANOMALY</div>
           </div>
           <div class="anomaly-desc" id="enemy-desc">
             Analyzing incoming partition telemetry...
           </div>
-
-          <!-- Corrupted Data Table Mini-view Container -->
           <div id="table-preview-container"></div>
         </div>
 
-        <!-- Combat Skills (PySpark / SQL Functions) Grid -->
         <div class="skills-section">
-          <div class="skills-header">Select Transformation to stage into DAG:</div>
-          <div class="skills-grid" id="skills-grid">
-            <!-- Dynamically populated from src/battle.js -->
-          </div>
+          <div class="skills-header">Select transformation to stage into DAG:</div>
+          <div class="skills-grid" id="skills-grid"></div>
         </div>
 
-        <!-- Battle Output Log -->
         <div class="battle-log" id="battle-log">
-          <div>[SYSTEM] Ready for staging... Choose the transformation to commit to the pipeline DAG.</div>
+          <div>[SYSTEM] Ready for staging. Select the transformation to commit to the pipeline DAG.</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Pipeline Run Diagnostic Modal -->
+  <!-- Pipeline Diagnostic Modal -->
   <div id="pipeline-diagnostic-modal" class="modal-backdrop">
     <div class="diagnostic-window">
       <div class="diagnostic-header">
         <div class="diagnostic-title">
-          <span> PIPELINE COMPILATION & EXECUTION</span>
+          <span>PIPELINE COMPILATION & EXECUTION</span>
         </div>
         <div id="diagnostic-level-label" style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">
           TARGET: BRONZE_INGESTION_DAG
         </div>
       </div>
 
-      <div class="diagnostic-terminal" id="diagnostic-terminal">
-        <!-- Lines appended dynamically by diagnostic runner -->
-      </div>
+      <div class="diagnostic-terminal" id="diagnostic-terminal"></div>
 
       <div class="diagnostic-footer" id="diagnostic-footer" style="display:none;">
         <div id="diagnostic-status-summary" class="diagnostic-summary"></div>
@@ -182,10 +164,10 @@
   <div id="leaderboard-modal" class="modal-backdrop">
     <div class="leaderboard-window">
       <div class="leaderboard-header">
-        <h2>🏆 PRODUCTION PIPELINE LEADERBOARD</h2>
+        <h2>PRODUCTION PIPELINE LEADERBOARD</h2>
         <button id="btn-close-leaderboard" class="close-x">&times;</button>
       </div>
-      <p style="font-size:12px; color:#888888; margin-bottom:12px;">Fastest engineers to deploy Bronze, Silver, & Gold layers to production.</p>
+      <p style="font-size:12px; color:#888888; margin-bottom:12px;">Fastest engineers to deploy Bronze, Silver, and Gold layers to production.</p>
       
       <div class="leaderboard-table-container">
         <table class="leaderboard-table">
@@ -198,9 +180,7 @@
               <th>DATE</th>
             </tr>
           </thead>
-          <tbody id="leaderboard-body">
-            <!-- Populated from localStorage -->
-          </tbody>
+          <tbody id="leaderboard-body"></tbody>
         </table>
       </div>
 
@@ -211,13 +191,12 @@
     </div>
   </div>
 
-  <!-- Game Over & Victory Overlay Modal -->
+  <!-- Game Over / Victory Modal -->
   <div id="game-end-modal" class="modal-backdrop">
     <div class="end-window">
       <h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1>
-      <p id="end-desc">Your pipeline crashed under dirty data tables.</p>
+      <p id="end-desc">Your pipeline crashed under unresolved data anomalies.</p>
       
-      <!-- Victory Score Submission Box -->
       <div id="victory-score-entry" style="display: none; margin-bottom: 20px;">
         <div class="stat-highlight" style="flex-direction: column; gap: 4px;">
           <div style="display: flex; justify-content: space-around; width: 100%;">
@@ -235,30 +214,23 @@
     </div>
   </div>
 
-  <!-- Modular Game Architecture Scripts (Structured by Functional Domain) -->
-  <!-- 0. Shared Utility Functions -->
+  <!-- Scripts -->
   <script src="src/utils.js"></script>
-  <!-- 1. Procedural Audio Synthesizer -->
   <script src="src/audio.js"></script>
   <script src="src/music.js"></script>
-  <!-- 2. Data Engineering Anomalies & PySpark Skills Database -->
   <script src="src/levels/bronze.js"></script>
   <script src="src/levels/silver.js"></script>
   <script src="src/levels/gold.js"></script>
   <script src="src/data.js"></script>
-  <!-- 3. Three.js 2.5D Isometric Rendering Engine & Mesh Controls -->
   <script src="src/player.js"></script>
   <script src="src/board.js"></script>
   <script src="src/engine.js"></script>
-  <!-- 4. Turn-Based JRPG Combat Controller & DataFrame Validation -->
   <script src="src/battle.js"></script>
-  <!-- 5. Game Subsystems and UI -->
   <script src="src/timer.js"></script>
   <script src="src/pipeline.js"></script>
   <script src="src/leaderboard.js"></script>
   <script src="src/controls.js"></script>
   <script src="src/ui.js"></script>
-  <!-- 6. Main Game Controller & Orchestrator -->
   <script src="src/main.js"></script>
 </body>
 </html>

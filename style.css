@@ -1,19 +1,9 @@
-/* ==========================================================================
-   PySpark Survivor: Data Lake Chronicles - Stylesheet
-   Theme: Pure Monochrome (Black & White / High Contrast Cyber Noir)
-   Fully Responsive for Phones, Tablets, Desktops, & High-Resolution Displays
-   ========================================================================== */
-
 :root {
   --bg: #000000;
   --panel-bg: rgba(10, 10, 10, 0.95);
   --border-color: #333333;
   --border-bright: #ffffff;
   --accent: #ffffff;
-  --accent-pyspark: #ffffff;
-  --hp-fill: #ffffff;
-  --sanity-fill: #cccccc;
-  --xp-fill: #666666;
   --text-main: #b0b0b0;
   --text-bright: #ffffff;
   --text-dim: #777777;
@@ -31,18 +21,13 @@
 body {
   background: radial-gradient(circle at center, #151821 0%, #0c0e13 70%, #000000 100%);
   color: var(--text-main);
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
   width: 100vw;
   height: 100vh;
   touch-action: none;
 }
 
-/* Background Logo Watermark */
 #bg-logo {
   position: absolute;
   top: 44%;
@@ -59,7 +44,6 @@ body {
   user-select: none;
 }
 
-/* Three.js 3D/2.5D Canvas Container */
 #webgl-canvas {
   position: absolute;
   top: 0;
@@ -69,7 +53,6 @@ body {
   z-index: 1;
 }
 
-/* UI Overlay Layer */
 #ui-layer {
   position: absolute;
   top: 0;
@@ -83,19 +66,14 @@ body {
   justify-content: space-between;
 }
 
-/* Top Developer Status Bar */
+/* Top status bar */
 .top-bar {
   pointer-events: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: clamp(8px, 1.5vh, 16px) clamp(12px, 2vw, 24px);
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.98) 0%,
-    rgba(0, 0, 0, 0.8) 80%,
-    transparent 100%
-  );
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
   border-bottom: 1px solid var(--border-color);
   backdrop-filter: blur(10px);
   gap: 12px;
@@ -194,7 +172,6 @@ body {
   color: #000000;
 }
 
-/* Run Pipeline Button (Disabled vs Pulsing Ready) */
 .btn-run-pipeline {
   background: #141414;
   border: 1.5px solid #444444;
@@ -224,18 +201,11 @@ body {
 }
 
 @keyframes pulseGlow {
-  0% {
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 22px rgba(255, 255, 255, 0.95);
-  }
-  100% {
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-  }
+  0% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.4); }
+  50% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.95); }
+  100% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.4); }
 }
 
-/* Floating Instructions / Controls Mini-card */
 .controls-hint {
   position: absolute;
   bottom: clamp(16px, 3vh, 24px);
@@ -260,9 +230,7 @@ body {
   font-weight: 600;
 }
 
-/* =========================================================================
-   MOBILE / TOUCH D-PAD CONTROLLER
-   ========================================================================= */
+/* Touch controls */
 #mobile-dpad {
   position: absolute;
   bottom: 20px;
@@ -297,266 +265,13 @@ body {
   transform: scale(0.94);
 }
 
-#dpad-up {
-  grid-column: 2;
-  grid-row: 1;
-}
-#dpad-left {
-  grid-column: 1;
-  grid-row: 2;
-}
-#dpad-center-run {
-  grid-column: 2;
-  grid-row: 2;
-  font-size: 15px;
-  border-color: #ffffff;
-}
-#dpad-right {
-  grid-column: 3;
-  grid-row: 2;
-}
-#dpad-down {
-  grid-column: 2;
-  grid-row: 3;
-}
+#dpad-up { grid-column: 2; grid-row: 1; }
+#dpad-left { grid-column: 1; grid-row: 2; }
+#dpad-center-run { grid-column: 2; grid-row: 2; font-size: 15px; border-color: #ffffff; }
+#dpad-right { grid-column: 3; grid-row: 2; }
+#dpad-down { grid-column: 2; grid-row: 3; }
 
-/* Battle Screen Modal Overlay */
-#battle-modal {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.92);
-  backdrop-filter: blur(12px);
-  z-index: 100;
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  pointer-events: auto;
-  padding: clamp(10px, 2vh, 20px);
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.battle-window {
-  width: min(820px, 96vw);
-  max-height: 92vh;
-  background: #000000;
-  border: 1.5px solid var(--border-bright);
-  box-shadow:
-    0 0 35px rgba(255, 255, 255, 0.1),
-    0 20px 50px rgba(0, 0, 0, 1);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.battle-header {
-  background: #0d0d0d;
-  padding: clamp(10px, 1.5vh, 14px) clamp(12px, 2vw, 20px);
-  border-bottom: 1px solid #333333;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.battle-title {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(9px, 1.2vw, 11px);
-  color: #ffffff;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.battle-content {
-  padding: clamp(12px, 2vh, 20px);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(10px, 1.5vh, 18px);
-  overflow-y: auto;
-}
-
-/* Enemy Anomaly Data Table Card */
-.anomaly-card {
-  background: #0d0d0d;
-  border: 1px solid #282828;
-  border-radius: 4px;
-  padding: clamp(10px, 1.5vh, 14px) clamp(12px, 2vw, 18px);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.anomaly-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.anomaly-name {
-  font-size: clamp(13px, 1.6vw, 15px);
-  font-weight: 700;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: "Fira Code", monospace;
-}
-
-.anomaly-desc {
-  font-size: clamp(11px, 1.3vw, 12px);
-  color: #999999;
-  line-height: 1.45;
-}
-
-/* Corrupted Mini-Table Preview with Touch Scroll */
-#table-preview-container {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.table-preview {
-  width: 100%;
-  min-width: 320px;
-  border-collapse: collapse;
-  font-family: "Fira Code", monospace;
-  font-size: clamp(9px, 1.2vw, 11px);
-  margin-top: 4px;
-  background: #000000;
-  border-radius: 2px;
-  overflow: hidden;
-  border: 1px solid #333333;
-}
-
-.table-preview th {
-  background: #141414;
-  padding: 6px 8px;
-  text-align: left;
-  color: #ffffff;
-  border-bottom: 1px solid #333333;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.table-preview td {
-  padding: 5px 8px;
-  border-bottom: 1px solid #1a1a1a;
-  color: #b8b8b8;
-  white-space: nowrap;
-}
-
-.table-preview tr.glitch-row {
-  background: #1f1f1f;
-}
-
-.table-preview td.corrupted {
-  color: #ffffff;
-  font-weight: 700;
-  background: #333333;
-}
-
-/* PySpark Skill Selector Grid */
-.skills-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.skills-header {
-  font-size: clamp(10px, 1.2vw, 11px);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #ffffff;
-  font-family: "Fira Code", monospace;
-}
-
-.skills-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(8px, 1.5vw, 10px);
-}
-
-.skill-card {
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
-  border-radius: 4px;
-  padding: clamp(10px, 1.5vh, 12px) clamp(10px, 1.5vw, 14px);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  transition: all 0.15s ease;
-  text-align: left;
-}
-
-.skill-card:hover:not(:disabled),
-.skill-card:active:not(:disabled) {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #000000;
-  transform: translateY(-2px);
-}
-
-.skill-card:hover:not(:disabled) .skill-code,
-.skill-card:active:not(:disabled) .skill-code {
-  color: #000000;
-}
-
-.skill-card:hover:not(:disabled) .skill-effect,
-.skill-card:active:not(:disabled) .skill-effect {
-  color: #333333;
-}
-
-.skill-code {
-  font-family: "Fira Code", monospace;
-  font-size: clamp(10px, 1.3vw, 12px);
-  font-weight: 600;
-  color: #ffffff;
-  word-break: break-all;
-}
-
-.skill-effect {
-  font-size: clamp(9px, 1.1vw, 11px);
-  color: #888888;
-  line-height: 1.3;
-}
-
-.battle-log {
-  height: clamp(40px, 7vh, 52px);
-  background: #000000;
-  border-radius: 4px;
-  border: 1px solid #2a2a2a;
-  padding: 6px 10px;
-  font-family: "Fira Code", monospace;
-  font-size: clamp(9px, 1.2vw, 11px);
-  color: #ffffff;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column-reverse;
-  flex-shrink: 0;
-}
-
-/* Toast Message */
+/* Toast */
 #toast-msg {
   position: absolute;
   top: clamp(60px, 10vh, 80px);
@@ -577,27 +292,7 @@ body {
   text-align: center;
 }
 
-/* =========================================================================
-   GENERIC MODAL BACKDROP & BUTTONS
-   ========================================================================= */
-.modal-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.94);
-  backdrop-filter: blur(14px);
-  z-index: 300;
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  pointer-events: auto;
-  padding: clamp(12px, 2.5vh, 24px);
-  animation: fadeIn 0.2s ease-out;
-}
-
+/* Button components */
 .btn-primary {
   background: #ffffff;
   color: #000000;
@@ -671,368 +366,4 @@ body {
 
 .close-x:hover {
   color: #ffffff;
-}
-
-/* =========================================================================
-   START MENU MODAL
-   ========================================================================= */
-.menu-window {
-  width: min(680px, 94vw);
-  background: #0d0d0d;
-  border: 1.5px solid var(--border-bright);
-  border-radius: 6px;
-  padding: clamp(18px, 3vh, 32px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.12);
-  max-height: 92vh;
-  overflow-y: auto;
-}
-
-.menu-badge {
-  font-family: "Fira Code", monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  background: #ffffff;
-  color: #000000;
-  padding: 2px 8px;
-  font-weight: 700;
-  border-radius: 2px;
-  margin-bottom: 12px;
-}
-
-.menu-title {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(15px, 3.2vw, 22px);
-  color: #ffffff;
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.menu-subtitle {
-  font-size: clamp(12px, 1.6vw, 14px);
-  color: #999999;
-  margin-bottom: 20px;
-  font-family: "Fira Code", monospace;
-}
-
-.rules-box {
-  background: #000000;
-  border: 1px solid #282828;
-  border-radius: 4px;
-  padding: clamp(12px, 2vh, 18px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
-  font-size: clamp(11px, 1.3vw, 12.5px);
-  line-height: 1.5;
-  color: #b0b0b0;
-  margin-bottom: 24px;
-  width: 100%;
-}
-
-.rule-item {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.rule-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.rule-item strong {
-  color: #ffffff;
-}
-
-.menu-actions {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* =========================================================================
-   PIPELINE DIAGNOSTIC TERMINAL MODAL
-   ========================================================================= */
-.diagnostic-window {
-  width: min(720px, 94vw);
-  background: #000000;
-  border: 1.5px solid var(--border-bright);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 35px rgba(255, 255, 255, 0.15);
-}
-
-.diagnostic-header {
-  background: #111111;
-  padding: 12px 18px;
-  border-bottom: 1px solid #333333;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.diagnostic-title {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(9px, 1.2vw, 11px);
-  color: #ffffff;
-}
-
-.diagnostic-terminal {
-  background: #050505;
-  padding: 16px;
-  font-family: "Fira Code", monospace;
-  font-size: clamp(10px, 1.3vw, 12px);
-  min-height: 220px;
-  max-height: 380px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.diag-line {
-  line-height: 1.45;
-}
-
-.diag-info {
-  color: #aaaaaa;
-}
-
-.diag-pass {
-  color: #4ade80;
-  font-weight: 600;
-}
-
-.diag-warn {
-  color: #facc15;
-  font-weight: 600;
-}
-
-.diag-fail {
-  color: #ef4444;
-  font-weight: 700;
-}
-
-.diagnostic-footer {
-  background: #111111;
-  padding: 12px 18px;
-  border-top: 1px solid #333333;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.diagnostic-summary {
-  font-family: "Fira Code", monospace;
-  font-size: 12px;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* =========================================================================
-   LEADERBOARD MODAL
-   ========================================================================= */
-.leaderboard-window {
-  width: min(720px, 94vw);
-  background: #0d0d0d;
-  border: 1.5px solid var(--border-bright);
-  border-radius: 6px;
-  padding: clamp(16px, 2.5vh, 24px);
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-}
-
-.leaderboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.leaderboard-header h2 {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(11px, 1.8vw, 14px);
-  color: #ffffff;
-}
-
-.leaderboard-table-container {
-  overflow-x: auto;
-  border: 1px solid #282828;
-  border-radius: 4px;
-  margin-bottom: 16px;
-}
-
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: "Fira Code", monospace;
-  font-size: clamp(10px, 1.2vw, 12px);
-  text-align: left;
-}
-
-.leaderboard-table th {
-  background: #181818;
-  color: #ffffff;
-  padding: 8px 12px;
-  border-bottom: 1px solid #333333;
-  font-weight: 700;
-}
-
-.leaderboard-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #1a1a1a;
-  color: #cccccc;
-}
-
-.leaderboard-table tr:nth-child(even) {
-  background: #090909;
-}
-
-.leaderboard-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* =========================================================================
-   GAME END / VICTORY OVERLAY
-   ========================================================================= */
-.end-window {
-  background: #0d0d0d;
-  border: 1.5px solid var(--border-bright);
-  border-radius: 6px;
-  padding: clamp(20px, 3vh, 32px);
-  width: min(540px, 92vw);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.end-window h1 {
-  font-family: "Press Start 2P", monospace;
-  font-size: clamp(15px, 3vw, 22px);
-  margin-bottom: 12px;
-  color: #ffffff;
-}
-
-.end-window p {
-  font-size: clamp(11px, 1.4vw, 13px);
-  line-height: 1.6;
-  color: #999999;
-  margin-bottom: 18px;
-}
-
-.stat-highlight {
-  background: #000000;
-  border: 1px solid #333333;
-  border-radius: 4px;
-  padding: 10px 16px;
-  display: flex;
-  justify-content: space-around;
-  font-family: "Fira Code", monospace;
-  font-size: 12px;
-  margin-bottom: 10px;
-  width: 100%;
-}
-
-.player-input {
-  background: #000000;
-  border: 1.5px solid #ffffff;
-  color: #ffffff;
-  font-family: "Fira Code", monospace;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: center;
-  padding: 8px 12px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  width: 220px;
-}
-
-.player-input:focus {
-  outline: none;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
-}
-
-/* =========================================================================
-   RESPONSIVE BREAKPOINTS (Tablets & Phones)
-   ========================================================================= */
-
-/* Tablets & Small Laptops (max-width: 900px) */
-@media (max-width: 900px) {
-  .top-bar {
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .items-hud {
-    justify-content: flex-end;
-  }
-  .controls-hint {
-    font-size: 10px;
-    padding: 6px 10px;
-  }
-}
-
-/* Mobile Phones (max-width: 680px) */
-@media (max-width: 680px) {
-  .top-bar {
-    padding: 6px 10px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-
-  .dev-profile {
-    justify-content: space-between;
-  }
-
-  .items-hud {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 6px;
-  }
-
-  .items-hud .hud-badge {
-    padding: 4px 7px;
-    font-size: 10px;
-  }
-
-  .btn-run-pipeline {
-    padding: 5px 10px;
-    font-size: 10px;
-  }
-
-  .skills-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .controls-hint {
-    display: none; /* Replaced by touch D-pad on mobile */
-  }
-
-  #mobile-dpad {
-    display: grid;
-  }
-}
-
-/* Very Small Phones (max-width: 380px) */
-@media (max-width: 380px) {
-  .items-hud {
-    justify-content: center;
-  }
 }

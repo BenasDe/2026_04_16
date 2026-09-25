@@ -1,15 +1,14 @@
-/** Silver level task definitions. */
 window.SILVER_LEVEL = {
   level: 2,
   name: "Silver Layer (SQL Transformations)",
   engine: "Spark SQL / ANSI SQL",
-  description: "Write rigorous analytical SQL transformations to produce clean dimensional models and aggregated feature sets.",
+  description: "Write analytical SQL transformations to produce clean dimensional models and aggregated feature sets.",
   redBullsToPlace: 2,
   tasks: [
     {
       id: "s_window",
-      name: "🪟 WINDOW_RANKER",
-      desc: "Task: Keep only the most recent status update per customer using an SQL Window Function.",
+      name: "WINDOW_RANKER",
+      desc: "Isolate only the most recent status update per customer using an SQL window function.",
       tableHeaders: ["customer_id", "status", "updated_at"],
       tableRows: [
         ["C-1", "ACTIVE", "2026-04-01 10:00:00"],
@@ -23,32 +22,32 @@ window.SILVER_LEVEL = {
           code: "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY updated_at DESC) as rn FROM updates) WHERE rn = 1",
           label: "Window ROW_NUMBER() partitioned by customer descending",
           correct: true,
-          explain: "Correct! Exactly isolates the latest update record per customer."
+          explain: "ROW_NUMBER() partitioned by customer isolates the latest update record."
         },
         {
           code: "SELECT customer_id, MAX(updated_at) FROM updates GROUP BY customer_id",
           label: "GROUP BY with MAX(updated_at)",
           correct: false,
-          explain: "Dropped the 'status' column because it wasn't in GROUP BY."
+          explain: "status column omitted because it was not included in the GROUP BY clause."
         },
         {
           code: "SELECT * FROM updates ORDER BY updated_at DESC LIMIT 2",
           label: "Global ORDER BY updated_at DESC LIMIT 2",
           correct: false,
-          explain: "Limit only takes top 2 global rows regardless of customer count."
+          explain: "LIMIT returns top 2 global rows regardless of customer groupings."
         },
         {
           code: "SELECT DISTINCT customer_id, status FROM updates",
           label: "SELECT DISTINCT customer_id, status",
           correct: false,
-          explain: "Retains all historical status transitions since statuses are distinct."
+          explain: "Retains all historical status transitions since status values are distinct."
         }
       ]
     },
     {
       id: "s_having",
-      name: "⚖️ AGGREGATOR",
-      desc: "Task: Identify merchant accounts whose total transaction volume exceeds $10,000 using SQL aggregation.",
+      name: "AGGREGATOR",
+      desc: "Identify merchant accounts whose total transaction volume exceeds $10,000 using SQL aggregation.",
       tableHeaders: ["merchant_id", "tx_count", "total_volume"],
       tableRows: [
         ["M-80", "150", "$24,500.00"],
@@ -62,32 +61,32 @@ window.SILVER_LEVEL = {
           code: "SELECT merchant_id, SUM(amount) as total FROM transactions GROUP BY merchant_id HAVING SUM(amount) > 10000",
           label: "GROUP BY merchant_id HAVING SUM(amount) > 10000",
           correct: true,
-          explain: "Accurately applies post-aggregation HAVING filter to aggregate amounts."
+          explain: "HAVING clause filters aggregate sums after grouping."
         },
         {
           code: "SELECT merchant_id, SUM(amount) as total FROM transactions WHERE SUM(amount) > 10000 GROUP BY merchant_id",
           label: "WHERE SUM(amount) > 10000 GROUP BY merchant_id",
           correct: false,
-          explain: "SQL Syntax Error: Aggregate functions like SUM() cannot appear in WHERE clauses."
+          explain: "Syntax error: aggregate functions cannot appear in a WHERE clause."
         },
         {
           code: "SELECT merchant_id, amount FROM transactions WHERE amount > 10000",
           label: "Filter individual transactions > 10000",
           correct: false,
-          explain: "Filters single transactions instead of calculating aggregate volume per merchant."
+          explain: "Filters single transactions rather than aggregated volume per merchant."
         },
         {
           code: "SELECT merchant_id FROM transactions GROUP BY merchant_id",
           label: "GROUP BY merchant_id without sum filter",
           correct: false,
-          explain: "Returns all merchants including small accounts under $10,000."
+          explain: "Returns all merchants without applying the volume threshold."
         }
       ]
     },
     {
       id: "s_join",
-      name: "🔗 ORPHAN_HUNTER",
-      desc: "Task: Find all active users who have NEVER completed an order using an SQL Anti-Join.",
+      name: "ORPHAN_HUNTER",
+      desc: "Identify all active users who have never completed an order using an SQL anti-join.",
       tableHeaders: ["user_id", "email", "has_orders"],
       tableRows: [
         ["U-10", "alex@lab.io", "Has 3 orders"],
@@ -101,32 +100,32 @@ window.SILVER_LEVEL = {
           code: "SELECT u.user_id, u.email FROM users u LEFT JOIN orders o ON u.user_id = o.user_id WHERE o.order_id IS NULL",
           label: "LEFT JOIN ... WHERE o.order_id IS NULL",
           correct: true,
-          explain: "Classic anti-join pattern: isolates unmatched users with null foreign keys."
+          explain: "Anti-join isolates unmatched users with null foreign keys."
         },
         {
           code: "SELECT u.user_id, u.email FROM users u INNER JOIN orders o ON u.user_id = o.user_id",
           label: "INNER JOIN users and orders",
           correct: false,
-          explain: "Inner join returns users WITH orders, the exact opposite of the requirement."
+          explain: "Inner join returns users with orders instead of orphans."
         },
         {
           code: "SELECT user_id, email FROM users WHERE user_id NOT IN (SELECT user_id FROM orders)",
           label: "WHERE user_id NOT IN (orders subquery)",
           correct: false,
-          explain: "Vulnerable to NULL hazard: if orders contains a single NULL user_id, NOT IN evaluates to empty!"
+          explain: "Vulnerable to NULL values: if orders contains a NULL user_id, NOT IN returns no rows."
         },
         {
           code: "SELECT user_id FROM users CROSS JOIN orders",
           label: "CROSS JOIN users and orders",
           correct: false,
-          explain: "Cartesian product: causes memory explosion without filtering orphans."
+          explain: "Cartesian product produces an unindexed join multiplication."
         }
       ]
     },
     {
       id: "s_case",
-      name: "🏷️ CLASSIFIER",
-      desc: "Task: Segment customers into 'VIP' (spend >= 1000), 'REGULAR' (spend >= 100), and 'NEW' using CASE WHEN.",
+      name: "CLASSIFIER",
+      desc: "Segment customers into 'VIP' (spend >= 1000), 'REGULAR' (spend >= 100), and 'NEW' using CASE WHEN.",
       tableHeaders: ["customer_id", "lifetime_spend", "target_tier"],
       tableRows: [
         ["C-501", "$1,450.00", "Should be VIP"],
@@ -140,32 +139,32 @@ window.SILVER_LEVEL = {
           code: "SELECT customer_id, CASE WHEN lifetime_spend >= 1000 THEN 'VIP' WHEN lifetime_spend >= 100 THEN 'REGULAR' ELSE 'NEW' END AS tier FROM customers",
           label: "Evaluated CASE WHEN tier segmentation",
           correct: true,
-          explain: "Correctly ordered cascading thresholds classify all cohorts cleanly."
+          explain: "Cascading thresholds evaluate largest spend bounds first."
         },
         {
           code: "SELECT customer_id, CASE WHEN lifetime_spend >= 100 THEN 'REGULAR' WHEN lifetime_spend >= 1000 THEN 'VIP' ELSE 'NEW' END AS tier FROM customers",
           label: "Inverted CASE WHEN order (>= 100 first)",
           correct: false,
-          explain: "Bug: Anyone with spend >= 1000 also matches >= 100, so VIPs are labeled REGULAR!"
+          explain: "Spend >= 100 evaluates first, incorrectly classifying VIP accounts as REGULAR."
         },
         {
           code: "SELECT customer_id, IF(lifetime_spend >= 1000, 'VIP', 'REGULAR') AS tier FROM customers",
           label: "Binary IF statement",
           correct: false,
-          explain: "Misses the 'NEW' tier entirely, grouping newcomers into REGULAR."
+          explain: "Omits the 'NEW' tier, collapsing new accounts into REGULAR."
         },
         {
           code: "SELECT customer_id, 'VIP' AS tier FROM customers",
           label: "Hardcode all as 'VIP'",
           correct: false,
-          explain: "Incorrectly classifies zero-spend accounts as VIP."
+          explain: "Static literal labels zero-spend accounts as VIP."
         }
       ]
     },
     {
       id: "s_coalesce",
-      name: "🛡️ COALESCER",
-      desc: "Task: Standardize fallback contact info prioritizing mobile_phone -> work_phone -> email -> 'UNREACHABLE'.",
+      name: "COALESCER",
+      desc: "Standardize fallback contact info prioritizing mobile_phone -> work_phone -> email -> 'UNREACHABLE'.",
       tableHeaders: ["user_id", "mobile_phone", "work_phone", "email"],
       tableRows: [
         ["U-90", "NULL", "+370-600-1111", "test@corp.lt"],
@@ -179,25 +178,25 @@ window.SILVER_LEVEL = {
           code: "SELECT user_id, COALESCE(mobile_phone, work_phone, email, 'UNREACHABLE') AS primary_contact FROM directory",
           label: "COALESCE(mobile, work, email, 'UNREACHABLE')",
           correct: true,
-          explain: "Returns the first non-null contact method across the hierarchy."
+          explain: "COALESCE returns the first non-null contact value in precedence order."
         },
         {
           code: "SELECT user_id, NVL(mobile_phone, email) AS primary_contact FROM directory",
           label: "NVL(mobile_phone, email)",
           correct: false,
-          explain: "Ignores work_phone and crashes if both mobile and email are null."
+          explain: "Omits work_phone and fails when both mobile and email are null."
         },
         {
           code: "SELECT user_id, CONCAT(mobile_phone, work_phone, email) AS primary_contact FROM directory",
           label: "CONCAT all contact columns",
           correct: false,
-          explain: "In standard SQL, concatenating with NULL produces NULL."
+          explain: "In standard SQL, string concatenation with NULL returns NULL."
         },
         {
           code: "SELECT user_id, email AS primary_contact FROM directory",
           label: "Select email only",
           correct: false,
-          explain: "Fails fallback logic and yields nulls for accounts without email."
+          explain: "Ignores phone fallbacks and produces nulls for accounts without email."
         }
       ]
     }

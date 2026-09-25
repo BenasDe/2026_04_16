@@ -1,4 +1,3 @@
-/** Procedural data astronaut. Faces +Z; the root stays anchored to the board. */
 window.createPlayerCharacter = function () {
   const group = new THREE.Group();
   const rig = new THREE.Group();
@@ -28,7 +27,6 @@ window.createPlayerCharacter = function () {
     return part;
   }
 
-  // Rounded pressure suit and contrasting collar make the silhouette readable.
   ellipsoid(rig, suit, 0, 0.85, 0, 0.37, 0.43, 0.27);
   mesh(rig, new THREE.CylinderGeometry(0.25, 0.29, 0.12, 16), seams, 0, 1.15, 0);
   const helmet = new THREE.Group();
@@ -36,7 +34,6 @@ window.createPlayerCharacter = function () {
   rig.add(helmet);
   ellipsoid(helmet, suit, 0, 0, 0, 0.46, 0.43, 0.41);
   ellipsoid(helmet, glass, 0, 0.015, 0.20, 0.405, 0.30, 0.29);
-  // Bright eyes and a reflected highlight, visible even at board scale.
   [-0.14, 0.14].forEach(x => {
     mesh(helmet, new THREE.BoxGeometry(0.065, 0.12, 0.025), glow, x, 0.035, 0.48);
   });
@@ -47,7 +44,6 @@ window.createPlayerCharacter = function () {
     ear.rotation.z = Math.PI / 2;
   });
 
-  // Portable compute pack, with a small status antenna above one shoulder.
   mesh(rig, new THREE.BoxGeometry(0.52, 0.55, 0.22), orange, 0, 0.87, -0.29);
   [-0.16, 0.16].forEach(x => {
     mesh(rig, new THREE.CylinderGeometry(0.085, 0.085, 0.46, 10), seams, x, 0.87, -0.43);

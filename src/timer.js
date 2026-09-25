@@ -1,6 +1,5 @@
-/** Timer subsystem. Dependencies are supplied by the game controller. */
 window.createGameTimer = function (gameState) {
-  const formatStopwatch = (ms) => window.Utils ? window.Utils.formatStopwatch(ms) : `${Math.floor(ms/1000)}s`;
+  const formatStopwatch = (ms) => window.Utils ? window.Utils.formatStopwatch(ms) : `${Math.floor(ms / 1000)}s`;
 
   function startTimer() {
     if (gameState.timer.running) return;
@@ -12,15 +11,11 @@ window.createGameTimer = function (gameState) {
       const formatted = formatStopwatch(gameState.timer.elapsedMs);
       const timerEl = document.getElementById('timer-display');
       if (timerEl) {
-        timerEl.innerText = `⏱️ ${formatted}`;
+        timerEl.innerText = formatted;
       }
-    }, 41); // ~24 fps update for smooth hundredths
+    }, 41);
   }
 
-  /**
-   * Adds a time penalty to the active stopwatch and flashes timer HUD red.
-   * @param {number} ms - Milliseconds to add (default 60,000 ms = 60s).
-   */
   function addTimerPenalty(ms = 60000) {
     if (gameState.timer.startTime) {
       gameState.timer.startTime -= ms;
@@ -29,7 +24,7 @@ window.createGameTimer = function (gameState) {
     const formatted = formatStopwatch(gameState.timer.elapsedMs);
     const timerEl = document.getElementById('timer-display');
     if (timerEl) {
-      timerEl.innerText = `⏱️ ${formatted}`;
+      timerEl.innerText = formatted;
       timerEl.style.color = '#ef4444';
       setTimeout(() => {
         if (timerEl) timerEl.style.color = '#ffffff';
@@ -51,7 +46,7 @@ window.createGameTimer = function (gameState) {
     gameState.timer.startTime = null;
     const timerEl = document.getElementById('timer-display');
     if (timerEl) {
-      timerEl.innerText = `⏱️ 00:00.00`;
+      timerEl.innerText = '00:00.00';
     }
   }
 

@@ -1,4 +1,3 @@
-/** Pipeline subsystem. Dependencies are supplied by the game controller. */
 window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTimerPenalty, triggerGameOver, triggerVictory, loadLevel }) {
   async function executePipelineRun() {
     const levels = window.GAME_LEVELS || [];
@@ -8,14 +7,13 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
     const totalTasks = currentLevel.tasks.length;
     const stagedCount = Object.keys(gameState.stagedTasks).length;
     if (stagedCount < totalTasks) {
-      showToast(`⚠️ You must stage all ${totalTasks} tasks before running the pipeline! (${stagedCount}/${totalTasks} staged)`);
+      showToast(`Stage all ${totalTasks} tasks before running the pipeline (${stagedCount}/${totalTasks} staged).`);
       return;
     }
 
     gameState.pipelineRunning = true;
     updateHUD();
 
-    // Show Diagnostic Terminal Modal
     const modal = document.getElementById('pipeline-diagnostic-modal');
     const terminal = document.getElementById('diagnostic-terminal');
     const footer = document.getElementById('diagnostic-footer');
@@ -43,12 +41,12 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
       const skill = item.chosenSkill;
       const isCorrect = !!(skill && (skill.correct === true || skill.isCorrect === true));
 
-      appendDiagLine('diag-info', `─── [NODE ${i + 1}/${stagedList.length}] Checking "${task.name}"...`);
+      appendDiagLine('diag-info', `--- [NODE ${i + 1}/${stagedList.length}] Checking "${task.name}"...`);
       if (window.sfx && window.sfx.pipelineBeep) window.sfx.pipelineBeep();
       await delay(450);
 
       if (isCorrect) {
-        appendDiagLine('diag-pass', `  ✔ PASSED: Logic compiled cleanly. [0 Red Bulls used]`);
+        appendDiagLine('diag-pass', `  [PASS] Logic compiled cleanly.`);
         if (skill && skill.explain) {
           appendDiagLine('diag-info', `    ${skill.explain}`);
         }
@@ -56,30 +54,24 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
         mistakesCount++;
         gameState.redBulls -= 1;
         if (gameState.stats) gameState.stats.totalMistakes += 1;
-        addTimerPenalty(60000); // Add +60s penalty for each used Red Bull
+        addTimerPenalty(60000);
         if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
-        appendDiagLine('diag-warn', `  ✖ BUG DETECTED in query logic! Hotfix required.`);
+        appendDiagLine('diag-warn', `  [FAIL] Bug detected in query logic. Hotfix required.`);
         if (skill && skill.explain) {
           appendDiagLine('diag-info', `    Issue: ${skill.explain}`);
         }
-        appendDiagLine('diag-warn', `  ⚡ Hotfix deployed: -1 Red Bull consumed [+60s TIME PENALTY] (Remaining: ${gameState.redBulls})`);
+        appendDiagLine('diag-warn', `  [HOTFIX] -1 Red Bull consumed (+60s penalty). Remaining: ${gameState.redBulls}`);
         updateHUD();
       }
       await delay(350);
     }
 
     await delay(400);
+    appendDiagLine('diag-info', `[AUDIT] Starting Fuel: ${startLevelRb} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.redBulls}`);
 
-    // Print exact Hotfix Audit
-    appendDiagLine('diag-info', `[AUDIT] Level Starting Fuel: ${startLevelRb} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining Red Bulls: ${gameState.redBulls}`);
-
-    // Resolution Evaluation
     if (gameState.redBulls < 0) {
-      // CRITICAL FAILURE: Out of Red Bulls
       if (window.sfx && window.sfx.pipelineCrash) window.sfx.pipelineCrash();
-      appendDiagLine('diag-fail', `💥 [FATAL CRASH] OUT OF MEMORY (OOM) / UNRESOLVED ANOMALIES!`);
-      appendDiagLine('diag-fail', `You lacked sufficient Red Bull to hotfix all pipeline bugs.`);
-
+      appendDiagLine('diag-fail', `[CRITICAL] Out of memory (OOM). Insufficient Red Bull to resolve bugs.`);
       summaryEl.innerHTML = `<span style="color:#ef4444;">STATUS: FAILED (OOM) | Red Bulls: 0</span>`;
       actionBtn.innerText = 'ABORT & RESTART';
       actionBtn.onclick = () => {
@@ -90,14 +82,13 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
       };
       footer.style.display = 'flex';
     } else {
-      // SUCCESSFUL RUN
       if (window.sfx && window.sfx.levelClear) window.sfx.levelClear();
-      appendDiagLine('diag-pass', `✔ [DEPLOYED] Pipeline completed validation and reached target tables!`);
-      appendDiagLine('diag-info', `[STATS] Bugs Hotfixed: ${mistakesCount} | Red Bulls Surviving: ${gameState.redBulls}`);
+      appendDiagLine('diag-pass', `[DEPLOYED] Pipeline completed validation and reached target tables.`);
+      appendDiagLine('diag-info', `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Red Bulls: ${gameState.redBulls}`);
 
       const isLastLevel = gameState.levelIndex >= levels.length - 1;
       summaryEl.innerHTML = `<span style="color:#4ade80;">STATUS: DEPLOYED SUCCESS | Surviving Red Bulls: ${gameState.redBulls}</span>`;
-      actionBtn.innerText = isLastLevel ? '👑 CLAIM PRODUCTION VICTORY' : '➔ NEXT LEVEL PIPELINE';
+      actionBtn.innerText = isLastLevel ? 'CLAIM PRODUCTION VICTORY' : 'NEXT LEVEL PIPELINE';
 
       actionBtn.onclick = () => {
         actionBtn.onclick = null;

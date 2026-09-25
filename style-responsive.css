@@ -1,0 +1,61 @@
+@media (max-width: 900px) {
+  .top-bar {
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .items-hud {
+    justify-content: flex-end;
+  }
+  .controls-hint {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 680px) {
+  .top-bar {
+    padding: 6px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .dev-profile {
+    justify-content: space-between;
+  }
+
+  .items-hud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .items-hud .hud-badge {
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .btn-run-pipeline {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .skills-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-hint {
+    display: none;
+  }
+
+  #mobile-dpad {
+    display: grid;
+  }
+}
+
+@media (max-width: 380px) {
+  .items-hud {
+    justify-content: center;
+  }
+}

@@ -1,8 +1,5 @@
-/** Controls subsystem. Dependencies are supplied by the game controller. */
 window.bindGameControls = function ({ gameState, engine, movePlayer, executePipelineRun, showToast }) {
-  // Keyboard Navigation
   window.addEventListener('keydown', e => {
-    // If the user is currently typing in an input field (e.g. callsign input), do not intercept keystrokes
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
       if (e.code === 'Enter' && document.activeElement?.id === 'player-name-input') {
         const saveBtn = document.getElementById('btn-save-score');
@@ -35,7 +32,6 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
     }
   });
 
-  // Mouse Hover Raycasting on Tiles
   let hoveredTile = null;
 
   window.addEventListener('pointermove', e => {
@@ -69,7 +65,6 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
       const dy = tile.userData.gridY - gameState.player.gridY;
       const isAdjacent = Math.abs(dx) + Math.abs(dy) === 1;
 
-      // Highlight adjacent tiles brighter
       if (isAdjacent) {
         tile.userData.material.color.setHex(0x404856);
       } else {
@@ -81,7 +76,6 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
     }
   });
 
-  // Click / Pointer Raycasting for Tile Movement
   window.addEventListener('pointerdown', e => {
     if (
       gameState.inBattle ||
@@ -104,7 +98,6 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
       const targetX = targetTile.userData.gridX;
       const targetY = targetTile.userData.gridY;
 
-      // Check if clicked tile is adjacent (Manhattan distance == 1)
       const dx = targetX - gameState.player.gridX;
       const dy = targetY - gameState.player.gridY;
       if (Math.abs(dx) + Math.abs(dy) === 1) {
@@ -113,7 +106,6 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
     }
   });
 
-  // Mobile On-Screen D-Pad Controller Handlers
   const bindDpad = (id, action) => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -138,11 +130,10 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
       const currentLevel = levels[gameState.levelIndex];
       const stagedCount = Object.keys(gameState.stagedTasks).length;
       const total = currentLevel ? currentLevel.tasks.length : 5;
-      showToast(`📦 Staged ${stagedCount}/${total} tasks. Stage all tasks to run pipeline!`);
+      showToast(`Staged ${stagedCount}/${total} tasks. Stage all tasks to run pipeline.`);
     }
   });
 
-  // Touch Swipe Gesture Support for Canvas
   let touchStartX = 0;
   let touchStartY = 0;
 
@@ -180,15 +171,15 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
     const dy = e.changedTouches[0].clientY - touchStartY;
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
-    const swipeThreshold = 35; // px
+    const swipeThreshold = 35;
 
     if (Math.max(absDx, absDy) > swipeThreshold) {
       if (absDx > absDy) {
-        if (dx > 0) movePlayer(1, 0);  // Swipe Right
-        else movePlayer(-1, 0);         // Swipe Left
+        if (dx > 0) movePlayer(1, 0);
+        else movePlayer(-1, 0);
       } else {
-        if (dy > 0) movePlayer(0, 1);  // Swipe Down
-        else movePlayer(0, -1);         // Swipe Up
+        if (dy > 0) movePlayer(0, 1);
+        else movePlayer(0, -1);
       }
     }
   }, { passive: true });

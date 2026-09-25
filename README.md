@@ -1,45 +1,50 @@
-#  PySpark Survivor: Data Lake Chronicles
+# PySpark Survivor: Data Lake Chronicles
 
-> **Zero to Production: A Data Engineering Roguelike**  
-> Live at [houstonwehavedata.org](https://houstonwehavedata.org)
+A 2.5D isometric data engineering puzzle game built with vanilla JavaScript, Three.js, and Web Audio API.
 
-[![Three.js](https://img.shields.io/badge/Three.js-r128-black?logo=three.js)](https://threejs.org/)
-[![Web Audio API](https://img.shields.io/badge/Audio-Web%20Audio%20API-black)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
-[![Firebase](https://img.shields.io/badge/Database-Firebase%20Realtime-orange?logo=firebase)](https://firebase.google.com/)
+Live: [houstonwehavedata.org](https://houstonwehavedata.org)
 
-**PySpark Survivor** is a 2.5D isometric Data Engineering adventure game built in pure vanilla HTML5, CSS3, and modern ES6 JavaScript.
----
+## Overview
 
-## Core Game Mechanics
+Deploy data pipelines across Bronze, Silver, and Gold medallion layers. Inspect dirty tables and data anomalies on the grid, stage transformation queries into your DAG, and run compilation to validate logic.
 
-- **Medallion Architecture Levels:**
-  1. **Level 1 (Bronze Ingestion):** Clean raw streaming & batch landing tables with **PySpark 3.5.0** (Deduplication, NULL imputation, Regex string cleansing, Type casting, and whitespace trimming).
-  2. **Level 2 (Silver Analytical SQL):** Author robust dimensional transforms using **Spark SQL / ANSI SQL** (`ROW_NUMBER() OVER(PARTITION BY...)`, `GROUP BY HAVING`, `COALESCE`, `JOIN ON`, `CASE WHEN`).
-  3. **Level 3 (Gold Production Optimization):** Optimize mission-critical big data workloads (**Broadcast Hash Joins**, **Delta Lake `MERGE INTO`**, **Partition Pruning**, and **Salted Join Keys** for severe skew).
-- ** Red Bull Fuel:**
-  - You start each run with **0 Red Bulls**.
-  - Collect 2 cans per level hidden across the grid.
-  - Red Bull is your only life support! If a staged query contains a bug during pipeline compilation, it consumes **1 Red Bull** to deploy an emergency hotfix.
-  - If you run out of Red Bull and have unpatched bugs, your pipeline crashes with a fatal **Out Of Memory (OOM)** error.
-- ** Blind Staging:**
-  - You won't know if your code transformations are correct when inspecting anomalies. Choices are committed directly into the DAG.
-  - Validation occurs only when you press ** RUN PIPELINE**.
-- ** Stopwatch & Time Penalty:**
-  - A live precision stopwatch records elapsed time from start to gold deployment.
-  - **Penalty:** Every used Red Bull (hotfix) inflicts a **+60-second penalty** on your final time.
-- ** Global Cloud Leaderboard:**
-  - Backed by **Firebase Realtime Database REST API**.
-  - Scores (time, surviving Red Bulls, engineer callsign, and date) sync live across all players and devices globally, with local storage fallback for offline support.
+### Mechanics
 
----
+- **Bronze Layer (Raw Ingestion):** PySpark transformations covering deduplication, null imputation, regex cleansing, type casting, and string trimming.
+- **Silver Layer (Analytical SQL):** Dimensional transforms using SQL window functions (`ROW_NUMBER() OVER`), `GROUP BY ... HAVING`, `COALESCE`, anti-joins, and `CASE WHEN`.
+- **Gold Layer (Production Optimization):** Big data optimizations including broadcast hash joins, Delta Lake `MERGE INTO`, partition pruning, and key salting.
+- **Red Bull Fuel & Hotfixes:** Each level contains cans to collect. Unresolved query bugs consume 1 Red Bull per hotfix and add a 60-second penalty to your final time. Running out of cans causes an out-of-memory (OOM) pipeline crash.
+- **Blind Staging:** Validation happens only during pipeline execution, testing understanding of the underlying engine behavior.
+- **Global Leaderboard:** Track completion times across players using a Firebase Realtime Database backend with local storage fallback.
 
-##  Controls
+## Controls
 
 | Control | Action |
 | :--- | :--- |
-| <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd> | Move Engineer across grid |
-| **Mouse Click / Tap** | Click any adjacent tile to move |
-| **Touch Swipes** | Swipe Up, Down, Left, or Right on mobile/tablet screens |
-| **On-Screen D-Pad** | Directional touch controls for phones & handhelds |
-| <kbd>Space</kbd> / <kbd>Enter</kbd> / Center  | Trigger ** RUN PIPELINE** once all nodes are staged |
+| <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / Arrows | Move across grid |
+| Click / Tap | Move to adjacent tile |
+| Touch Swipe | Directional swipe on mobile |
+| On-Screen D-Pad | Touch controls on mobile screens |
+| <kbd>Space</kbd> / <kbd>Enter</kbd> / RUN | Trigger pipeline execution when all nodes are staged |
 
+## Tech Stack
+
+- **Rendering:** Three.js (r128)
+- **Audio:** Web Audio API (procedural SFX and synthesizer background loop)
+- **Database:** Firebase Realtime Database (REST API)
+- **Styling:** CSS3 (modular stylesheets, responsive layout)
+- **Runtime:** Vanilla ES6 JavaScript (no bundler or build step required)
+
+## Local Development
+
+Serve the root directory with any static HTTP server:
+
+```bash
+# Python 3
+python -m http.server 8000
+
+# Node.js
+npx serve .
+```
+
+Open `http://localhost:8000` in your browser.
