@@ -237,9 +237,13 @@ class GameEngine {
     }
 
     // Fisher-Yates shuffle to guarantee uniform distribution across all rows
-    for (let i = candidateCoords.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [candidateCoords[i], candidateCoords[j]] = [candidateCoords[j], candidateCoords[i]];
+    if (window.Utils) {
+      window.Utils.shuffle(candidateCoords);
+    } else {
+      for (let i = candidateCoords.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [candidateCoords[i], candidateCoords[j]] = [candidateCoords[j], candidateCoords[i]];
+      }
     }
 
     // 4. Place Red Bull pickups
@@ -250,7 +254,7 @@ class GameEngine {
     }
 
     // 5. Place Tasks (PySpark / SQL)
-    const shuffledTasks = [...tasks].sort(() => Math.random() - 0.5);
+    const shuffledTasks = window.Utils ? window.Utils.shuffle([...tasks]) : [...tasks].sort(() => Math.random() - 0.5);
     for (let i = 0; i < shuffledTasks.length && coordIdx < candidateCoords.length; i++) {
       const c = candidateCoords[coordIdx++];
       board[c.x][c.y].type = 'enemy';

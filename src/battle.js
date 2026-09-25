@@ -101,7 +101,7 @@ class BattleSystem {
    */
   renderSkillCards(taskData) {
     this.skillsGrid.innerHTML = '';
-    const shuffled = [...taskData.skills].sort(() => Math.random() - 0.5);
+    const shuffled = window.Utils ? window.Utils.shuffle([...taskData.skills]) : [...taskData.skills].sort(() => Math.random() - 0.5);
 
     shuffled.forEach(skill => {
       const btn = document.createElement('button');

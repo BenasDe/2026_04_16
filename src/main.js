@@ -44,15 +44,7 @@ const battleSystem = new BattleSystem(engine, gameState, (task, chosenSkill) => 
 // =============================================================================
 // TIMER / STOPWATCH SUBSYSTEM
 // =============================================================================
-function formatStopwatch(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const hundredths = Math.floor((ms % 1000) / 10);
-
-  const pad = (n) => (n < 10 ? '0' + n : '' + n);
-  return `${pad(minutes)}:${pad(seconds)}.${pad(hundredths)}`;
-}
+const formatStopwatch = (ms) => window.Utils ? window.Utils.formatStopwatch(ms) : `${Math.floor(ms/1000)}s`;
 
 function startTimer() {
   if (gameState.timer.running) return;
@@ -388,9 +380,7 @@ function appendDiagLine(cssClass, text) {
   terminal.scrollTop = terminal.scrollHeight;
 }
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const delay = (ms) => window.Utils ? window.Utils.delay(ms) : new Promise(r => setTimeout(r, ms));
 
 // =============================================================================
 // GAME OVER & VICTORY
@@ -885,17 +875,19 @@ window.addEventListener('touchend', e => {
 }, { passive: true });
 
 /**
- * Toast Notification Display
+ * Toast Notification Display (delegates to Utils)
  */
 function showToast(msg, duration = 2500) {
-  const toast = document.getElementById('toast-msg');
-  if (!toast) return;
-  toast.innerHTML = msg;
-  toast.style.display = 'block';
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => {
-    toast.style.display = 'none';
-  }, duration);
+  if (window.Utils) {
+    window.Utils.showToast(msg, duration);
+  } else {
+    const toast = document.getElementById('toast-msg');
+    if (!toast) return;
+    toast.innerHTML = msg;
+    toast.style.display = 'block';
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { toast.style.display = 'none'; }, duration);
+  }
 }
 
 // =============================================================================
