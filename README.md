@@ -23,7 +23,7 @@
   - If you run out of Red Bull and have unpatched bugs, your pipeline crashes with a fatal **Out Of Memory (OOM)** error.
 - ** Blind Staging:**
   - You won't know if your code transformations are correct when inspecting anomalies. Choices are committed directly into the DAG.
-  - Validation occurs only when you press **⚡ RUN PIPELINE**.
+  - Validation occurs only when you press ** RUN PIPELINE**.
 - ** Stopwatch & Time Penalty:**
   - A live precision stopwatch records elapsed time from start to gold deployment.
   - **Penalty:** Every used Red Bull (hotfix) inflicts a **+60-second penalty** on your final time.
@@ -41,5 +41,5 @@
 | **Mouse Click / Tap** | Click any adjacent tile to move |
 | **Touch Swipes** | Swipe Up, Down, Left, or Right on mobile/tablet screens |
 | **On-Screen D-Pad** | Directional touch controls for phones & handhelds |
-| <kbd>Space</kbd> / <kbd>Enter</kbd> / Center ⚡ | Trigger **⚡ RUN PIPELINE** once all nodes are staged |
+| <kbd>Space</kbd> / <kbd>Enter</kbd> / Center  | Trigger ** RUN PIPELINE** once all nodes are staged |
 
