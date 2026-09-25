@@ -14,7 +14,7 @@ const gameState = {
     maxSanity: 100,
     xp: 0,
     level: 1,
-    coffees: 2,
+    redBulls: 2,
     clearedCount: 0,
     totalEnemies: 6
   },
@@ -96,19 +96,19 @@ function movePlayer(dx, dy) {
 }
 
 /**
- * Checks the contents of the current grid tile (Coffee rest station or Data Anomaly).
+ * Checks the contents of the current grid tile (Red Bull pickup or Data Anomaly).
  */
 function checkCurrentTile() {
   const cell = gameState.board[gameState.player.gridX][gameState.player.gridY];
   if (!cell || cell.cleared) return;
 
-  if (cell.type === 'coffee') {
+  if (cell.type === 'redBull') {
     cell.cleared = true;
-    gameState.player.coffees += 1;
+    gameState.player.redBulls += 1;
     gameState.player.sanity = Math.min(gameState.player.maxSanity, gameState.player.sanity + 25);
     gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 15);
-    window.sfx.coffee();
-    showToast('☕ Coffee & StackOverflow Break! Found +1 Espresso (+25 Sanity, +15 Health)');
+    window.sfx.redBull();
+    showToast('⚡ Red Bull & StackOverflow Break! Found +1 can (+25 Sanity, +15 Health)');
 
     engine.removeInteractiveObject(gameState.player.gridX, gameState.player.gridY);
     updateHUD();
@@ -118,28 +118,28 @@ function checkCurrentTile() {
 }
 
 /**
- * Restores Sanity and Health by consuming a coffee item.
+ * Restores Sanity and Health by consuming a can of Red Bull.
  */
-function drinkCoffee() {
+function drinkRedBull() {
   if (
-    gameState.player.coffees > 0 &&
+    gameState.player.redBulls > 0 &&
     (gameState.player.sanity < gameState.player.maxSanity || gameState.player.hp < gameState.player.maxHp)
   ) {
-    gameState.player.coffees--;
+    gameState.player.redBulls--;
     gameState.player.sanity = Math.min(gameState.player.maxSanity, gameState.player.sanity + 30);
     gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 15);
-    window.sfx.coffee();
-    showToast('☕ Gulp! Drank Espresso (+30 Sanity, +15 Health)');
+    window.sfx.redBull();
+    showToast('⚡ Gulp! Drank Red Bull (+30 Sanity, +15 Health)');
     updateHUD();
-  } else if (gameState.player.coffees <= 0) {
-    showToast('⚠️ No more coffee left! Find a rest station on the grid.');
+  } else if (gameState.player.redBulls <= 0) {
+    showToast('⚠️ No more Red Bull left! Find a can on the grid.');
   } else {
     showToast('⚡ Sanity and Health are already at 100%!');
   }
 }
 
 /**
- * Updates top status bar meters (Health, Sanity, EXP, Coffee counts).
+ * Updates top status bar meters (Health, Sanity, EXP, Red Bull counts).
  */
 function updateHUD() {
   // HP Bar
@@ -165,7 +165,7 @@ function updateHUD() {
   document.getElementById('xp-text').innerText = `${gameState.player.xp} / 100`;
 
   // Counters
-  document.getElementById('coffee-count').innerText = gameState.player.coffees;
+  document.getElementById('red-bull-count').innerText = gameState.player.redBulls;
   document.getElementById('cleared-count').innerText = `${gameState.player.clearedCount} / ${gameState.player.totalEnemies}`;
 }
 window.updateHUD = updateHUD;
@@ -236,7 +236,7 @@ window.addEventListener('keydown', e => {
     movePlayer(1, 0);
   }
   if (e.code === 'KeyC') {
-    drinkCoffee();
+    drinkRedBull();
   }
 });
 
@@ -310,7 +310,7 @@ window.addEventListener('pointerdown', e => {
 });
 
 // UI Button Handlers
-document.getElementById('btn-drink-coffee').addEventListener('click', drinkCoffee);
+document.getElementById('btn-drink-red-bull').addEventListener('click', drinkRedBull);
 document.getElementById('btn-restart').addEventListener('click', () => {
   window.location.reload();
 });
@@ -331,7 +331,7 @@ bindDpad('dpad-up', () => movePlayer(0, -1));
 bindDpad('dpad-down', () => movePlayer(0, 1));
 bindDpad('dpad-left', () => movePlayer(-1, 0));
 bindDpad('dpad-right', () => movePlayer(1, 0));
-bindDpad('dpad-coffee', () => drinkCoffee());
+bindDpad('dpad-red-bull', () => drinkRedBull());
 
 // Touch Swipe Gesture Support for Canvas
 let touchStartX = 0;

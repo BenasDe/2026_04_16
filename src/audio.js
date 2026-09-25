@@ -98,9 +98,9 @@ class SoundFX {
   }
 
   /**
-   * Coffee sip sound for restoring Sanity and Health.
+   * Red Bull sip sound for restoring Sanity and Health.
    */
-  coffee() {
+  redBull() {
     this.init();
     this.playTone(880, 'sine', 0.15, 0.1);
     setTimeout(() => this.playTone(1320, 'sine', 0.2, 0.1), 120);
