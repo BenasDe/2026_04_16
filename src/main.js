@@ -1,6 +1,8 @@
 const gameState = {
   levelIndex: 0,
-  redBulls: 0,
+  espresso: 0,
+  get redBulls() { return this.espresso; },
+  set redBulls(val) { this.espresso = val; },
   gridSize: 5,
   board: [],
   player: {
@@ -56,13 +58,13 @@ function loadLevel(levelIndex) {
   gameState.board = engine.buildBoard(
     gameState.gridSize,
     currentLevel.tasks,
-    currentLevel.redBullsToPlace !== undefined ? currentLevel.redBullsToPlace : 2
+    currentLevel.espressoToPlace ?? currentLevel.redBullsToPlace ?? 2
   );
 
   engine.setPlayerGridPosition(0, 0, gameState.gridSize);
   renderLevel(currentLevel, levelIndex);
   updateHUD();
-  showToast(`Entered ${currentLevel.name}. Collect Red Bull and stage queries.`);
+  showToast(`Entered ${currentLevel.name}. Collect espresso and stage queries.`);
 }
 
 function movePlayer(dx, dy) {
@@ -88,12 +90,14 @@ function checkCurrentTile() {
   const cell = gameState.board[gameState.player.gridX][gameState.player.gridY];
   if (!cell) return;
 
-  if (cell.type === 'redBull' && !cell.cleared) {
+  if ((cell.type === 'espresso' || cell.type === 'redBull') && !cell.cleared) {
     cell.cleared = true;
-    gameState.redBulls += 1;
+    gameState.espresso += 1;
     if (gameState.stats) gameState.stats.totalScavenged += 1;
-    if (window.sfx && window.sfx.redBull) window.sfx.redBull();
-    showToast(`Scavenged Red Bull (+1 hotfix fuel, total: ${gameState.redBulls}).`);
+    if (window.sfx && (window.sfx.espresso || window.sfx.redBull)) {
+      (window.sfx.espresso || window.sfx.redBull).call(window.sfx);
+    }
+    showToast(`Scavenged espresso (+1 hotfix fuel, total: ${gameState.espresso}).`);
     engine.removeInteractiveObject(gameState.player.gridX, gameState.player.gridY);
     updateHUD();
     return;
@@ -157,7 +161,7 @@ function startGame() {
   }
 
   setStartMenuVisible(false);
-  gameState.redBulls = 0;
+  gameState.espresso = 0;
   gameState.stats = { totalScavenged: 0, totalMistakes: 0 };
   gameState.gameOver = false;
   gameState.pipelineRunning = false;

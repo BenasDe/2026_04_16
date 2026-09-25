@@ -3,6 +3,7 @@ window.SILVER_LEVEL = {
   name: "Silver Layer (SQL Transformations)",
   engine: "Spark SQL / ANSI SQL",
   description: "Write analytical SQL transformations to produce clean dimensional models and aggregated feature sets.",
+  espressoToPlace: 2,
   redBullsToPlace: 2,
   tasks: [
     {

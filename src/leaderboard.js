@@ -2,6 +2,8 @@ window.createLeaderboard = function (formatStopwatch) {
   const FIREBASE_DB_URL = "https://pyspark-survivor-default-rtdb.europe-west1.firebasedatabase.app".replace(/\/+$/, '');
   const LEADERBOARD_KEY = 'pyspark_survivor_leaderboard';
 
+  const getFuel = (r) => r.espresso ?? r.redBulls ?? 0;
+
   async function getLeaderboard() {
     if (FIREBASE_DB_URL) {
       try {
@@ -12,7 +14,7 @@ window.createLeaderboard = function (formatStopwatch) {
             const list = Object.values(data);
             list.sort((a, b) => {
               if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
-              return b.redBulls - a.redBulls;
+              return getFuel(b) - getFuel(a);
             });
             const trimmed = list.slice(0, 25);
             try {
@@ -41,7 +43,7 @@ window.createLeaderboard = function (formatStopwatch) {
     return [];
   }
 
-  async function saveLeaderboardRecord(name, timeMs, redBulls) {
+  async function saveLeaderboardRecord(name, timeMs, espresso) {
     const timeFormatted = formatStopwatch(timeMs);
     const dateStr = new Date().toISOString().split('T')[0];
 
@@ -49,7 +51,8 @@ window.createLeaderboard = function (formatStopwatch) {
       name: (name || 'ANON_DE').trim().toUpperCase().substring(0, 15),
       timeMs,
       timeFormatted,
-      redBulls,
+      espresso,
+      redBulls: espresso,
       date: dateStr,
       timestamp: Date.now()
     };
@@ -62,7 +65,7 @@ window.createLeaderboard = function (formatStopwatch) {
     localList.push(record);
     localList.sort((a, b) => {
       if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
-      return b.redBulls - a.redBulls;
+      return getFuel(b) - getFuel(a);
     });
     localList = localList.slice(0, 25);
     try {
@@ -115,11 +118,12 @@ window.createLeaderboard = function (formatStopwatch) {
 
     records.forEach((rec, idx) => {
       const tr = document.createElement('tr');
+      const cups = getFuel(rec);
       tr.innerHTML = `
         <td style="font-weight:700; color:${idx === 0 ? '#facc15' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#b45309' : '#ffffff'};">#${idx + 1}</td>
         <td style="font-weight:600; color:#ffffff;">${rec.name}</td>
         <td style="font-family:'Fira Code'; font-weight:700;">${rec.timeFormatted}</td>
-        <td>${rec.redBulls} cans</td>
+        <td>${cups} cups</td>
         <td style="color:#777777;">${rec.date || '-'}</td>
       `;
       tbody.appendChild(tr);

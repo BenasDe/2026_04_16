@@ -20,8 +20,8 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
     const totalTasks = currentLevel ? currentLevel.tasks.length : 5;
     const stagedCount = Object.keys(gameState.stagedTasks).length;
 
-    const rbEl = document.getElementById('red-bull-count');
-    if (rbEl) rbEl.innerText = gameState.redBulls;
+    const espressoEl = document.getElementById('espresso-count') || document.getElementById('red-bull-count');
+    if (espressoEl) espressoEl.innerText = gameState.espresso;
 
     const stagedEl = document.getElementById('staged-count');
     if (stagedEl) stagedEl.innerText = `${stagedCount} / ${totalTasks}`;
@@ -43,7 +43,7 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
     document.getElementById('end-title').innerText = 'PIPELINE CRASHED (OOM)';
     document.getElementById('end-title').style.color = '#ef4444';
     document.getElementById('end-desc').innerText =
-      'Your pipeline ran out of Red Bull while attempting to patch faulty queries. Critical deadlock reached.';
+      'Your pipeline ran out of espresso while attempting to patch faulty queries. Critical deadlock reached.';
     document.getElementById('victory-score-entry').style.display = 'none';
     modal.style.display = 'flex';
   }
@@ -63,17 +63,18 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
     const victoryEntry = document.getElementById('victory-score-entry');
     victoryEntry.style.display = 'block';
     document.getElementById('victory-time-val').innerText = finalFormatted;
-    document.getElementById('victory-rb-val').innerText = gameState.redBulls;
+    const victoryEspresso = document.getElementById('victory-espresso-val') || document.getElementById('victory-rb-val');
+    if (victoryEspresso) victoryEspresso.innerText = gameState.espresso;
 
     const auditEl = document.getElementById('victory-audit-breakdown');
     if (auditEl) {
-      const scavenged = gameState.stats ? gameState.stats.totalScavenged : gameState.redBulls;
+      const scavenged = gameState.stats ? gameState.stats.totalScavenged : gameState.espresso;
       const mistakes = gameState.stats ? gameState.stats.totalMistakes : 0;
       const penaltySec = mistakes * 60;
       auditEl.innerHTML = `
-        <div>Fuel: Scavenged <strong>${scavenged}</strong> cans - <strong>${mistakes}</strong> hotfixes = <strong>${gameState.redBulls}</strong> remaining</div>
+        <div>Fuel: Scavenged <strong>${scavenged}</strong> cups - <strong>${mistakes}</strong> hotfixes = <strong>${gameState.espresso}</strong> remaining</div>
         <div style="margin-top: 3px; color: ${mistakes > 0 ? '#facc15' : '#4ade80'};">
-          ${mistakes > 0 ? `Red Bull Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes x 60s added to final time)` : `Clean Deploy: Zero hotfix penalties.`}
+          ${mistakes > 0 ? `Espresso Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes x 60s added to final time)` : `Clean Deploy: Zero hotfix penalties.`}
         </div>
       `;
     }
@@ -132,7 +133,7 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
         saveBtn.disabled = true;
         saveBtn.innerText = 'PUBLISHING...';
       }
-      await saveLeaderboardRecord(name, gameState.timer.elapsedMs, gameState.redBulls);
+      await saveLeaderboardRecord(name, gameState.timer.elapsedMs, gameState.espresso);
       document.getElementById('victory-score-entry').style.display = 'none';
       if (saveBtn) {
         saveBtn.disabled = false;

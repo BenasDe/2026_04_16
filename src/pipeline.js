@@ -32,7 +32,7 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
     await delay(500);
 
     let mistakesCount = 0;
-    const startLevelRb = gameState.redBulls;
+    const startLevelFuel = gameState.espresso;
     const stagedList = Object.values(gameState.stagedTasks);
 
     for (let i = 0; i < stagedList.length; i++) {
@@ -52,7 +52,7 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
         }
       } else {
         mistakesCount++;
-        gameState.redBulls -= 1;
+        gameState.espresso -= 1;
         if (gameState.stats) gameState.stats.totalMistakes += 1;
         addTimerPenalty(60000);
         if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
@@ -60,19 +60,19 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
         if (skill && skill.explain) {
           appendDiagLine('diag-info', `    Issue: ${skill.explain}`);
         }
-        appendDiagLine('diag-warn', `  [HOTFIX] -1 Red Bull consumed (+60s penalty). Remaining: ${gameState.redBulls}`);
+        appendDiagLine('diag-warn', `  [HOTFIX] -1 Espresso consumed (+60s penalty). Remaining: ${gameState.espresso}`);
         updateHUD();
       }
       await delay(350);
     }
 
     await delay(400);
-    appendDiagLine('diag-info', `[AUDIT] Starting Fuel: ${startLevelRb} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.redBulls}`);
+    appendDiagLine('diag-info', `[AUDIT] Starting Fuel: ${startLevelFuel} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.espresso}`);
 
-    if (gameState.redBulls < 0) {
+    if (gameState.espresso < 0) {
       if (window.sfx && window.sfx.pipelineCrash) window.sfx.pipelineCrash();
-      appendDiagLine('diag-fail', `[CRITICAL] Out of memory (OOM). Insufficient Red Bull to resolve bugs.`);
-      summaryEl.innerHTML = `<span style="color:#ef4444;">STATUS: FAILED (OOM) | Red Bulls: 0</span>`;
+      appendDiagLine('diag-fail', `[CRITICAL] Out of memory (OOM). Insufficient Espresso to resolve bugs.`);
+      summaryEl.innerHTML = `<span style="color:#ef4444;">STATUS: FAILED (OOM) | Espresso: 0</span>`;
       actionBtn.innerText = 'ABORT & RESTART';
       actionBtn.onclick = () => {
         actionBtn.onclick = null;
@@ -84,10 +84,10 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
     } else {
       if (window.sfx && window.sfx.levelClear) window.sfx.levelClear();
       appendDiagLine('diag-pass', `[DEPLOYED] Pipeline completed validation and reached target tables.`);
-      appendDiagLine('diag-info', `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Red Bulls: ${gameState.redBulls}`);
+      appendDiagLine('diag-info', `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Espresso: ${gameState.espresso}`);
 
       const isLastLevel = gameState.levelIndex >= levels.length - 1;
-      summaryEl.innerHTML = `<span style="color:#4ade80;">STATUS: DEPLOYED SUCCESS | Surviving Red Bulls: ${gameState.redBulls}</span>`;
+      summaryEl.innerHTML = `<span style="color:#4ade80;">STATUS: DEPLOYED SUCCESS | Surviving Espresso: ${gameState.espresso}</span>`;
       actionBtn.innerText = isLastLevel ? 'CLAIM PRODUCTION VICTORY' : 'NEXT LEVEL PIPELINE';
 
       actionBtn.onclick = () => {

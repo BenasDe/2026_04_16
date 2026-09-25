@@ -13,7 +13,7 @@ Deploy data pipelines across Bronze, Silver, and Gold medallion layers. Inspect 
 - **Bronze Layer (Raw Ingestion):** PySpark transformations covering deduplication, null imputation, regex cleansing, type casting, and string trimming.
 - **Silver Layer (Analytical SQL):** Dimensional transforms using SQL window functions (`ROW_NUMBER() OVER`), `GROUP BY ... HAVING`, `COALESCE`, anti-joins, and `CASE WHEN`.
 - **Gold Layer (Production Optimization):** Big data optimizations including broadcast hash joins, Delta Lake `MERGE INTO`, partition pruning, and key salting.
-- **Red Bull Fuel & Hotfixes:** Each level contains cans to collect. Unresolved query bugs consume 1 Red Bull per hotfix and add a 60-second penalty to your final time. Running out of cans causes an out-of-memory (OOM) pipeline crash.
+- **Espresso Fuel & Hotfixes:** Each level contains coffee cups to collect. Unresolved query bugs consume 1 Espresso per hotfix and add a 60-second penalty to your final time. Running out of coffee causes an out-of-memory (OOM) pipeline crash.
 - **Blind Staging:** Validation happens only during pipeline execution, testing understanding of the underlying engine behavior.
 - **Global Leaderboard:** Track completion times across players using a Firebase Realtime Database backend with local storage fallback.
 

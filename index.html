@@ -39,9 +39,9 @@
         <div class="hud-badge timer-badge" title="Elapsed Time">
           <span id="timer-display">00:00.00</span>
         </div>
-        <div class="hud-badge redbull-badge" title="Red Bulls available for Hotfixes">
-          <span>Red Bull:</span>
-          <strong id="red-bull-count" style="color: #ffffff;">0</strong>
+        <div class="hud-badge espresso-badge" title="Espresso available for Hotfixes">
+          <span>Espresso:</span>
+          <strong id="espresso-count" style="color: #ffffff;">0</strong>
         </div>
         <div class="hud-badge staged-badge" title="Anomalies Staged into DAG">
           <span>Staged:</span>
@@ -56,7 +56,7 @@
     </header>
 
     <aside class="controls-hint">
-      Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles | Collect Red Bull cans to survive deployment bugs
+      Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles | Collect espresso cups to survive deployment bugs
     </aside>
 
     <div id="mobile-dpad">
@@ -82,13 +82,13 @@
           <div><strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) -> Silver (Analytical SQL) -> Gold (Spark/Delta Lake Optimization).</div>
         </div>
         <div class="rule-item">
-          <div><strong>Red Bull Survival:</strong> You start with <strong>0 Red Bulls</strong>. Collect cans across the grid to fuel hotfixes when bugs occur.</div>
+          <div><strong>Espresso Survival:</strong> You start with <strong>0 Espressos</strong>. Collect coffee cups across the grid to fuel hotfixes when bugs occur.</div>
         </div>
         <div class="rule-item">
           <div><strong>Blind Staging:</strong> Code correctness is validated only when executing <strong>RUN PIPELINE</strong>.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Hotfixes & Penalties:</strong> Each bug consumes <strong>1 Red Bull</strong> and adds <strong>+60s penalty</strong> to your final time. Running out of fuel causes an OOM crash.</div>
+          <div><strong>Hotfixes & Penalties:</strong> Each bug consumes <strong>1 Espresso</strong> and adds <strong>+60s penalty</strong> to your final time. Running out of coffee causes an OOM crash.</div>
         </div>
         <div class="rule-item">
           <div><strong>Leaderboard:</strong> The timer tracks deployment speed from launch to Gold certification.</div>
@@ -176,7 +176,7 @@
               <th>#</th>
               <th>ENGINEER</th>
               <th>TIME</th>
-              <th>REMAINING RED BULLS</th>
+              <th>REMAINING ESPRESSO</th>
               <th>DATE</th>
             </tr>
           </thead>
@@ -201,7 +201,7 @@
         <div class="stat-highlight" style="flex-direction: column; gap: 4px;">
           <div style="display: flex; justify-content: space-around; width: 100%;">
             <div>Final Time: <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
-            <div>Red Bulls Preserved: <strong id="victory-rb-val" style="color:#ffffff;">0</strong></div>
+            <div>Espresso Preserved: <strong id="victory-espresso-val" style="color:#ffffff;">0</strong></div>
           </div>
           <div id="victory-audit-breakdown" style="font-size:11px; color:#888888; border-top:1px solid #222; padding-top:4px; margin-top:2px;"></div>
         </div>
