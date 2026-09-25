@@ -1,6 +1,7 @@
 /* ==========================================================================
    PySpark Survivor: Data Lake Chronicles - Stylesheet
    Theme: Pure Monochrome (Black & White / High Contrast Cyber Noir)
+   Fully Responsive for Phones, Tablets, Desktops, & High-Resolution Displays
    ========================================================================== */
 
 :root {
@@ -24,6 +25,7 @@
   margin: 0;
   padding: 0;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -33,6 +35,7 @@ body {
   overflow: hidden;
   width: 100vw;
   height: 100vh;
+  touch-action: none;
 }
 
 /* Three.js 3D/2.5D Canvas Container */
@@ -65,33 +68,36 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 24px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.75) 80%, transparent 100%);
+  padding: clamp(8px, 1.5vh, 16px) clamp(12px, 2vw, 24px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.8) 80%, transparent 100%);
   border-bottom: 1px solid var(--border-color);
   backdrop-filter: blur(10px);
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .dev-profile {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .avatar-badge {
-  width: 44px;
-  height: 44px;
+  width: clamp(36px, 5vw, 44px);
+  height: clamp(36px, 5vw, 44px);
   border-radius: 4px;
   background: #000000;
   border: 1.5px solid var(--border-bright);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: clamp(18px, 2.5vw, 22px);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
 
 .dev-info h2 {
-  font-size: 13px;
+  font-size: clamp(12px, 1.5vw, 14px);
   color: var(--text-bright);
   font-weight: 700;
   display: flex;
@@ -101,8 +107,8 @@ body {
 }
 
 .dev-rank {
-  font-size: 10px;
-  padding: 2px 6px;
+  font-size: 9px;
+  padding: 2px 5px;
   background: #ffffff;
   color: #000000;
   border-radius: 2px;
@@ -112,27 +118,28 @@ body {
 
 .stats-meters {
   display: flex;
-  gap: 24px;
+  gap: clamp(10px, 2vw, 24px);
+  flex-wrap: wrap;
 }
 
 .meter-container {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 140px;
+  gap: 4px;
+  min-width: clamp(95px, 12vw, 140px);
 }
 
 .meter-label {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: clamp(9px, 1.2vw, 11px);
   font-family: 'Fira Code', monospace;
   font-weight: 600;
   color: var(--text-bright);
 }
 
 .meter-bar-outer {
-  height: 8px;
+  height: clamp(6px, 1vh, 8px);
   background: #111111;
   border-radius: 2px;
   overflow: hidden;
@@ -153,9 +160,9 @@ body {
 .items-hud {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: clamp(8px, 1.5vw, 16px);
   font-family: 'Fira Code', monospace;
-  font-size: 12px;
+  font-size: clamp(10px, 1.3vw, 12px);
 }
 
 .hud-badge {
@@ -163,26 +170,28 @@ body {
   align-items: center;
   gap: 6px;
   background: #000000;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 4px;
   border: 1px solid var(--border-color);
   color: var(--text-bright);
+  white-space: nowrap;
 }
 
 .hud-btn {
   background: #000000;
   border: 1px solid var(--border-bright);
   color: #ffffff;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
   font-family: 'Fira Code', monospace;
-  font-size: 11px;
+  font-size: clamp(10px, 1.2vw, 11px);
   font-weight: 600;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.hud-btn:hover {
+.hud-btn:hover, .hud-btn:active {
   background: #ffffff;
   color: #000000;
 }
@@ -190,12 +199,12 @@ body {
 /* Floating Instructions / Controls Mini-card */
 .controls-hint {
   position: absolute;
-  bottom: 24px;
-  left: 24px;
+  bottom: clamp(16px, 3vh, 24px);
+  left: clamp(16px, 3vw, 24px);
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   font-size: 11px;
   font-family: 'Fira Code', monospace;
   color: #888888;
@@ -212,6 +221,49 @@ body {
   font-weight: 600;
 }
 
+/* =========================================================================
+   MOBILE / TOUCH D-PAD CONTROLLER
+   ========================================================================= */
+#mobile-dpad {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: none;
+  grid-template-columns: repeat(3, 46px);
+  grid-template-rows: repeat(3, 46px);
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 20;
+}
+
+.dpad-btn {
+  background: rgba(18, 18, 18, 0.9);
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  border-radius: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.dpad-btn:active {
+  background: #ffffff;
+  color: #000000;
+  transform: scale(0.94);
+}
+
+#dpad-up { grid-column: 2; grid-row: 1; }
+#dpad-left { grid-column: 1; grid-row: 2; }
+#dpad-coffee { grid-column: 2; grid-row: 2; font-size: 13px; border-color: #888888; }
+#dpad-right { grid-column: 3; grid-row: 2; }
+#dpad-down { grid-column: 2; grid-row: 3; }
+
 /* Battle Screen Modal Overlay */
 #battle-modal {
   position: absolute;
@@ -227,6 +279,7 @@ body {
   justify-content: center;
   align-items: center;
   pointer-events: auto;
+  padding: clamp(10px, 2vh, 20px);
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -236,8 +289,8 @@ body {
 }
 
 .battle-window {
-  width: 820px;
-  max-width: 95vw;
+  width: min(820px, 96vw);
+  max-height: 92vh;
   background: #000000;
   border: 1.5px solid var(--border-bright);
   box-shadow: 0 0 35px rgba(255, 255, 255, 0.1), 0 20px 50px rgba(0, 0, 0, 1);
@@ -249,28 +302,30 @@ body {
 
 .battle-header {
   background: #0d0d0d;
-  padding: 14px 20px;
+  padding: clamp(10px, 1.5vh, 14px) clamp(12px, 2vw, 20px);
   border-bottom: 1px solid #333333;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .battle-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 1.2vw, 11px);
   color: #ffffff;
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .battle-content {
-  padding: 20px;
+  padding: clamp(12px, 2vh, 20px);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(10px, 1.5vh, 18px);
+  overflow-y: auto;
 }
 
 /* Enemy Anomaly Data Table Card */
@@ -278,31 +333,32 @@ body {
   background: #0d0d0d;
   border: 1px solid #282828;
   border-radius: 4px;
-  padding: 14px 18px;
+  padding: clamp(10px, 1.5vh, 14px) clamp(12px, 2vw, 18px);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .anomaly-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .anomaly-name {
-  font-size: 15px;
+  font-size: clamp(13px, 1.6vw, 15px);
   font-weight: 700;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-family: 'Fira Code', monospace;
-  letter-spacing: 0.5px;
 }
 
 .anomaly-hp-bar {
-  width: 180px;
+  width: clamp(110px, 20vw, 180px);
   height: 8px;
   background: #1a1a1a;
   border-radius: 2px;
@@ -318,17 +374,24 @@ body {
 }
 
 .anomaly-desc {
-  font-size: 12px;
+  font-size: clamp(11px, 1.3vw, 12px);
   color: #999999;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
-/* Corrupted Mini-Table Preview (High-contrast B&W) */
+/* Corrupted Mini-Table Preview with Touch Scroll */
+#table-preview-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .table-preview {
   width: 100%;
+  min-width: 320px;
   border-collapse: collapse;
   font-family: 'Fira Code', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 1.2vw, 11px);
   margin-top: 4px;
   background: #000000;
   border-radius: 2px;
@@ -338,17 +401,19 @@ body {
 
 .table-preview th {
   background: #141414;
-  padding: 7px 10px;
+  padding: 6px 8px;
   text-align: left;
   color: #ffffff;
   border-bottom: 1px solid #333333;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .table-preview td {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border-bottom: 1px solid #1a1a1a;
   color: #b8b8b8;
+  white-space: nowrap;
 }
 
 .table-preview tr.glitch-row {
@@ -361,7 +426,7 @@ body {
   background: #333333;
 }
 
-/* PySpark Skill Selector */
+/* PySpark Skill Selector Grid */
 .skills-section {
   display: flex;
   flex-direction: column;
@@ -369,7 +434,7 @@ body {
 }
 
 .skills-header {
-  font-size: 11px;
+  font-size: clamp(10px, 1.2vw, 11px);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -380,84 +445,88 @@ body {
 .skills-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: clamp(8px, 1.5vw, 10px);
 }
 
 .skill-card {
   background: #0d0d0d;
   border: 1px solid #2a2a2a;
   border-radius: 4px;
-  padding: 12px 14px;
+  padding: clamp(10px, 1.5vh, 12px) clamp(10px, 1.5vw, 14px);
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   transition: all 0.15s ease;
   text-align: left;
 }
 
-.skill-card:hover:not(:disabled) {
+.skill-card:hover:not(:disabled), .skill-card:active:not(:disabled) {
   border-color: #ffffff;
   background: #ffffff;
   color: #000000;
   transform: translateY(-2px);
 }
 
-.skill-card:hover:not(:disabled) .skill-code {
+.skill-card:hover:not(:disabled) .skill-code, .skill-card:active:not(:disabled) .skill-code {
   color: #000000;
 }
 
-.skill-card:hover:not(:disabled) .skill-effect {
+.skill-card:hover:not(:disabled) .skill-effect, .skill-card:active:not(:disabled) .skill-effect {
   color: #333333;
 }
 
 .skill-code {
   font-family: 'Fira Code', monospace;
-  font-size: 12px;
+  font-size: clamp(10px, 1.3vw, 12px);
   font-weight: 600;
   color: #ffffff;
+  word-break: break-all;
 }
 
 .skill-effect {
-  font-size: 11px;
+  font-size: clamp(9px, 1.1vw, 11px);
   color: #888888;
   line-height: 1.3;
 }
 
 .battle-log {
-  height: 52px;
+  height: clamp(40px, 7vh, 52px);
   background: #000000;
   border-radius: 4px;
   border: 1px solid #2a2a2a;
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-family: 'Fira Code', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 1.2vw, 11px);
   color: #ffffff;
   overflow-y: auto;
   display: flex;
   flex-direction: column-reverse;
+  flex-shrink: 0;
 }
 
-/* Floating Dialogues & Messages */
+/* Toast Message */
 #toast-msg {
   position: absolute;
-  top: 80px;
+  top: clamp(60px, 10vh, 80px);
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.96);
   border: 1.5px solid var(--border-bright);
   border-radius: 4px;
-  padding: 10px 20px;
+  padding: 8px 16px;
   font-family: 'Fira Code', monospace;
-  font-size: 12px;
+  font-size: clamp(11px, 1.4vw, 12px);
   color: #ffffff;
   z-index: 200;
   pointer-events: none;
   display: none;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+  max-width: 90vw;
+  text-align: center;
 }
 
-/* Game Over & Victory Overlays */
+/* Game End Modal */
 #game-end-modal {
   position: absolute;
   top: 0;
@@ -478,17 +547,17 @@ body {
 
 #game-end-modal h1 {
   font-family: 'Press Start 2P', monospace;
-  font-size: 26px;
-  margin-bottom: 16px;
+  font-size: clamp(16px, 3.5vw, 26px);
+  margin-bottom: 14px;
   color: #ffffff;
 }
 
 #game-end-modal p {
-  font-size: 15px;
-  max-width: 500px;
+  font-size: clamp(12px, 1.8vw, 15px);
+  max-width: 480px;
   line-height: 1.6;
   color: #999999;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .btn-primary {
@@ -497,21 +566,86 @@ body {
   border: 1px solid #ffffff;
   font-family: 'Fira Code', monospace;
   font-weight: 700;
-  font-size: 13px;
-  padding: 12px 28px;
+  font-size: clamp(11px, 1.5vw, 13px);
+  padding: 10px 24px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.btn-primary:hover {
+.btn-primary:hover, .btn-primary:active {
   background: #000000;
   color: #ffffff;
   border-color: #ffffff;
-  transform: translateY(-2px);
 }
 
 /* Low Sanity Distortion Effect in B&W */
 body.low-sanity #webgl-canvas {
   filter: contrast(2) invert(0.2);
+}
+
+/* =========================================================================
+   RESPONSIVE BREAKPOINTS (Tablets & Phones)
+   ========================================================================= */
+
+/* Tablets & Small Laptops (max-width: 900px) */
+@media (max-width: 900px) {
+  .top-bar {
+    justify-content: center;
+    gap: 10px;
+  }
+  .stats-meters {
+    justify-content: center;
+  }
+  .controls-hint {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+}
+
+/* Mobile Phones (max-width: 680px) */
+@media (max-width: 680px) {
+  .top-bar {
+    padding: 8px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .dev-profile {
+    justify-content: space-between;
+  }
+
+  .stats-meters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .meter-container {
+    min-width: 0;
+  }
+
+  .items-hud {
+    justify-content: space-between;
+  }
+
+  .skills-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-hint {
+    display: none; /* Replaced by touch D-pad on mobile */
+  }
+
+  #mobile-dpad {
+    display: grid;
+  }
+}
+
+/* Very Small Phones (max-width: 380px) */
+@media (max-width: 380px) {
+  .stats-meters {
+    grid-template-columns: 1fr;
+  }
 }
