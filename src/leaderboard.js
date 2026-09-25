@@ -139,7 +139,7 @@ window.createLeaderboard = function (formatStopwatch) {
         <td style="font-weight:700; color:${idx === 0 ? '#facc15' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#b45309' : '#ffffff'};">#${idx + 1}</td>
         <td style="font-weight:600; color:#ffffff;">${rec.name}</td>
         <td style="font-family:'Fira Code'; font-weight:700;">⏱️ ${rec.timeFormatted}</td>
-        <td>⚡ ${rec.redBulls} cans</td>
+        <td> ${rec.redBulls} cans</td>
         <td style="color:#777777;">${rec.date || '-'}</td>
       `;
       tbody.appendChild(tr);
