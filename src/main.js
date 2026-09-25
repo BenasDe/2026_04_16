@@ -207,7 +207,7 @@ function triggerVictory() {
   window.sfx.victory();
   const modal = document.getElementById('game-end-modal');
   document.getElementById('end-title').innerText = '🏆 GOLD LAYER CERTIFIED!';
-  document.getElementById('end-title').style.color = '#7ee787';
+  document.getElementById('end-title').style.color = '#ffffff';
   document.getElementById('end-desc').innerText =
     'Outstanding PySpark mastery! All anomalies cleansed, nulls imputed, and duplicate records neutralized. Clean Gold tables delivered to production!';
   modal.style.display = 'flex';
@@ -237,6 +237,45 @@ window.addEventListener('keydown', e => {
   }
   if (e.code === 'KeyC') {
     drinkCoffee();
+  }
+});
+
+// Tile Hover Highlighting for intuitive cursor feedback
+let hoveredTile = null;
+
+window.addEventListener('pointermove', e => {
+  if (gameState.inBattle || gameState.gameOver || e.target.closest('#ui-layer') || e.target.closest('#battle-modal')) {
+    if (hoveredTile) {
+      hoveredTile.userData.material.color.setHex(hoveredTile.userData.baseColor);
+      hoveredTile = null;
+    }
+    return;
+  }
+
+  engine.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  engine.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  engine.raycaster.setFromCamera(engine.mouse, engine.camera);
+
+  const intersects = engine.raycaster.intersectObjects(engine.tileMeshes);
+  if (intersects.length > 0) {
+    const tile = intersects[0].object;
+    if (hoveredTile && hoveredTile !== tile) {
+      hoveredTile.userData.material.color.setHex(hoveredTile.userData.baseColor);
+    }
+    hoveredTile = tile;
+    const dx = tile.userData.gridX - gameState.player.gridX;
+    const dy = tile.userData.gridY - gameState.player.gridY;
+    const isAdjacent = Math.abs(dx) + Math.abs(dy) === 1;
+
+    // Highlight adjacent tiles brighter
+    if (isAdjacent) {
+      tile.userData.material.color.setHex(0x404856);
+    } else {
+      tile.userData.material.color.setHex(0x282e38);
+    }
+  } else if (hoveredTile) {
+    hoveredTile.userData.material.color.setHex(hoveredTile.userData.baseColor);
+    hoveredTile = null;
   }
 });
 
