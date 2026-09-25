@@ -48,11 +48,11 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(560px, 78vw);
-  max-height: 65vh;
+  width: min(880px, 92vw);
+  max-height: 80vh;
   object-fit: contain;
-  opacity: 0.32;
-  filter: invert(1) brightness(1.4) contrast(1.1);
+  opacity: 0.48;
+  filter: invert(1) brightness(1.6) contrast(1.15);
   pointer-events: none;
   z-index: 0;
   user-select: none;
