@@ -5,30 +5,16 @@
  */
 
 class SoundFX {
-  constructor() {
-    this.ctx = null;
-  }
+  constructor() { this.ctx = null; }
 
-  /**
-   * Lazy-initializes the Web Audio Context upon the first user interaction.
-   */
   init() {
     if (!this.ctx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AudioContext();
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
   }
 
-  /**
-   * Plays a single synthetic oscillator tone.
-   * @param {number} freq - Frequency in Hz.
-   * @param {OscillatorType} type - 'sine' | 'square' | 'sawtooth' | 'triangle'.
-   * @param {number} duration - Duration in seconds.
-   * @param {number} gainVal - Volume level (0.0 to 1.0).
-   */
   playTone(freq, type = 'sine', duration = 0.1, gainVal = 0.1) {
     if (!this.ctx) return;
     try {
@@ -47,17 +33,8 @@ class SoundFX {
     }
   }
 
-  /**
-   * Player movement / grid step sound effect.
-   */
-  step() {
-    this.init();
-    this.playTone(180, 'triangle', 0.05, 0.04);
-  }
+  step() { this.init(); this.playTone(180, 'triangle', 0.05, 0.04); }
 
-  /**
-   * Arpeggiated chime for correct PySpark function execution.
-   */
   correct() {
     this.init();
     if (!this.ctx) return;
@@ -76,9 +53,6 @@ class SoundFX {
     });
   }
 
-  /**
-   * Low buzz / dissonance sound for runtime error / wrong PySpark choice.
-   */
   wrong() {
     this.init();
     if (!this.ctx) return;
@@ -97,33 +71,19 @@ class SoundFX {
     });
   }
 
-  /**
-   * Coffee sip sound for restoring Sanity and Health.
-   */
-  coffee() {
+  /** Red Bull sip sound for restoring Sanity and Health. */
+  redBull() {
     this.init();
     this.playTone(880, 'sine', 0.15, 0.1);
     setTimeout(() => this.playTone(1320, 'sine', 0.2, 0.1), 120);
   }
 
-  /**
-   * Battle encounter trigger sound.
-   */
-  encounter() {
-    this.init();
-    this.playTone(300, 'sawtooth', 0.3, 0.15);
-  }
+  encounter() { this.init(); this.playTone(300, 'sawtooth', 0.3, 0.15); }
 
-  /**
-   * Victory fanfare & celebratory confetti.
-   */
   victory() {
     this.init();
-    if (window.confetti) {
-      window.confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
-    }
+    if (window.confetti) window.confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
   }
 }
 
-// Export a singleton sound manager instance
 window.sfx = new SoundFX();
