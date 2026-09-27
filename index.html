@@ -75,24 +75,24 @@
   <div id="start-menu-modal" class="modal-backdrop">
     <div class="menu-window">
       <div class="menu-badge" data-i18n="menu_badge">HOUSTON WE HAVE DATA</div>
-      <h1 class="menu-title" data-i18n="menu_title">DUOMENŲ SRAUTO IŠGYVENIMAS</h1>
+      <h1 class="menu-title" data-i18n="menu_title">PIPELINE</h1>
       <p class="menu-subtitle" data-i18n="menu_subtitle">Nuo nulio iki produkcijos: Duomenų inžinerijos „Roguelike“</p>
 
       <div class="rules-box">
         <div class="rule-item">
-          <div data-i18n="rule_levels"><strong>3 progresiniai lygiai:</strong> Bronza (PySpark gavimas) -> Sidabras (Analitinis SQL) -> Auksas (Spark/Delta Lake optimizavimas).</div>
+          <div data-i18n="rule_levels"><strong>3  lygiai:</strong> Bronza (PySpark) -> Sidabras (SQL) -> Auksas (Spark/Delta Lake optimizavimas).</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_espresso"><strong>Išgyvenimas su espreso:</strong> Pradedate su <strong>0 espreso</strong>. Rinkite kavos puodelius žemėlapyje, kad galėtumėte atlikti skubius taisymus iškilus klaidoms.</div>
+          <div data-i18n="rule_espresso"><strong>Išgyvenimas su espreso:</strong> Pradedate su <strong>0 espreso</strong>. Rinkite kavos puodelius žemėlapyje, kad galėtumėte išgyventi radus klaidas.</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_blind"><strong>Paruošimas aklai:</strong> Kodo teisingumas patikrinamas tik vykdant <strong>PALEISTI DUOMENŲ SRAUTĄ</strong>.</div>
+          <div data-i18n="rule_blind"><strong>Paruošimas:</strong> Kodo patikrinamas vyksta tik vykdant <strong>PALEISTI DUOMENŲ SRAUTĄ</strong>.</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 espreso</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Pasibaigus kavai, įvyksta OOM lūžis.</div>
+          <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 espreso</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Pasibaigus kavai, Game Over.</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja diegimo greitį nuo paleidimo iki Aukso sertifikavimo.</div>
+          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja greitį nuo paleidimo iki 3 lygio užbaigimo.</div>
         </div>
       </div>
 
@@ -102,7 +102,7 @@
       </div>
 
       <div class="menu-actions" style="margin-top: 14px;">
-        <button id="btn-start-game" class="btn-primary btn-large" data-i18n="btn_start_run">PRADĖTI DUOMENŲ SRAUTO DIEGIMĄ</button>
+        <button id="btn-start-game" class="btn-primary btn-large" data-i18n="btn_start_run">PRADĖTI "Pipeline" DIEGIMĄ</button>
         <button id="btn-menu-leaderboard" class="btn-secondary" data-i18n="btn_view_leaderboard">ŽIŪRĖTI LYDERIŲ LENTELĘ</button>
       </div>
     </div>
@@ -168,7 +168,7 @@
   <div id="leaderboard-modal" class="modal-backdrop">
     <div class="leaderboard-window">
       <div class="leaderboard-header">
-        <h2 data-i18n="lb_title">PRODUKCIJOS DUOMENŲ SRAUTO LYDERIŲ LENTELĖ</h2>
+        <h2 data-i18n="lb_title">PRODUKCIJOS "PIPELINE" LYDERIŲ LENTELĖ</h2>
         <button id="btn-close-leaderboard" class="close-x">&times;</button>
       </div>
       <p style="font-size:12px; color:#888888; margin-bottom:12px;" data-i18n="lb_subtitle">Greičiausi inžinieriai, sėkmingai įdiegę Bronzos, Sidabro ir Aukso sluoksnius į produkciją.</p>
