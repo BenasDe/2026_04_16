@@ -34,6 +34,7 @@ Deploy data pipelines across Bronze, Silver, and Gold medallion layers. Inspect 
 - **Database:** Firebase Realtime Database (REST API)
 - **Styling:** CSS3 (modular stylesheets, responsive layout)
 - **Runtime:** Vanilla ES6 JavaScript (no bundler or build step required)
+- **Internationalization:** Bilingual support (Lithuanian by default, English toggle)
 
 ## Local Development
 

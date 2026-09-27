@@ -31,7 +31,8 @@
     gap: 6px;
   }
 
-  .items-hud .hud-badge {
+  .items-hud .hud-badge,
+  .items-hud .hud-btn {
     padding: 4px 7px;
     font-size: 10px;
   }

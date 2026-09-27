@@ -64,7 +64,12 @@ function loadLevel(levelIndex) {
   engine.setPlayerGridPosition(0, 0, gameState.gridSize);
   renderLevel(currentLevel, levelIndex);
   updateHUD();
-  showToast(`Entered ${currentLevel.name}. Collect espresso and stage queries.`);
+
+  const locLevel = window.i18n ? window.i18n.getLocalizedLevel(currentLevel) : currentLevel;
+  const enterMsg = window.i18n
+    ? window.i18n.t('toast_entered_level', { name: locLevel.name })
+    : `Entered ${currentLevel.name}. Collect espresso and stage queries.`;
+  showToast(enterMsg);
 }
 
 function movePlayer(dx, dy) {
@@ -97,7 +102,10 @@ function checkCurrentTile() {
     if (window.sfx && (window.sfx.espresso || window.sfx.redBull)) {
       (window.sfx.espresso || window.sfx.redBull).call(window.sfx);
     }
-    showToast(`Scavenged espresso (+1 hotfix fuel, total: ${gameState.espresso}).`);
+    const scavengeMsg = window.i18n
+      ? window.i18n.t('toast_scavenged_espresso', { count: gameState.espresso })
+      : `Scavenged espresso (+1 hotfix fuel, total: ${gameState.espresso}).`;
+    showToast(scavengeMsg);
     engine.removeInteractiveObject(gameState.player.gridX, gameState.player.gridY);
     updateHUD();
     return;
@@ -108,7 +116,13 @@ function checkCurrentTile() {
     const isAlreadyStaged = !!gameState.stagedTasks[cell.data.id];
 
     if (isAlreadyStaged) {
-      showToast(`Task already staged into DAG (${Object.keys(gameState.stagedTasks).length}/${currentLevel.tasks.length}).`);
+      const alreadyStagedMsg = window.i18n
+        ? window.i18n.t('toast_task_already_staged', {
+            staged: Object.keys(gameState.stagedTasks).length,
+            total: currentLevel.tasks.length
+          })
+        : `Task already staged into DAG (${Object.keys(gameState.stagedTasks).length}/${currentLevel.tasks.length}).`;
+      showToast(alreadyStagedMsg);
     } else {
       battleSystem.startBattle(cell.data, currentLevel.engine);
     }
@@ -134,9 +148,16 @@ function handleTaskStaged(task, chosenSkill) {
 
   if (stagedCount >= totalTasks) {
     if (window.sfx && window.sfx.levelClear) window.sfx.levelClear();
-    showToast('All tasks staged. Run pipeline to compile and deploy.', 3500);
+    const allStagedMsg = window.i18n
+      ? window.i18n.t('toast_all_tasks_staged')
+      : 'All tasks staged. Run pipeline to compile and deploy.';
+    showToast(allStagedMsg, 3500);
   } else {
-    showToast(`Staged query for "${task.name}" (${stagedCount}/${totalTasks}).`);
+    const locTask = window.i18n ? window.i18n.getLocalizedTask(task) : task;
+    const stagedMsg = window.i18n
+      ? window.i18n.t('toast_staged_query', { name: locTask.name, staged: stagedCount, total: totalTasks })
+      : `Staged query for "${task.name}" (${stagedCount}/${totalTasks}).`;
+    showToast(stagedMsg);
   }
 }
 
@@ -176,6 +197,10 @@ bindButtons({
 });
 
 bindGameControls({ gameState, engine, movePlayer, executePipelineRun, showToast });
+
+if (window.i18n) {
+  window.i18n.applyDOM();
+}
 
 loadLevel(0);
 setStartMenuVisible(true);

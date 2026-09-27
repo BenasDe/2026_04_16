@@ -129,8 +129,10 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
       const levels = window.GAME_LEVELS || [];
       const currentLevel = levels[gameState.levelIndex];
       const stagedCount = Object.keys(gameState.stagedTasks).length;
-      const total = currentLevel ? currentLevel.tasks.length : 5;
-      showToast(`Staged ${stagedCount}/${total} tasks. Stage all tasks to run pipeline.`);
+      const msg = window.i18n
+        ? window.i18n.t('toast_stage_all_before_run', { staged: stagedCount, total })
+        : `Staged ${stagedCount}/${total} tasks. Stage all tasks to run pipeline.`;
+      showToast(msg);
     }
   });
 

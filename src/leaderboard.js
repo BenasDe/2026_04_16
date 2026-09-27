@@ -94,10 +94,11 @@ window.createLeaderboard = function (formatStopwatch) {
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
 
+    const connectingMsg = window.i18n ? window.i18n.t('lb_connecting') : 'Connecting to leaderboard...';
     tbody.innerHTML = `
       <tr>
         <td colspan="5" style="text-align: center; color: #888888; padding: 22px 12px; font-family: 'Fira Code', monospace;">
-          Connecting to leaderboard...
+          ${connectingMsg}
         </td>
       </tr>
     `;
@@ -106,10 +107,13 @@ window.createLeaderboard = function (formatStopwatch) {
     tbody.innerHTML = '';
 
     if (records.length === 0) {
+      const emptyMsg = window.i18n
+        ? window.i18n.t('lb_empty')
+        : 'No completed pipeline runs yet. Deploy Bronze, Silver, and Gold to claim #1.';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td colspan="5" style="text-align: center; color: #777777; padding: 28px 12px; font-style: italic; font-family: 'Fira Code', monospace;">
-          No completed pipeline runs yet. Deploy Bronze, Silver, and Gold to claim #1.
+          ${emptyMsg}
         </td>
       `;
       tbody.appendChild(tr);
@@ -119,11 +123,12 @@ window.createLeaderboard = function (formatStopwatch) {
     records.forEach((rec, idx) => {
       const tr = document.createElement('tr');
       const cups = getFuel(rec);
+      const cupsStr = window.i18n ? window.i18n.t('lb_cups', { count: cups }) : `${cups} cups`;
       tr.innerHTML = `
         <td style="font-weight:700; color:${idx === 0 ? '#facc15' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#b45309' : '#ffffff'};">#${idx + 1}</td>
         <td style="font-weight:600; color:#ffffff;">${rec.name}</td>
         <td style="font-family:'Fira Code'; font-weight:700;">${rec.timeFormatted}</td>
-        <td>${cups} cups</td>
+        <td>${cupsStr}</td>
         <td style="color:#777777;">${rec.date || '-'}</td>
       `;
       tbody.appendChild(tr);
@@ -146,5 +151,21 @@ window.createLeaderboard = function (formatStopwatch) {
     renderLeaderboard();
   }
 
-  return { saveLeaderboardRecord, openLeaderboard, closeLeaderboard, clearLocalLeaderboard };
+  if (window.i18n) {
+    window.i18n.onLanguageChange(() => {
+      const modal = document.getElementById('leaderboard-modal');
+      if (modal && modal.style.display === 'flex') {
+        renderLeaderboard();
+      }
+    });
+  }
+
+  return {
+    getLeaderboard,
+    saveLeaderboardRecord,
+    renderLeaderboard,
+    openLeaderboard,
+    closeLeaderboard,
+    clearLocalLeaderboard
+  };
 };

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lt">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PySpark Survivor: Data Lake Chronicles</title>
+  <title>PySpark Survivor: Duomenų ežero kronikos</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,41 +28,42 @@
       <div class="dev-profile">
         <div class="avatar-badge" id="dev-avatar">DE</div>
         <div class="dev-info">
-          <h2><span class="dev-rank" id="dev-rank">LEVEL 1</span> <span id="pipeline-status">Bronze Layer (Ingestion)</span></h2>
+          <h2><span class="dev-rank" id="dev-rank">1 LYGIS</span> <span id="pipeline-status">Bronzos sluoksnis (Neapdorotų duomenų gavimas)</span></h2>
           <div style="font-size: 11px; color: #888888; font-family: 'Fira Code', monospace;">
-            Engine: <span id="pipeline-engine-text" style="color: #ffffff;">PySpark 3.5.0</span>
+            <span data-i18n="hud_engine">Variklis:</span> <span id="pipeline-engine-text" style="color: #ffffff;">PySpark 3.5.0</span>
           </div>
         </div>
       </div>
 
       <div class="items-hud">
-        <div class="hud-badge timer-badge" title="Elapsed Time">
+        <div class="hud-badge timer-badge" data-i18n-title="hud_timer_title" title="Praėjęs laikas">
           <span id="timer-display">00:00.00</span>
         </div>
-        <div class="hud-badge espresso-badge" title="Espresso available for Hotfixes">
-          <span>Espresso:</span>
+        <div class="hud-badge espresso-badge" data-i18n-title="hud_espresso_title" title="Espreso skubiems klaidų taisymams">
+          <span data-i18n="hud_espresso">Espreso:</span>
           <strong id="espresso-count" style="color: #ffffff;">0</strong>
         </div>
-        <div class="hud-badge staged-badge" title="Anomalies Staged into DAG">
-          <span>Staged:</span>
+        <div class="hud-badge staged-badge" data-i18n-title="hud_staged_title" title="Anomalijos įtrauktos į DAG">
+          <span data-i18n="hud_staged">Paruošta:</span>
           <strong id="staged-count" style="color: #ffffff;">0 / 5</strong>
         </div>
-        <button id="btn-run-pipeline" class="btn-run-pipeline" disabled title="Validate and deploy all staged transformations">
-          RUN PIPELINE
+        <button id="btn-run-pipeline" class="btn-run-pipeline" disabled data-i18n="btn_run_pipeline" data-i18n-title="btn_run_pipeline_title" title="Patikrinti ir įdiegti visas paruoštas transformacijas">
+          PALEISTI DUOMENŲ SRAUTĄ
         </button>
-        <button type="button" class="hud-btn" data-music-toggle aria-pressed="true">Music: On</button>
-        <button class="hud-btn" id="btn-open-leaderboard" title="View Global Leaderboard">Leaderboard</button>
+        <button type="button" class="hud-btn" data-music-toggle aria-pressed="true" data-i18n="music_on">Muzika: Įjungta</button>
+        <button type="button" class="hud-btn" id="btn-lang-toggle" data-lang-label title="Pakeisti kalbą į anglų (EN)">LT</button>
+        <button class="hud-btn" id="btn-open-leaderboard" data-i18n="btn_leaderboard" data-i18n-title="btn_leaderboard_title" title="Žiūrėti globalią lyderių lentelę">Lyderių lentelė</button>
       </div>
     </header>
 
-    <aside class="controls-hint">
-      Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Click adjacent tiles | Collect espresso cups to survive deployment bugs
+    <aside class="controls-hint" data-i18n="controls_hint">
+      Judėjimas: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> arba <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Spustelėkite gretimus laukelius | Rinkite espreso puodelius klaidų taisymui
     </aside>
 
     <div id="mobile-dpad">
       <button class="dpad-btn" id="dpad-up" aria-label="Up">▲</button>
       <button class="dpad-btn" id="dpad-left" aria-label="Left">◀</button>
-      <button class="dpad-btn" id="dpad-center-run" aria-label="Run Pipeline">RUN</button>
+      <button class="dpad-btn" id="dpad-center-run" data-i18n="dpad_run" aria-label="Run Pipeline">LEISTI</button>
       <button class="dpad-btn" id="dpad-right" aria-label="Right">▶</button>
       <button class="dpad-btn" id="dpad-down" aria-label="Down">▼</button>
     </div>
@@ -73,33 +74,36 @@
   <!-- Start Menu -->
   <div id="start-menu-modal" class="modal-backdrop">
     <div class="menu-window">
-      <div class="menu-badge">HOUSTON WE HAVE DATA</div>
-      <h1 class="menu-title">DATA PIPELINE SURVIVOR</h1>
-      <p class="menu-subtitle">Zero to Production: A Data Engineering Roguelike</p>
+      <div class="menu-badge" data-i18n="menu_badge">HOUSTON WE HAVE DATA</div>
+      <h1 class="menu-title" data-i18n="menu_title">DUOMENŲ SRAUTO IŠGYVENIMAS</h1>
+      <p class="menu-subtitle" data-i18n="menu_subtitle">Nuo nulio iki produkcijos: Duomenų inžinerijos „Roguelike“</p>
 
       <div class="rules-box">
         <div class="rule-item">
-          <div><strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) -> Silver (Analytical SQL) -> Gold (Spark/Delta Lake Optimization).</div>
+          <div data-i18n="rule_levels"><strong>3 progresiniai lygiai:</strong> Bronza (PySpark gavimas) -> Sidabras (Analitinis SQL) -> Auksas (Spark/Delta Lake optimizavimas).</div>
         </div>
         <div class="rule-item">
-          <div><strong>Espresso Survival:</strong> You start with <strong>0 Espressos</strong>. Collect coffee cups across the grid to fuel hotfixes when bugs occur.</div>
+          <div data-i18n="rule_espresso"><strong>Išgyvenimas su espreso:</strong> Pradedate su <strong>0 espreso</strong>. Rinkite kavos puodelius žemėlapyje, kad galėtumėte atlikti skubius taisymus iškilus klaidoms.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Blind Staging:</strong> Code correctness is validated only when executing <strong>RUN PIPELINE</strong>.</div>
+          <div data-i18n="rule_blind"><strong>Paruošimas aklai:</strong> Kodo teisingumas patikrinamas tik vykdant <strong>PALEISTI DUOMENŲ SRAUTĄ</strong>.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Hotfixes & Penalties:</strong> Each bug consumes <strong>1 Espresso</strong> and adds <strong>+60s penalty</strong> to your final time. Running out of coffee causes an OOM crash.</div>
+          <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 espreso</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Pasibaigus kavai, įvyksta OOM lūžis.</div>
         </div>
         <div class="rule-item">
-          <div><strong>Leaderboard:</strong> The timer tracks deployment speed from launch to Gold certification.</div>
+          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja diegimo greitį nuo paleidimo iki Aukso sertifikavimo.</div>
         </div>
       </div>
 
-      <button type="button" class="btn-secondary" data-music-toggle aria-pressed="true">Music: On</button>
+      <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+        <button type="button" class="btn-secondary" data-music-toggle aria-pressed="true" data-i18n="music_on">Muzika: Įjungta</button>
+        <button type="button" class="btn-secondary" id="btn-menu-lang-toggle" data-lang-label title="Pakeisti kalbą į anglų (EN)">LT</button>
+      </div>
 
       <div class="menu-actions" style="margin-top: 14px;">
-        <button id="btn-start-game" class="btn-primary btn-large">START PIPELINE RUN</button>
-        <button id="btn-menu-leaderboard" class="btn-secondary">VIEW LEADERBOARD</button>
+        <button id="btn-start-game" class="btn-primary btn-large" data-i18n="btn_start_run">PRADĖTI DUOMENŲ SRAUTO DIEGIMĄ</button>
+        <button id="btn-menu-leaderboard" class="btn-secondary" data-i18n="btn_view_leaderboard">ŽIŪRĖTI LYDERIŲ LENTELĘ</button>
       </div>
     </div>
   </div>
@@ -109,31 +113,31 @@
     <div class="battle-window">
       <div class="battle-header">
         <div class="battle-title">
-          <span>ANOMALY INSPECTOR</span>
+          <span data-i18n="anomaly_inspector_title">ANOMALIJŲ INSPEKTORIUS</span>
         </div>
         <div style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;" id="battle-engine-badge">
-          ENGINE: PySpark 3.5.0
+          VARIKLIS: PySpark 3.5.0
         </div>
       </div>
 
       <div class="battle-content">
         <div class="anomaly-card">
           <div class="anomaly-top">
-            <div class="anomaly-name" id="enemy-name">ANOMALY</div>
+            <div class="anomaly-name" id="enemy-name" data-i18n="anomaly_default_title">ANOMALIJA</div>
           </div>
-          <div class="anomaly-desc" id="enemy-desc">
-            Analyzing incoming partition telemetry...
+          <div class="anomaly-desc" id="enemy-desc" data-i18n="anomaly_default_desc">
+            Analizuojama gaunama skaidinių telemetrija...
           </div>
           <div id="table-preview-container"></div>
         </div>
 
         <div class="skills-section">
-          <div class="skills-header">Select transformation to stage into DAG:</div>
+          <div class="skills-header" data-i18n="skills_header">Pasirinkite transformaciją, kurią norite įtraukti į DAG:</div>
           <div class="skills-grid" id="skills-grid"></div>
         </div>
 
         <div class="battle-log" id="battle-log">
-          <div>[SYSTEM] Ready for staging. Select the transformation to commit to the pipeline DAG.</div>
+          <div data-i18n="battle_system_ready">[SISTEMA] Pasiruošta. Pasirinkite transformaciją, kurią norite įtraukti į duomenų srauto DAG.</div>
         </div>
       </div>
     </div>
@@ -144,10 +148,10 @@
     <div class="diagnostic-window">
       <div class="diagnostic-header">
         <div class="diagnostic-title">
-          <span>PIPELINE COMPILATION & EXECUTION</span>
+          <span data-i18n="diag_title">DUOMENŲ SRAUTO KOMPILIAVIMAS IR VYKDYMAS</span>
         </div>
         <div id="diagnostic-level-label" style="font-family: 'Fira Code', monospace; font-size: 11px; color: #ffffff;">
-          TARGET: BRONZE_INGESTION_DAG
+          TIKSLAS: BRONZE_INGESTION_DAG
         </div>
       </div>
 
@@ -155,7 +159,7 @@
 
       <div class="diagnostic-footer" id="diagnostic-footer" style="display:none;">
         <div id="diagnostic-status-summary" class="diagnostic-summary"></div>
-        <button id="btn-diagnostic-action" class="btn-primary">CONTINUE</button>
+        <button id="btn-diagnostic-action" class="btn-primary" data-i18n="btn_continue">TĘSTI</button>
       </div>
     </div>
   </div>
@@ -164,20 +168,20 @@
   <div id="leaderboard-modal" class="modal-backdrop">
     <div class="leaderboard-window">
       <div class="leaderboard-header">
-        <h2>PRODUCTION PIPELINE LEADERBOARD</h2>
+        <h2 data-i18n="lb_title">PRODUKCIJOS DUOMENŲ SRAUTO LYDERIŲ LENTELĖ</h2>
         <button id="btn-close-leaderboard" class="close-x">&times;</button>
       </div>
-      <p style="font-size:12px; color:#888888; margin-bottom:12px;">Fastest engineers to deploy Bronze, Silver, and Gold layers to production.</p>
+      <p style="font-size:12px; color:#888888; margin-bottom:12px;" data-i18n="lb_subtitle">Greičiausi inžinieriai, sėkmingai įdiegę Bronzos, Sidabro ir Aukso sluoksnius į produkciją.</p>
       
       <div class="leaderboard-table-container">
         <table class="leaderboard-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>ENGINEER</th>
-              <th>TIME</th>
-              <th>REMAINING ESPRESSO</th>
-              <th>DATE</th>
+              <th data-i18n="lb_th_rank">#</th>
+              <th data-i18n="lb_th_engineer">INŽINIERIUS</th>
+              <th data-i18n="lb_th_time">LAIKAS</th>
+              <th data-i18n="lb_th_espresso">LIKĘS ESPRESO</th>
+              <th data-i18n="lb_th_date">DATA</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body"></tbody>
@@ -185,8 +189,8 @@
       </div>
 
       <div class="leaderboard-actions">
-        <button id="btn-clear-leaderboard" class="btn-text">Clear Local Records</button>
-        <button id="btn-close-leaderboard-btn" class="btn-secondary">CLOSE</button>
+        <button id="btn-clear-leaderboard" class="btn-text" data-i18n="btn_clear_lb">Išvalyti vietinius įrašus</button>
+        <button id="btn-close-leaderboard-btn" class="btn-secondary" data-i18n="btn_close">UŽDARYTI</button>
       </div>
     </div>
   </div>
@@ -194,27 +198,29 @@
   <!-- Game Over / Victory Modal -->
   <div id="game-end-modal" class="modal-backdrop">
     <div class="end-window">
-      <h1 id="end-title" style="color: #ffffff;">OUT OF MEMORY (OOM)</h1>
-      <p id="end-desc">Your pipeline crashed under unresolved data anomalies.</p>
+      <h1 id="end-title" style="color: #ffffff;" data-i18n="game_over_title">TRŪKSTA ATMINTIES (OOM)</h1>
+      <p id="end-desc" data-i18n="game_over_desc">Jūsų duomenų srautui pritrūko espreso bandant ištaisyti klaidingas užklausas. Pasiektas aklavietės taškas.</p>
       
       <div id="victory-score-entry" style="display: none; margin-bottom: 20px;">
         <div class="stat-highlight" style="flex-direction: column; gap: 4px;">
           <div style="display: flex; justify-content: space-around; width: 100%;">
-            <div>Final Time: <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
-            <div>Espresso Preserved: <strong id="victory-espresso-val" style="color:#ffffff;">0</strong></div>
+            <div><span data-i18n="victory_final_time">Galutinis laikas:</span> <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
+            <div><span data-i18n="victory_espresso_preserved">Išsaugotas espreso:</span> <strong id="victory-espresso-val" style="color:#ffffff;">0</strong></div>
           </div>
           <div id="victory-audit-breakdown" style="font-size:11px; color:#888888; border-top:1px solid #222; padding-top:4px; margin-top:2px;"></div>
         </div>
-        <label for="player-name-input" style="font-family:'Fira Code', monospace; font-size:12px; display:block; margin: 12px 0 6px;">ENTER ENGINEER CALLSIGN:</label>
-        <input type="text" id="player-name-input" maxlength="15" value="DE_HERO" class="player-input">
-        <button class="btn-primary" id="btn-save-score" style="margin-top:10px;">SUBMIT SCORE</button>
+        <label for="player-name-input" style="font-family:'Fira Code', monospace; font-size:12px; display:block; margin: 12px 0 6px;" data-i18n="callsign_label">ĮVESKITE INŽINIERIAUS ŠAUKINĮ:</label>
+        <input type="text" id="player-name-input" maxlength="15" value="DE_HEROJUS" class="player-input">
+        <button class="btn-primary" id="btn-save-score" style="margin-top:10px;" data-i18n="btn_submit_score">PATEIKTI REZULTATĄ</button>
       </div>
 
-      <button class="btn-secondary" id="btn-restart">PLAY AGAIN</button>
+      <button class="btn-secondary" id="btn-restart" data-i18n="btn_play_again">ŽAISTI DAR KARTĄ</button>
     </div>
   </div>
 
   <!-- Scripts -->
+  <script src="src/i18n-tasks.js"></script>
+  <script src="src/i18n.js"></script>
   <script src="src/utils.js"></script>
   <script src="src/audio.js"></script>
   <script src="src/music.js"></script>

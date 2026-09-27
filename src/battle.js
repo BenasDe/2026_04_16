@@ -19,16 +19,23 @@ class BattleSystem {
 
     window.sfx.encounter();
 
-    this.enemyNameEl.innerText = taskData.name;
-    this.enemyDescEl.innerText = taskData.desc;
+    const locTask = window.i18n ? window.i18n.getLocalizedTask(taskData) : taskData;
+
+    this.enemyNameEl.innerText = locTask.name;
+    this.enemyDescEl.innerText = locTask.desc;
     if (this.engineBadgeEl) {
-      this.engineBadgeEl.innerText = `ENGINE: ${engineName}`;
+      this.engineBadgeEl.innerText = window.i18n
+        ? window.i18n.t('battle_engine', { engine: engineName })
+        : `ENGINE: ${engineName}`;
     }
 
-    this.renderCorruptedTable(taskData);
-    this.renderSkillCards(taskData);
+    this.renderCorruptedTable(locTask);
+    this.renderSkillCards(locTask);
 
-    this.battleLog.innerHTML = `<div>[READY] Inspect records and commit transformation logic to the DAG.</div>`;
+    const readyMsg = window.i18n
+      ? window.i18n.t('battle_ready')
+      : '[READY] Inspect records and commit transformation logic to the DAG.';
+    this.battleLog.innerHTML = `<div>${readyMsg}</div>`;
     this.modal.style.display = 'flex';
   }
 
@@ -91,8 +98,12 @@ class BattleSystem {
 
     window.sfx.stageTask();
 
+    const stagedLog = window.i18n
+      ? window.i18n.t('battle_staged')
+      : "[STAGED] Logic committed to DAG (validation deferred to 'Run Pipeline').";
+
     this.battleLog.innerHTML =
-      `<div style="color:#ffffff; font-weight:700;">[STAGED] Logic committed to DAG (validation deferred to 'Run Pipeline').</div>` +
+      `<div style="color:#ffffff; font-weight:700;">${stagedLog}</div>` +
       this.battleLog.innerHTML;
 
     setTimeout(() => {

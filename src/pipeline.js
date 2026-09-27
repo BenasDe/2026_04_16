@@ -7,7 +7,10 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
     const totalTasks = currentLevel.tasks.length;
     const stagedCount = Object.keys(gameState.stagedTasks).length;
     if (stagedCount < totalTasks) {
-      showToast(`Stage all ${totalTasks} tasks before running the pipeline (${stagedCount}/${totalTasks} staged).`);
+      const msg = window.i18n
+        ? window.i18n.t('toast_stage_all_before_run', { staged: stagedCount, total: totalTasks })
+        : `Stage all ${totalTasks} tasks before running the pipeline (${stagedCount}/${totalTasks} staged).`;
+      showToast(msg);
       return;
     }
 
@@ -21,14 +24,25 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
     const actionBtn = document.getElementById('btn-diagnostic-action');
     const targetLabel = document.getElementById('diagnostic-level-label');
 
-    if (targetLabel) targetLabel.innerText = `TARGET: ${currentLevel.name.toUpperCase().replace(/\s+/g, '_')}_DAG`;
+    const locLevel = window.i18n ? window.i18n.getLocalizedLevel(currentLevel) : currentLevel;
+    if (targetLabel) {
+      const targetSlug = `${locLevel.name.toUpperCase().replace(/\s+/g, '_')}_DAG`;
+      targetLabel.innerText = window.i18n ? window.i18n.t('diag_target', { target: targetSlug }) : `TARGET: ${targetSlug}`;
+    }
     terminal.innerHTML = '';
     footer.style.display = 'none';
     modal.style.display = 'flex';
 
-    appendDiagLine('diag-info', `[INIT] Booting compilation engine (${currentLevel.engine})...`);
+    const initMsg = window.i18n
+      ? window.i18n.t('diag_init', { engine: currentLevel.engine })
+      : `[INIT] Booting compilation engine (${currentLevel.engine})...`;
+    appendDiagLine('diag-info', initMsg);
     await delay(400);
-    appendDiagLine('diag-info', `[DAG] Resolving dependencies for ${currentLevel.tasks.length} staged nodes...`);
+
+    const resolvingMsg = window.i18n
+      ? window.i18n.t('diag_dag_resolving', { count: currentLevel.tasks.length })
+      : `[DAG] Resolving dependencies for ${currentLevel.tasks.length} staged nodes...`;
+    appendDiagLine('diag-info', resolvingMsg);
     await delay(500);
 
     let mistakesCount = 0;
@@ -41,14 +55,21 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
       const skill = item.chosenSkill;
       const isCorrect = !!(skill && (skill.correct === true || skill.isCorrect === true));
 
-      appendDiagLine('diag-info', `--- [NODE ${i + 1}/${stagedList.length}] Checking "${task.name}"...`);
+      const locTask = window.i18n ? window.i18n.getLocalizedTask(task) : task;
+      const locSkill = locTask.skills.find(s => s.code === skill.code) || skill;
+
+      const checkingMsg = window.i18n
+        ? window.i18n.t('diag_checking_node', { current: i + 1, total: stagedList.length, name: locTask.name })
+        : `--- [NODE ${i + 1}/${stagedList.length}] Checking "${task.name}"...`;
+      appendDiagLine('diag-info', checkingMsg);
       if (window.sfx && window.sfx.pipelineBeep) window.sfx.pipelineBeep();
       await delay(450);
 
       if (isCorrect) {
-        appendDiagLine('diag-pass', `  [PASS] Logic compiled cleanly.`);
-        if (skill && skill.explain) {
-          appendDiagLine('diag-info', `    ${skill.explain}`);
+        const passMsg = window.i18n ? window.i18n.t('diag_pass') : `  [PASS] Logic compiled cleanly.`;
+        appendDiagLine('diag-pass', passMsg);
+        if (locSkill && locSkill.explain) {
+          appendDiagLine('diag-info', `    ${locSkill.explain}`);
         }
       } else {
         mistakesCount++;
@@ -56,24 +77,37 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
         if (gameState.stats) gameState.stats.totalMistakes += 1;
         addTimerPenalty(60000);
         if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
-        appendDiagLine('diag-warn', `  [FAIL] Bug detected in query logic. Hotfix required.`);
-        if (skill && skill.explain) {
-          appendDiagLine('diag-info', `    Issue: ${skill.explain}`);
+
+        const failMsg = window.i18n ? window.i18n.t('diag_fail') : `  [FAIL] Bug detected in query logic. Hotfix required.`;
+        appendDiagLine('diag-warn', failMsg);
+        if (locSkill && locSkill.explain) {
+          const issueMsg = window.i18n ? window.i18n.t('diag_issue', { explain: locSkill.explain }) : `    Issue: ${locSkill.explain}`;
+          appendDiagLine('diag-info', issueMsg);
         }
-        appendDiagLine('diag-warn', `  [HOTFIX] -1 Espresso consumed (+60s penalty). Remaining: ${gameState.espresso}`);
+        const hotfixMsg = window.i18n
+          ? window.i18n.t('diag_hotfix', { remaining: gameState.espresso })
+          : `  [HOTFIX] -1 Espresso consumed (+60s penalty). Remaining: ${gameState.espresso}`;
+        appendDiagLine('diag-warn', hotfixMsg);
         updateHUD();
       }
       await delay(350);
     }
 
     await delay(400);
-    appendDiagLine('diag-info', `[AUDIT] Starting Fuel: ${startLevelFuel} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.espresso}`);
+    const auditMsg = window.i18n
+      ? window.i18n.t('diag_audit', { start: startLevelFuel, mistakes: mistakesCount, penalty: mistakesCount * 60, remaining: gameState.espresso })
+      : `[AUDIT] Starting Fuel: ${startLevelFuel} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.espresso}`;
+    appendDiagLine('diag-info', auditMsg);
 
     if (gameState.espresso < 0) {
       if (window.sfx && window.sfx.pipelineCrash) window.sfx.pipelineCrash();
-      appendDiagLine('diag-fail', `[CRITICAL] Out of memory (OOM). Insufficient Espresso to resolve bugs.`);
-      summaryEl.innerHTML = `<span style="color:#ef4444;">STATUS: FAILED (OOM) | Espresso: 0</span>`;
-      actionBtn.innerText = 'ABORT & RESTART';
+      const critMsg = window.i18n
+        ? window.i18n.t('diag_critical_oom')
+        : `[CRITICAL] Out of memory (OOM). Insufficient Espresso to resolve bugs.`;
+      appendDiagLine('diag-fail', critMsg);
+      const failStatus = window.i18n ? window.i18n.t('status_failed_oom') : 'STATUS: FAILED (OOM) | Espresso: 0';
+      summaryEl.innerHTML = `<span style="color:#ef4444;">${failStatus}</span>`;
+      actionBtn.innerText = window.i18n ? window.i18n.t('btn_abort_restart') : 'ABORT & RESTART';
       actionBtn.onclick = () => {
         actionBtn.onclick = null;
         modal.style.display = 'none';
@@ -83,12 +117,23 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
       footer.style.display = 'flex';
     } else {
       if (window.sfx && window.sfx.levelClear) window.sfx.levelClear();
-      appendDiagLine('diag-pass', `[DEPLOYED] Pipeline completed validation and reached target tables.`);
-      appendDiagLine('diag-info', `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Espresso: ${gameState.espresso}`);
+      const deployedMsg = window.i18n
+        ? window.i18n.t('diag_deployed')
+        : `[DEPLOYED] Pipeline completed validation and reached target tables.`;
+      appendDiagLine('diag-pass', deployedMsg);
+      const statsMsg = window.i18n
+        ? window.i18n.t('diag_stats', { mistakes: mistakesCount, remaining: gameState.espresso })
+        : `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Espresso: ${gameState.espresso}`;
+      appendDiagLine('diag-info', statsMsg);
 
       const isLastLevel = gameState.levelIndex >= levels.length - 1;
-      summaryEl.innerHTML = `<span style="color:#4ade80;">STATUS: DEPLOYED SUCCESS | Surviving Espresso: ${gameState.espresso}</span>`;
-      actionBtn.innerText = isLastLevel ? 'CLAIM PRODUCTION VICTORY' : 'NEXT LEVEL PIPELINE';
+      const successStatus = window.i18n
+        ? window.i18n.t('status_deployed_success', { remaining: gameState.espresso })
+        : `STATUS: DEPLOYED SUCCESS | Surviving Espresso: ${gameState.espresso}`;
+      summaryEl.innerHTML = `<span style="color:#4ade80;">${successStatus}</span>`;
+      actionBtn.innerText = isLastLevel
+        ? (window.i18n ? window.i18n.t('btn_claim_victory') : 'CLAIM PRODUCTION VICTORY')
+        : (window.i18n ? window.i18n.t('btn_next_level') : 'NEXT LEVEL PIPELINE');
 
       actionBtn.onclick = () => {
         actionBtn.onclick = null;

@@ -1,11 +1,14 @@
 window.createGameUI = function ({ gameState, formatStopwatch }) {
   function renderLevel(currentLevel, levelIndex) {
+    const locLevel = window.i18n ? window.i18n.getLocalizedLevel(currentLevel) : currentLevel;
     const rankEl = document.getElementById('dev-rank');
     const statusEl = document.getElementById('pipeline-status');
     const engineEl = document.getElementById('pipeline-engine-text');
-    if (rankEl) rankEl.innerText = `LEVEL ${levelIndex + 1}`;
-    if (statusEl) statusEl.innerText = currentLevel.name;
-    if (engineEl) engineEl.innerText = currentLevel.engine;
+    if (rankEl) {
+      rankEl.innerText = window.i18n ? window.i18n.t('hud_level', { num: levelIndex + 1 }) : `LEVEL ${levelIndex + 1}`;
+    }
+    if (statusEl && locLevel) statusEl.innerText = locLevel.name;
+    if (engineEl && locLevel) engineEl.innerText = locLevel.engine;
 
     const btnRun = document.getElementById('btn-run-pipeline');
     if (btnRun) {
@@ -40,10 +43,17 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
 
   function showGameOver() {
     const modal = document.getElementById('game-end-modal');
-    document.getElementById('end-title').innerText = 'PIPELINE CRASHED (OOM)';
-    document.getElementById('end-title').style.color = '#ef4444';
-    document.getElementById('end-desc').innerText =
-      'Your pipeline ran out of espresso while attempting to patch faulty queries. Critical deadlock reached.';
+    const titleEl = document.getElementById('end-title');
+    const descEl = document.getElementById('end-desc');
+    if (titleEl) {
+      titleEl.innerText = window.i18n ? window.i18n.t('game_over_title') : 'PIPELINE CRASHED (OOM)';
+      titleEl.style.color = '#ef4444';
+    }
+    if (descEl) {
+      descEl.innerText = window.i18n
+        ? window.i18n.t('game_over_desc')
+        : 'Your pipeline ran out of espresso while attempting to patch faulty queries. Critical deadlock reached.';
+    }
     document.getElementById('victory-score-entry').style.display = 'none';
     modal.style.display = 'flex';
   }
@@ -55,10 +65,17 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
 
     const finalFormatted = formatStopwatch(gameState.timer.elapsedMs);
     const modal = document.getElementById('game-end-modal');
-    document.getElementById('end-title').innerText = 'GOLD PRODUCTION CERTIFIED';
-    document.getElementById('end-title').style.color = '#ffffff';
-    document.getElementById('end-desc').innerText =
-      'All 3 data pipeline layers (Bronze PySpark, Silver Analytical SQL, Gold Spark/Delta Optimization) successfully deployed to production.';
+    const titleEl = document.getElementById('end-title');
+    const descEl = document.getElementById('end-desc');
+    if (titleEl) {
+      titleEl.innerText = window.i18n ? window.i18n.t('victory_title') : 'GOLD PRODUCTION CERTIFIED';
+      titleEl.style.color = '#ffffff';
+    }
+    if (descEl) {
+      descEl.innerText = window.i18n
+        ? window.i18n.t('victory_desc')
+        : 'All 3 data pipeline layers successfully deployed to production.';
+    }
 
     const victoryEntry = document.getElementById('victory-score-entry');
     victoryEntry.style.display = 'block';
@@ -71,10 +88,17 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
       const scavenged = gameState.stats ? gameState.stats.totalScavenged : gameState.espresso;
       const mistakes = gameState.stats ? gameState.stats.totalMistakes : 0;
       const penaltySec = mistakes * 60;
+      const fuelHtml = window.i18n
+        ? window.i18n.t('victory_fuel_summary', { scavenged, mistakes, remaining: gameState.espresso })
+        : `Fuel: Scavenged <strong>${scavenged}</strong> cups - <strong>${mistakes}</strong> hotfixes = <strong>${gameState.espresso}</strong> remaining`;
+      const penaltyHtml = mistakes > 0
+        ? (window.i18n ? window.i18n.t('victory_penalty_summary', { penalty: penaltySec, mistakes }) : `Espresso Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes x 60s added)`)
+        : (window.i18n ? window.i18n.t('victory_clean_deploy') : 'Clean Deploy: Zero hotfix penalties.');
+
       auditEl.innerHTML = `
-        <div>Fuel: Scavenged <strong>${scavenged}</strong> cups - <strong>${mistakes}</strong> hotfixes = <strong>${gameState.espresso}</strong> remaining</div>
+        <div>${fuelHtml}</div>
         <div style="margin-top: 3px; color: ${mistakes > 0 ? '#facc15' : '#4ade80'};">
-          ${mistakes > 0 ? `Espresso Penalty: <strong>+${penaltySec}s</strong> (${mistakes} hotfixes x 60s added to final time)` : `Clean Deploy: Zero hotfix penalties.`}
+          ${penaltyHtml}
         </div>
       `;
     }
@@ -94,14 +118,34 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
     const musicButtons = document.querySelectorAll('[data-music-toggle]');
     const updateMusicButtons = () => {
       musicButtons.forEach(button => {
-        button.textContent = `Music: ${window.music.enabled ? 'On' : 'Off'}`;
-        button.setAttribute('aria-pressed', String(window.music.enabled));
-        button.title = window.music.enabled ? 'Turn background music off' : 'Turn background music on';
+        const on = !!window.music.enabled;
+        button.textContent = window.i18n ? window.i18n.t(on ? 'music_on' : 'music_off') : `Music: ${on ? 'On' : 'Off'}`;
+        button.setAttribute('aria-pressed', String(on));
+        button.title = window.i18n ? window.i18n.t(on ? 'music_title_on' : 'music_title_off') : (on ? 'Turn music off' : 'Turn music on');
       });
     };
     window.music.onChange = updateMusicButtons;
     musicButtons.forEach(button => button.addEventListener('click', () => window.music.toggle()));
     updateMusicButtons();
+
+    const langToggleButtons = [document.getElementById('btn-lang-toggle'), document.getElementById('btn-menu-lang-toggle')];
+    langToggleButtons.forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (window.i18n) window.i18n.toggleLanguage();
+        });
+      }
+    });
+
+    if (window.i18n) {
+      window.i18n.onLanguageChange(() => {
+        const levels = window.GAME_LEVELS || [];
+        const currentLevel = levels[gameState.levelIndex];
+        if (currentLevel) renderLevel(currentLevel, gameState.levelIndex);
+        updateMusicButtons();
+        updateHUD();
+      });
+    }
 
     document.getElementById('btn-start-game').addEventListener('click', startGame);
     document.getElementById('btn-menu-leaderboard').addEventListener('click', openLeaderboard);
@@ -110,7 +154,8 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
     document.getElementById('btn-close-leaderboard').addEventListener('click', closeLeaderboard);
     document.getElementById('btn-close-leaderboard-btn').addEventListener('click', closeLeaderboard);
     document.getElementById('btn-clear-leaderboard').addEventListener('click', () => {
-      if (confirm('Clear local leaderboard records?')) {
+      const confirmText = window.i18n ? window.i18n.t('confirm_clear_lb') : 'Clear local leaderboard records?';
+      if (confirm(confirmText)) {
         clearLocalLeaderboard();
       }
     });
@@ -131,15 +176,16 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
       const saveBtn = document.getElementById('btn-save-score');
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerText = 'PUBLISHING...';
+        saveBtn.innerText = window.i18n ? window.i18n.t('btn_publishing') : 'PUBLISHING...';
       }
       await saveLeaderboardRecord(name, gameState.timer.elapsedMs, gameState.espresso);
       document.getElementById('victory-score-entry').style.display = 'none';
       if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.innerText = 'SUBMIT SCORE';
+        saveBtn.innerText = window.i18n ? window.i18n.t('btn_submit_score') : 'SUBMIT SCORE';
       }
-      showToast('Score submitted to leaderboard.');
+      const successToast = window.i18n ? window.i18n.t('toast_score_submitted') : 'Score submitted to leaderboard.';
+      showToast(successToast);
       openLeaderboard();
     });
   }
