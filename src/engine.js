@@ -111,8 +111,8 @@ class GameEngine {
   get tileMeshes() { return this.board.tileMeshes; }
   get interactiveObjects() { return this.board.interactiveObjects; }
 
-  buildBoard(gridSize, tasks, redBullsToPlace = 2) {
-    return this.board.buildBoard(gridSize, tasks, redBullsToPlace);
+  buildBoard(gridSize, tasks, fuelToPlace = 2) {
+    return this.board.buildBoard(gridSize, tasks, fuelToPlace);
   }
 
   removeInteractiveObject(gridX, gridY) {

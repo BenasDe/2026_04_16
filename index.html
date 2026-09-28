@@ -39,9 +39,9 @@
         <div class="hud-badge timer-badge" data-i18n-title="hud_timer_title" title="Praėjęs laikas">
           <span id="timer-display">00:00.00</span>
         </div>
-        <div class="hud-badge espresso-badge" data-i18n-title="hud_espresso_title" title="Espreso skubiems klaidų taisymams">
-          <span data-i18n="hud_espresso">Espreso:</span>
-          <strong id="espresso-count" style="color: #ffffff;">0</strong>
+        <div class="hud-badge fuel-badge" data-i18n-title="hud_fuel_title" title="Kuras skubiems klaidų taisymams">
+          <span data-i18n="hud_fuel">Kuras:</span>
+          <strong id="fuel-count" style="color: #ffffff;">0</strong>
         </div>
         <div class="hud-badge staged-badge" data-i18n-title="hud_staged_title" title="Anomalijos įtrauktos į DAG">
           <span data-i18n="hud_staged">Paruošta:</span>
@@ -57,7 +57,7 @@
     </header>
 
     <aside class="controls-hint" data-i18n="controls_hint">
-      Judėjimas: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> arba <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Spustelėkite gretimus laukelius | Rinkite espreso puodelius klaidų taisymui
+      Judėjimas: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> arba <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> | Spustelėkite gretimus laukelius | Rinkite kurą klaidų taisymui
     </aside>
 
     <div id="mobile-dpad">
@@ -83,13 +83,13 @@
           <div data-i18n="rule_levels"><strong>3  lygiai:</strong> Bronza (PySpark) -> Sidabras (SQL) -> Auksas (Spark/Delta Lake optimizavimas).</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_espresso"><strong>Išgyvenimas su espreso:</strong> Pradedate su <strong>0 espreso</strong>. Rinkite kavos puodelius žemėlapyje, kad galėtumėte išgyventi radus klaidas.</div>
+          <div data-i18n="rule_fuel"><strong>Kuras klaidų taisymui:</strong> Pradedate su <strong>0 kuro vienetų</strong>. Rinkite kurą žemėlapyje, kad galėtumėte išgyventi radus klaidas.</div>
         </div>
         <div class="rule-item">
           <div data-i18n="rule_blind"><strong>Paruošimas:</strong> Kodo patikrinamas vyksta tik vykdant <strong>PALEISTI DUOMENŲ SRAUTĄ</strong>.</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 espreso</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Pasibaigus kavai, Game Over.</div>
+          <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 kuro vienetą</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Kai klaidai ištaisyti nepakanka kuro, Game Over.</div>
         </div>
         <div class="rule-item">
           <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja greitį nuo paleidimo iki 3 lygio užbaigimo.</div>
@@ -180,7 +180,7 @@
               <th data-i18n="lb_th_rank">#</th>
               <th data-i18n="lb_th_engineer">INŽINIERIUS</th>
               <th data-i18n="lb_th_time">LAIKAS</th>
-              <th data-i18n="lb_th_espresso">LIKĘS ESPRESO</th>
+              <th data-i18n="lb_th_fuel">LIKĘS KURAS</th>
               <th data-i18n="lb_th_date">DATA</th>
             </tr>
           </thead>
@@ -199,13 +199,13 @@
   <div id="game-end-modal" class="modal-backdrop">
     <div class="end-window">
       <h1 id="end-title" style="color: #ffffff;" data-i18n="game_over_title">TRŪKSTA ATMINTIES (OOM)</h1>
-      <p id="end-desc" data-i18n="game_over_desc">Jūsų duomenų srautui pritrūko espreso bandant ištaisyti klaidingas užklausas. Pasiektas aklavietės taškas.</p>
+      <p id="end-desc" data-i18n="game_over_desc">Jūsų duomenų srautui pritrūko kuro bandant ištaisyti klaidingas užklausas. Pasiektas aklavietės taškas.</p>
       
       <div id="victory-score-entry" style="display: none; margin-bottom: 20px;">
         <div class="stat-highlight" style="flex-direction: column; gap: 4px;">
           <div style="display: flex; justify-content: space-around; width: 100%;">
             <div><span data-i18n="victory_final_time">Galutinis laikas:</span> <strong id="victory-time-val" style="color:#ffffff;">00:00.00</strong></div>
-            <div><span data-i18n="victory_espresso_preserved">Išsaugotas espreso:</span> <strong id="victory-espresso-val" style="color:#ffffff;">0</strong></div>
+            <div><span data-i18n="victory_fuel_preserved">Išsaugotas kuras:</span> <strong id="victory-fuel-val" style="color:#ffffff;">0</strong></div>
           </div>
           <div id="victory-audit-breakdown" style="font-size:11px; color:#888888; border-top:1px solid #222; padding-top:4px; margin-top:2px;"></div>
         </div>
@@ -218,7 +218,9 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- Configuration and fuel definitions must precede localization and gameplay. -->
+  <script src="src/config.js"></script>
+  <script src="src/fuel.js"></script>
   <script src="src/i18n-tasks.js"></script>
   <script src="src/i18n.js"></script>
   <script src="src/utils.js"></script>

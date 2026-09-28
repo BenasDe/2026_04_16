@@ -3,8 +3,7 @@ window.GOLD_LEVEL = {
   name: "Gold Layer (Production Optimization)",
   engine: "Delta Lake & Spark Catalyst",
   description: "Optimize high-volume big data pipelines. Eliminate shuffle skews, broadcast lookup dimensions, and execute Delta Lake merges.",
-  espressoToPlace: 2,
-  redBullsToPlace: 2,
+  fuelToPlace: 2,
   tasks: [
     {
       id: "g_broadcast",

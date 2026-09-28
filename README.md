@@ -13,7 +13,7 @@ Deploy data pipelines across Bronze, Silver, and Gold medallion layers. Inspect 
 - **Bronze Layer (Raw Ingestion):** PySpark transformations covering deduplication, null imputation, regex cleansing, type casting, and string trimming.
 - **Silver Layer (Analytical SQL):** Dimensional transforms using SQL window functions (`ROW_NUMBER() OVER`), `GROUP BY ... HAVING`, `COALESCE`, anti-joins, and `CASE WHEN`.
 - **Gold Layer (Production Optimization):** Big data optimizations including broadcast hash joins, Delta Lake `MERGE INTO`, partition pruning, and key salting.
-- **Espresso Fuel & Hotfixes:** Each level contains coffee cups to collect. Unresolved query bugs consume 1 Espresso per hotfix and add a 60-second penalty to your final time. Running out of coffee causes an out-of-memory (OOM) pipeline crash.
+- **Fuel & Hotfixes:** Each level contains two fuel pickups. Each wrong answer consumes one fuel unit and adds a 60-second penalty. A negative fuel balance causes an out-of-memory (OOM) pipeline crash; exactly zero survives. Espresso cups are the default, with Red Bull cans also available.
 - **Blind Staging:** Validation happens only during pipeline execution, testing understanding of the underlying engine behavior.
 - **Global Leaderboard:** Track completion times across players using a Firebase Realtime Database backend with local storage fallback.
 
@@ -49,3 +49,46 @@ npx serve .
 ```
 
 Open `http://localhost:8000` in your browser.
+
+## Choose the fuel
+
+Change one line in `src/config.js`, then reload the page:
+
+```js
+fuelType: 'redbull'
+```
+
+Use `'espresso'` (the default) for cups, or `'redbull'` for cans. The selection
+controls the 3D pickup, LT/EN names, units, menus, HUD, diagnostics, toasts,
+victory/game-over messages, and leaderboard labels. Both models live in
+`src/fuel.js`; the espresso model is preserved and the can model is restored
+from the project's earlier implementation. Unsupported configuration values
+produce an explicit error instead of mixing two themes.
+
+Gameplay uses `gameState.fuel`, `fuelToPlace`, `type: 'fuel'`, and
+`sfx.collectFuel()`. Both drinks give one unit per pickup and use the same
+scoring rules. A new theme belongs in `src/fuel.js`: add its mesh factory and
+English/Lithuanian wording, then select its key in `src/config.js`.
+
+Leaderboard records represent the same resource regardless of the selected
+theme. The storage adapter in `src/leaderboard.js` reads `fuel`, `espresso`,
+and legacy `redBulls` counts. Writes deliberately retain the existing
+`espresso` and `redBulls` fields and payload shape so older clients and Firebase
+rules do not require a migration. These names are storage compatibility only;
+changing the selected drink does not rewrite or delete existing scores.
+
+## Fuel regression checks
+
+With Node.js 20 or newer, run from the repository root:
+
+```bash
+node --test tests/fuel.test.cjs
+```
+
+No packages need installing. Tests load scripts in HTML order and exercise both
+drinks in LT and EN, pickup placement/collection, staging, penalties, level
+progression, victory/restart, and legacy leaderboard reads/writes. The harness
+uses an in-memory DOM, deterministic clocks, mocked network/audio/rendering,
+and lightweight Three.js objects. It does not contact Firebase or replace a
+visual browser check. `THREE_TEST_MODULE` can point to a local Three.js r128
+CommonJS build to run these checks with real geometry/material constructors.

@@ -3,8 +3,7 @@ window.BRONZE_LEVEL = {
   name: "Bronze Layer (Raw Ingestion)",
   engine: "PySpark 3.5.0",
   description: "Sanitize raw ingestion tables from Kafka and landing buckets before bronze tables corrupt downstream schemas.",
-  espressoToPlace: 2,
-  redBullsToPlace: 2,
+  fuelToPlace: 2,
   tasks: [
     {
       id: "b_chimera",

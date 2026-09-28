@@ -18,7 +18,7 @@ class GameBoard {
     this.interactiveObjects = [];
   }
 
-  buildBoard(gridSize, tasks, espressoToPlace = 2) {
+  buildBoard(gridSize, tasks, fuelToPlace = 2) {
     this.clearBoard();
 
     const offset = ((gridSize - 1) * this.GRID_SPACING) / 2;
@@ -52,9 +52,9 @@ class GameBoard {
     }
 
     let coordIdx = 0;
-    for (let i = 0; i < espressoToPlace && coordIdx < candidateCoords.length; i++) {
+    for (let i = 0; i < fuelToPlace && coordIdx < candidateCoords.length; i++) {
       const c = candidateCoords[coordIdx++];
-      board[c.x][c.y].type = 'espresso';
+      board[c.x][c.y].type = 'fuel';
     }
 
     const shuffledTasks = window.Utils ? window.Utils.shuffle([...tasks]) : [...tasks].sort(() => Math.random() - 0.5);
@@ -71,7 +71,7 @@ class GameBoard {
         
         let tileColor = 0x1c2128;
         if (cell.type === 'start') tileColor = 0x30363d;
-        else if (cell.type === 'espresso' || cell.type === 'redBull') tileColor = 0x21262d;
+        else if (cell.type === 'fuel') tileColor = 0x21262d;
 
         const tileMat = new THREE.MeshStandardMaterial({
           color: tileColor,
@@ -127,81 +127,21 @@ class GameBoard {
           enemyGroup.userData = { isEnemy: true, gridX: x, gridY: y, data: cell.data, mesh: hexMesh };
           this.scene.add(enemyGroup);
           this.interactiveObjects.push(enemyGroup);
-        } else if (cell.type === 'espresso' || cell.type === 'redBull') {
-          const espressoGroup = new THREE.Group();
-          const cupMesh = this.createCoffeeCup();
-          cupMesh.position.y = 0.78;
-          espressoGroup.add(cupMesh);
+        } else if (cell.type === 'fuel') {
+          const fuelGroup = new THREE.Group();
+          const pickupMesh = window.GameFuel.createMesh();
+          pickupMesh.position.y = 0.78;
+          fuelGroup.add(pickupMesh);
 
-          espressoGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
-          espressoGroup.userData = { isEspresso: true, isRedBull: true, gridX: x, gridY: y, mesh: cupMesh };
-          this.scene.add(espressoGroup);
-          this.interactiveObjects.push(espressoGroup);
+          fuelGroup.position.set(x * this.GRID_SPACING - offset, 0, y * this.GRID_SPACING - offset);
+          fuelGroup.userData = { isFuel: true, gridX: x, gridY: y, mesh: pickupMesh };
+          this.scene.add(fuelGroup);
+          this.interactiveObjects.push(fuelGroup);
         }
       }
     }
 
     return board;
-  }
-
-  createCoffeeCup() {
-    const cupGroup = new THREE.Group();
-
-    const ceramicMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.25,
-      metalness: 0.1
-    });
-
-    // Cup body
-    const cupGeo = new THREE.CylinderGeometry(0.28, 0.2, 0.42, 24);
-    const cupMesh = new THREE.Mesh(cupGeo, ceramicMat);
-    cupMesh.castShadow = true;
-    cupGroup.add(cupMesh);
-
-    // Saucer / Plate underneath
-    const saucerGeo = new THREE.CylinderGeometry(0.44, 0.38, 0.05, 24);
-    const saucerMesh = new THREE.Mesh(saucerGeo, ceramicMat);
-    saucerMesh.position.y = -0.21;
-    saucerMesh.castShadow = true;
-    cupGroup.add(saucerMesh);
-
-    // Dark espresso coffee liquid surface
-    const coffeeMat = new THREE.MeshStandardMaterial({
-      color: 0x2b170b,
-      roughness: 0.2,
-      metalness: 0.2
-    });
-    const coffeeGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.02, 24);
-    const coffeeMesh = new THREE.Mesh(coffeeGeo, coffeeMat);
-    coffeeMesh.position.y = 0.18;
-    cupGroup.add(coffeeMesh);
-
-    // Golden crema swirl
-    const cremaMat = new THREE.MeshStandardMaterial({
-      color: 0xc89d66,
-      roughness: 0.45
-    });
-    const cremaGeo = new THREE.CircleGeometry(0.18, 16);
-    const cremaMesh = new THREE.Mesh(cremaGeo, cremaMat);
-    cremaMesh.rotation.x = -Math.PI / 2;
-    cremaMesh.position.y = 0.191;
-    cupGroup.add(cremaMesh);
-
-    // Cup handle
-    const handleGeo = new THREE.TorusGeometry(0.12, 0.035, 12, 24, Math.PI * 1.2);
-    const handleMesh = new THREE.Mesh(handleGeo, ceramicMat);
-    handleMesh.rotation.y = -Math.PI / 2;
-    handleMesh.rotation.z = Math.PI * 0.15;
-    handleMesh.position.set(0.25, 0.02, 0);
-    handleMesh.castShadow = true;
-    cupGroup.add(handleMesh);
-
-    return cupGroup;
-  }
-
-  createRedBullCan() {
-    return this.createCoffeeCup();
   }
 
   removeInteractiveObject(gridX, gridY) {

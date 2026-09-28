@@ -46,7 +46,7 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
     await delay(500);
 
     let mistakesCount = 0;
-    const startLevelFuel = gameState.espresso;
+    const startLevelFuel = gameState.fuel;
     const stagedList = Object.values(gameState.stagedTasks);
 
     for (let i = 0; i < stagedList.length; i++) {
@@ -73,7 +73,7 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
         }
       } else {
         mistakesCount++;
-        gameState.espresso -= 1;
+        gameState.fuel -= 1;
         if (gameState.stats) gameState.stats.totalMistakes += 1;
         addTimerPenalty(60000);
         if (window.sfx && window.sfx.pipelineHotfix) window.sfx.pipelineHotfix();
@@ -85,8 +85,8 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
           appendDiagLine('diag-info', issueMsg);
         }
         const hotfixMsg = window.i18n
-          ? window.i18n.t('diag_hotfix', { remaining: gameState.espresso })
-          : `  [HOTFIX] -1 Espresso consumed (+60s penalty). Remaining: ${gameState.espresso}`;
+          ? window.i18n.t('diag_hotfix', { remaining: gameState.fuel })
+          : `  [HOTFIX] -1 Fuel consumed (+60s penalty). Remaining: ${gameState.fuel}`;
         appendDiagLine('diag-warn', hotfixMsg);
         updateHUD();
       }
@@ -95,17 +95,17 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
 
     await delay(400);
     const auditMsg = window.i18n
-      ? window.i18n.t('diag_audit', { start: startLevelFuel, mistakes: mistakesCount, penalty: mistakesCount * 60, remaining: gameState.espresso })
-      : `[AUDIT] Starting Fuel: ${startLevelFuel} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.espresso}`;
+      ? window.i18n.t('diag_audit', { start: startLevelFuel, mistakes: mistakesCount, penalty: mistakesCount * 60, remaining: gameState.fuel })
+      : `[AUDIT] Starting Fuel: ${startLevelFuel} | Hotfixes: -${mistakesCount} (+${mistakesCount * 60}s penalty) | Remaining: ${gameState.fuel}`;
     appendDiagLine('diag-info', auditMsg);
 
-    if (gameState.espresso < 0) {
+    if (gameState.fuel < 0) {
       if (window.sfx && window.sfx.pipelineCrash) window.sfx.pipelineCrash();
       const critMsg = window.i18n
         ? window.i18n.t('diag_critical_oom')
-        : `[CRITICAL] Out of memory (OOM). Insufficient Espresso to resolve bugs.`;
+        : `[CRITICAL] Out of memory (OOM). Insufficient Fuel to resolve bugs.`;
       appendDiagLine('diag-fail', critMsg);
-      const failStatus = window.i18n ? window.i18n.t('status_failed_oom') : 'STATUS: FAILED (OOM) | Espresso: 0';
+      const failStatus = window.i18n ? window.i18n.t('status_failed_oom') : 'STATUS: FAILED (OOM) | Fuel: 0';
       summaryEl.innerHTML = `<span style="color:#ef4444;">${failStatus}</span>`;
       actionBtn.innerText = window.i18n ? window.i18n.t('btn_abort_restart') : 'ABORT & RESTART';
       actionBtn.onclick = () => {
@@ -122,14 +122,14 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
         : `[DEPLOYED] Pipeline completed validation and reached target tables.`;
       appendDiagLine('diag-pass', deployedMsg);
       const statsMsg = window.i18n
-        ? window.i18n.t('diag_stats', { mistakes: mistakesCount, remaining: gameState.espresso })
-        : `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Espresso: ${gameState.espresso}`;
+        ? window.i18n.t('diag_stats', { mistakes: mistakesCount, remaining: gameState.fuel })
+        : `[STATS] Bugs Hotfixed: ${mistakesCount} | Surviving Fuel: ${gameState.fuel}`;
       appendDiagLine('diag-info', statsMsg);
 
       const isLastLevel = gameState.levelIndex >= levels.length - 1;
       const successStatus = window.i18n
-        ? window.i18n.t('status_deployed_success', { remaining: gameState.espresso })
-        : `STATUS: DEPLOYED SUCCESS | Surviving Espresso: ${gameState.espresso}`;
+        ? window.i18n.t('status_deployed_success', { remaining: gameState.fuel })
+        : `STATUS: DEPLOYED SUCCESS | Surviving Fuel: ${gameState.fuel}`;
       summaryEl.innerHTML = `<span style="color:#4ade80;">${successStatus}</span>`;
       actionBtn.innerText = isLastLevel
         ? (window.i18n ? window.i18n.t('btn_claim_victory') : 'CLAIM PRODUCTION VICTORY')

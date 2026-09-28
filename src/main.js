@@ -1,8 +1,6 @@
 const gameState = {
   levelIndex: 0,
-  espresso: 0,
-  get redBulls() { return this.espresso; },
-  set redBulls(val) { this.espresso = val; },
+  fuel: 0,
   gridSize: 5,
   board: [],
   player: {
@@ -58,7 +56,7 @@ function loadLevel(levelIndex) {
   gameState.board = engine.buildBoard(
     gameState.gridSize,
     currentLevel.tasks,
-    currentLevel.espressoToPlace ?? currentLevel.redBullsToPlace ?? 2
+    currentLevel.fuelToPlace ?? 2
   );
 
   engine.setPlayerGridPosition(0, 0, gameState.gridSize);
@@ -68,7 +66,7 @@ function loadLevel(levelIndex) {
   const locLevel = window.i18n ? window.i18n.getLocalizedLevel(currentLevel) : currentLevel;
   const enterMsg = window.i18n
     ? window.i18n.t('toast_entered_level', { name: locLevel.name })
-    : `Entered ${currentLevel.name}. Collect espresso and stage queries.`;
+    : `Entered ${currentLevel.name}. Collect fuel and stage queries.`;
   showToast(enterMsg);
 }
 
@@ -95,16 +93,16 @@ function checkCurrentTile() {
   const cell = gameState.board[gameState.player.gridX][gameState.player.gridY];
   if (!cell) return;
 
-  if ((cell.type === 'espresso' || cell.type === 'redBull') && !cell.cleared) {
+  if (cell.type === 'fuel' && !cell.cleared) {
     cell.cleared = true;
-    gameState.espresso += 1;
+    gameState.fuel += 1;
     if (gameState.stats) gameState.stats.totalScavenged += 1;
-    if (window.sfx && (window.sfx.espresso || window.sfx.redBull)) {
-      (window.sfx.espresso || window.sfx.redBull).call(window.sfx);
+    if (window.sfx && window.sfx.collectFuel) {
+      window.sfx.collectFuel();
     }
     const scavengeMsg = window.i18n
-      ? window.i18n.t('toast_scavenged_espresso', { count: gameState.espresso })
-      : `Scavenged espresso (+1 hotfix fuel, total: ${gameState.espresso}).`;
+      ? window.i18n.t('toast_scavenged_fuel', { count: gameState.fuel })
+      : `Scavenged fuel (+1 hotfix fuel, total: ${gameState.fuel}).`;
     showToast(scavengeMsg);
     engine.removeInteractiveObject(gameState.player.gridX, gameState.player.gridY);
     updateHUD();
@@ -182,7 +180,7 @@ function startGame() {
   }
 
   setStartMenuVisible(false);
-  gameState.espresso = 0;
+  gameState.fuel = 0;
   gameState.stats = { totalScavenged: 0, totalMistakes: 0 };
   gameState.gameOver = false;
   gameState.pipelineRunning = false;

@@ -34,14 +34,10 @@ class SoundFX {
     this.playTone(180, 'triangle', 0.05, 0.04);
   }
 
-  espresso() {
+  collectFuel() {
     this.init();
     this.playTone(880, 'sine', 0.12, 0.12);
     setTimeout(() => this.playTone(1320, 'sine', 0.18, 0.12), 100);
-  }
-
-  redBull() {
-    this.espresso();
   }
 
   encounter() {

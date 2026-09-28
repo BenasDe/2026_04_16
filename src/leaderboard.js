@@ -2,7 +2,10 @@ window.createLeaderboard = function (formatStopwatch) {
   const FIREBASE_DB_URL = "https://pyspark-survivor-default-rtdb.europe-west1.firebasedatabase.app".replace(/\/+$/, '');
   const LEADERBOARD_KEY = 'pyspark_survivor_leaderboard';
 
-  const getFuel = (r) => r.espresso ?? r.redBulls ?? 0;
+  // Compatibility boundary: preserve the historical payload for older clients
+  // and existing Firebase rules. Gameplay and rendering use neutral fuel units.
+  const getFuel = (record) => record.fuel ?? record.espresso ?? record.redBulls ?? 0;
+  const storedFuelFields = (fuel) => ({ espresso: fuel, redBulls: fuel });
 
   async function getLeaderboard() {
     if (FIREBASE_DB_URL) {
@@ -43,7 +46,7 @@ window.createLeaderboard = function (formatStopwatch) {
     return [];
   }
 
-  async function saveLeaderboardRecord(name, timeMs, espresso) {
+  async function saveLeaderboardRecord(name, timeMs, fuel) {
     const timeFormatted = formatStopwatch(timeMs);
     const dateStr = new Date().toISOString().split('T')[0];
 
@@ -51,8 +54,7 @@ window.createLeaderboard = function (formatStopwatch) {
       name: (name || 'ANON_DE').trim().toUpperCase().substring(0, 15),
       timeMs,
       timeFormatted,
-      espresso,
-      redBulls: espresso,
+      ...storedFuelFields(fuel),
       date: dateStr,
       timestamp: Date.now()
     };
@@ -122,13 +124,13 @@ window.createLeaderboard = function (formatStopwatch) {
 
     records.forEach((rec, idx) => {
       const tr = document.createElement('tr');
-      const cups = getFuel(rec);
-      const cupsStr = window.i18n ? window.i18n.t('lb_cups', { count: cups }) : `${cups} cups`;
+      const fuel = getFuel(rec);
+      const fuelText = window.i18n ? window.i18n.t('lb_fuel_units', { count: fuel }) : `${fuel} fuel units`;
       tr.innerHTML = `
         <td style="font-weight:700; color:${idx === 0 ? '#facc15' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#b45309' : '#ffffff'};">#${idx + 1}</td>
         <td style="font-weight:600; color:#ffffff;">${rec.name}</td>
         <td style="font-family:'Fira Code'; font-weight:700;">${rec.timeFormatted}</td>
-        <td>${cupsStr}</td>
+        <td>${fuelText}</td>
         <td style="color:#777777;">${rec.date || '-'}</td>
       `;
       tbody.appendChild(tr);
