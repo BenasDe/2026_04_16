@@ -77,17 +77,19 @@ and legacy `redBulls` counts. Writes deliberately retain the existing
 rules do not require a migration. These names are storage compatibility only;
 changing the selected drink does not rewrite or delete existing scores.
 
-## Fuel regression checks
+## Regression checks
 
 With Node.js 20 or newer, run from the repository root:
 
 ```bash
-node --test tests/fuel.test.cjs
+node --test tests/fuel.test.cjs tests/controls.test.cjs
 ```
 
 No packages need installing. Tests load scripts in HTML order and exercise both
 drinks in LT and EN, pickup placement/collection, staging, penalties, level
-progression, victory/restart, and legacy leaderboard reads/writes. The harness
+progression, victory/restart, and legacy leaderboard reads/writes. D-pad RUN
+checks cover incomplete staging in LT/EN and the text fallback, varying task
+counts, and a successful run after all tasks are staged. The harness
 uses an in-memory DOM, deterministic clocks, mocked network/audio/rendering,
 and lightweight Three.js objects. It does not contact Firebase or replace a
 visual browser check. `THREE_TEST_MODULE` can point to a local Three.js r128
