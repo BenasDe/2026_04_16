@@ -128,6 +128,7 @@ window.bindGameControls = function ({ gameState, engine, movePlayer, executePipe
     } else {
       const levels = window.GAME_LEVELS || [];
       const currentLevel = levels[gameState.levelIndex];
+      const total = currentLevel ? currentLevel.tasks.length : 5;
       const stagedCount = Object.keys(gameState.stagedTasks).length;
       const msg = window.i18n
         ? window.i18n.t('toast_stage_all_before_run', { staged: stagedCount, total })
