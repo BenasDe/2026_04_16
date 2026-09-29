@@ -103,16 +103,20 @@
     coffeeMesh.position.y = 0.181;
     cupGroup.add(coffeeMesh);
 
-    const cremaMat = new THREE.MeshStandardMaterial({
-      color: 0xc49652,
-      roughness: 0.8
-    });
-    const cremaGeo = new THREE.RingGeometry(0.19, 0.229, 32, 1, Math.PI * 0.12, Math.PI * 1.45);
-    const cremaMesh = new THREE.Mesh(cremaGeo, cremaMat);
-    cremaMesh.name = 'espresso-crema';
-    cremaMesh.rotation.x = -Math.PI / 2;
-    cremaMesh.position.y = 0.183;
-    cupGroup.add(cremaMesh);
+  // Thin crema ring whose colour stays consistent under bright lights.
+const cremaMat = new THREE.MeshBasicMaterial({
+  color: 0xc49652,
+  toneMapped: false
+});
+
+const cremaGeo = new THREE.RingGeometry(0.214, 0.229, 32);
+const cremaMesh = new THREE.Mesh(cremaGeo, cremaMat);
+
+cremaMesh.name = 'espresso-crema';
+cremaMesh.rotation.x = -Math.PI / 2;
+cremaMesh.position.y = 0.183;
+
+cupGroup.add(cremaMesh);
 
     // The loop lies in the XY plane, extending out of the cup's side.
     // Thicken its outline tube instead of scaling the loop, so the hole is outlined too.
