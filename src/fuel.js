@@ -46,54 +46,81 @@
     const cupGroup = new THREE.Group();
 
     const ceramicMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.25,
-      metalness: 0.1
+      color: 0xf4f0e8,
+      roughness: 0.65,
+      metalness: 0
     });
+    // Unlit outlines stay dark under the board's bright lights. Mesh outlines
+    // also avoid WebGL's platform-dependent support for thick line widths.
+    const outlineMat = new THREE.MeshBasicMaterial({ color: 0x101317, side: THREE.BackSide });
+    const rimMat = new THREE.MeshBasicMaterial({ color: 0x101317 });
 
-    // Cup body
-    const cupGeo = new THREE.CylinderGeometry(0.28, 0.2, 0.42, 24);
-    const cupMesh = new THREE.Mesh(cupGeo, ceramicMat);
-    cupMesh.castShadow = true;
-    cupGroup.add(cupMesh);
+    function addCeramicPart(name, geometry, outlineGeometry = geometry) {
+      const mesh = new THREE.Mesh(geometry, ceramicMat);
+      mesh.name = name;
+      mesh.castShadow = true;
+      const outline = new THREE.Mesh(outlineGeometry, outlineMat);
+      outline.name = `${name}-outline`;
+      if (outlineGeometry === geometry) outline.scale.set(1.045, 1.045, 1.045);
+      mesh.add(outline);
+      cupGroup.add(mesh);
+      return mesh;
+    }
 
-    // Saucer / Plate underneath
-    const saucerGeo = new THREE.CylinderGeometry(0.44, 0.38, 0.05, 24);
-    const saucerMesh = new THREE.Mesh(saucerGeo, ceramicMat);
+    // Revolve a hollow ceramic wall and lip, leaving the drink visible.
+    // A capped cylinder would hide the coffee just below the rim.
+    const cupProfile = [
+      [0, -0.21], [0.18, -0.21], [0.2, -0.19], [0.24, -0.03],
+      [0.28, 0.18], [0.28, 0.205], [0.271, 0.216], [0.249, 0.216],
+      [0.24, 0.202], [0.239, 0.183], [0.203, -0.115], [0, -0.135]
+    ].map(([radius, height]) => new THREE.Vector2(radius, height));
+    addCeramicPart('espresso-cup', new THREE.LatheGeometry(cupProfile, 32));
+
+    // A shallow raised edge gives the saucer a separate silhouette.
+    const saucerProfile = [
+      [0, -0.025], [0.35, -0.025], [0.42, -0.018], [0.445, 0],
+      [0.445, 0.016], [0.42, 0.027], [0.34, 0.006], [0, 0.006]
+    ].map(([radius, height]) => new THREE.Vector2(radius, height));
+    const saucerMesh = addCeramicPart('espresso-saucer', new THREE.LatheGeometry(saucerProfile, 32));
     saucerMesh.position.y = -0.21;
-    saucerMesh.castShadow = true;
-    cupGroup.add(saucerMesh);
 
-    // Dark espresso coffee liquid surface
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(0.276, 0.007, 6, 32), rimMat);
+    lip.name = 'espresso-rim';
+    lip.rotation.x = Math.PI / 2;
+    lip.position.y = 0.211;
+    cupGroup.add(lip);
+
+    // Fill the opening almost to the lip, with a thin crescent of crema.
     const coffeeMat = new THREE.MeshStandardMaterial({
       color: 0x2b170b,
-      roughness: 0.2,
-      metalness: 0.2
+      roughness: 0.5,
+      metalness: 0
     });
-    const coffeeGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.02, 24);
+    const coffeeGeo = new THREE.CircleGeometry(0.242, 32);
     const coffeeMesh = new THREE.Mesh(coffeeGeo, coffeeMat);
-    coffeeMesh.position.y = 0.18;
+    coffeeMesh.name = 'espresso-coffee';
+    coffeeMesh.rotation.x = -Math.PI / 2;
+    coffeeMesh.position.y = 0.181;
     cupGroup.add(coffeeMesh);
 
-    // Golden crema swirl
     const cremaMat = new THREE.MeshStandardMaterial({
-      color: 0xc89d66,
-      roughness: 0.45
+      color: 0xc49652,
+      roughness: 0.8
     });
-    const cremaGeo = new THREE.CircleGeometry(0.18, 16);
+    const cremaGeo = new THREE.RingGeometry(0.19, 0.229, 32, 1, Math.PI * 0.12, Math.PI * 1.45);
     const cremaMesh = new THREE.Mesh(cremaGeo, cremaMat);
+    cremaMesh.name = 'espresso-crema';
     cremaMesh.rotation.x = -Math.PI / 2;
-    cremaMesh.position.y = 0.191;
+    cremaMesh.position.y = 0.183;
     cupGroup.add(cremaMesh);
 
-    // Cup handle
-    const handleGeo = new THREE.TorusGeometry(0.12, 0.035, 12, 24, Math.PI * 1.2);
-    const handleMesh = new THREE.Mesh(handleGeo, ceramicMat);
-    handleMesh.rotation.y = -Math.PI / 2;
-    handleMesh.rotation.z = Math.PI * 0.15;
-    handleMesh.position.set(0.25, 0.02, 0);
-    handleMesh.castShadow = true;
-    cupGroup.add(handleMesh);
+    // The loop lies in the XY plane, extending out of the cup's side.
+    // Thicken its outline tube instead of scaling the loop, so the hole is outlined too.
+    const handleMesh = addCeramicPart('espresso-handle',
+      new THREE.TorusGeometry(0.15, 0.035, 8, 32),
+      new THREE.TorusGeometry(0.15, 0.043, 8, 32));
+    handleMesh.position.set(0.325, -0.005, 0);
+    handleMesh.scale.y = 1.05;
 
     return cupGroup;
   }

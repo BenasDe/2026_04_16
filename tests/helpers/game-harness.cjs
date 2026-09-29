@@ -28,9 +28,9 @@ function makeThreeDouble() {
     }
     dispose() {}
   }
-  const result={Group,Scene:Group,Mesh,LineSegments,MeshStandardMaterial:Material,MeshBasicMaterial:Material,LineBasicMaterial:Material,
-    CanvasTexture:class {constructor(image){this.image=image;}},sRGBEncoding:3001,DoubleSide:2,MathUtils:{clamp:(n,min,max)=>Math.max(min,Math.min(max,n))}};
-  for(const type of ['BoxGeometry','CylinderGeometry','EdgesGeometry','RingGeometry','CircleGeometry','TorusGeometry']) {
+  const result={Group,Scene:Group,Mesh,LineSegments,Vector2:Vector,MeshStandardMaterial:Material,MeshBasicMaterial:Material,LineBasicMaterial:Material,
+    CanvasTexture:class {constructor(image){this.image=image;}},sRGBEncoding:3001,BackSide:1,DoubleSide:2,MathUtils:{clamp:(n,min,max)=>Math.max(min,Math.min(max,n))}};
+  for(const type of ['BoxGeometry','CylinderGeometry','EdgesGeometry','RingGeometry','CircleGeometry','TorusGeometry','LatheGeometry']) {
     result[type]=class {constructor(...args){this.type=type;this.args=args;}dispose(){}};
   }
   return result;
