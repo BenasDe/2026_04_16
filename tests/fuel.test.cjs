@@ -146,10 +146,56 @@ test('one-line choice selects the cup or restored labelled can without changing 
   assert.deepEqual(plain(layout(espresso)),plain(layout(redbull)));
   const cup=espresso.board.interactiveObjects.find(o=>o.userData.isFuel).userData.mesh;
   const can=redbull.board.interactiveObjects.find(o=>o.userData.isFuel).userData.mesh;
-  assert.equal(cup.children.length,5);assert.equal(can.geometry.type,'CylinderGeometry');
+  for(const part of ['cup','saucer','coffee','crema','handle'])assert(cup.children.some(child=>child.name===`espresso-${part}`));
+  assert.equal(can.geometry.type,'CylinderGeometry');
   assert.equal(can.children.length,3);assert.equal(can.material.length,3);
   assert.equal(espresso.canvasText.length,0);assert(redbull.canvasText.includes('Red Bull'));
   for(const game of [espresso,redbull])game.board.updateInteractiveObjects(1,{x:0,z:0});
+});
+
+// Raycasting needs the real r128 build; the default harness only tests gameplay.
+const realGeometry = {skip: !process.env.THREE_TEST_MODULE};
+
+test('espresso coffee stays visible from gameplay camera angles throughout rotation', realGeometry, () => {
+  const game=createGame(), THREE=game.context.THREE, cup=game.context.GameFuel.createMesh();
+  const coffee=cup.getObjectByName('espresso-coffee');
+  // Avoid the exact shared center vertex of the circle's triangle fan.
+  const target=new THREE.Vector3(0.01,coffee.position.y,0.013);
+  // Near/far corners of the 5x5 board relative to the following camera,
+  // plus its centered desktop and portrait views. Pickups float at y ~= 0.85.
+  const views=[[0,18.15,13.5],[0,21.15,15.5],[0,37.15,27]];
+  for(const x of [-9.6,9.6])for(const z of [3.9,23.1])views.push([x,18.15,z]);
+  for(let step=0;step<16;step++) {
+    cup.rotation.y=step*Math.PI/8;
+    cup.updateMatrixWorld(true);
+    for(const coordinates of views) {
+      const origin=new THREE.Vector3(...coordinates);
+      const ray=new THREE.Raycaster(origin,target.clone().sub(origin).normalize());
+      assert.equal(ray.intersectObject(cup,true)[0]?.object.name,'espresso-coffee',
+        `Coffee occluded at rotation ${step}, camera ${coordinates}`);
+    }
+  }
+});
+
+test('espresso handle has an open hole and projects beyond the cup wall', realGeometry, () => {
+  const game=createGame(), THREE=game.context.THREE, cup=game.context.GameFuel.createMesh();
+  cup.updateMatrixWorld(true);
+  const through=(x,y)=>new THREE.Raycaster(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1))
+    .intersectObject(cup,true);
+  assert.equal(through(0.36,-0.005).length,0,'The handle hole must remain open');
+  assert.equal(through(0.49,-0.005)[0]?.object.name,'espresso-handle');
+});
+
+test('espresso cup and saucer silhouettes use dark unlit outlines', realGeometry, () => {
+  const game=createGame(), THREE=game.context.THREE, cup=game.context.GameFuel.createMesh();
+  cup.updateMatrixWorld(true);
+  for(const [name,x,y] of [['cup',-0.29,0.19],['saucer',-0.455,-0.21]]) {
+    const ray=new THREE.Raycaster(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));
+    const hit=ray.intersectObject(cup,true)[0];
+    assert.equal(hit?.object.name,`espresso-${name}-outline`);
+    assert.equal(hit.object.material.isMeshBasicMaterial,true);
+    assert.equal(hit.object.material.color.getHex(),0x101317);
+  }
 });
 
 test('shared gameplay, DOM and translations contain no drink-specific names', () => {

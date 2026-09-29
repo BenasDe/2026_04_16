@@ -61,9 +61,9 @@ fuelType: 'redbull'
 Use `'espresso'` (the default) for cups, or `'redbull'` for cans. The selection
 controls the 3D pickup, LT/EN names, units, menus, HUD, diagnostics, toasts,
 victory/game-over messages, and leaderboard labels. Both models live in
-`src/fuel.js`; the espresso model is preserved and the can model is restored
-from the project's earlier implementation. Unsupported configuration values
-produce an explicit error instead of mixing two themes.
+`src/fuel.js`; the espresso has an open cup, visible coffee, a loop handle and
+dark outlines, and the can is restored from the project's earlier implementation.
+Unsupported configuration values produce an explicit error instead of mixing two themes.
 
 Gameplay uses `gameState.fuel`, `fuelToPlace`, `type: 'fuel'`, and
 `sfx.collectFuel()`. Both drinks give one unit per pickup and use the same
@@ -92,3 +92,6 @@ uses an in-memory DOM, deterministic clocks, mocked network/audio/rendering,
 and lightweight Three.js objects. It does not contact Firebase or replace a
 visual browser check. `THREE_TEST_MODULE` can point to a local Three.js r128
 CommonJS build to run these checks with real geometry/material constructors.
+With that build, three additional raycasting checks verify coffee visibility
+through a full rotation at gameplay camera angles, the open handle, and dark
+cup/saucer outlines. These geometry checks are skipped by the default harness.
