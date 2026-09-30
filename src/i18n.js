@@ -35,11 +35,11 @@
       menu_badge: "HOUSTON WE HAVE DATA",
       menu_title: "PIPELINE",
       menu_subtitle: "Nuo nulio iki produkcijos: Duomenų inžinerijos „Roguelike“",
-      rule_levels: "<strong>3  lygiai:</strong> Bronza (PySpark) -> Sidabras (SQL) -> Auksas (Spark/Delta Lake optimizavimas).",
+      rule_levels: "<strong>Lygių: {levelCount}.</strong> {levelNames}.",
       rule_fuel: "<strong>Kuras klaidų taisymui:</strong> Pradedate su <strong>0 {fuelUnits}</strong>. Rinkite {fuelPickups} žemėlapyje, kad galėtumėte išgyventi radus klaidas.",
       rule_blind: "<strong>Paruošimas:</strong> Kodo patikrinamas vyksta tik vykdant <strong>PALEISTI PIPELINE</strong>.",
       rule_penalties: "<strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 {fuelUnit}</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Kai klaidai ištaisyti nepakanka kuro, Game Over.",
-      rule_leaderboard: "<strong>Lyderių lentelė:</strong> Laikmatis fiksuoja greitį nuo paleidimo iki 3 lygio užbaigimo.",
+      rule_leaderboard: "<strong>Lyderių lentelė:</strong> Laikmatis fiksuoja laiką nuo paleidimo iki paskutinio lygio užbaigimo.",
       btn_start_run: "PRADĖTI \"Pipeline\" DIEGIMĄ",
       btn_view_leaderboard: "ŽIŪRĖTI LYDERIŲ LENTELĘ",
 
@@ -73,14 +73,14 @@
       btn_continue: "TĘSTI",
 
       lb_title: "PRODUKCIJOS \"PIPELINE\" LYDERIŲ LENTELĖ",
-      lb_subtitle: "Greičiausi inžinieriai, sėkmingai įdiegę Bronzos, Sidabro ir Aukso sluoksnius į produkciją.",
+      lb_subtitle: "Greičiausi inžinieriai, sėkmingai įdiegę visus kampanijos lygius į produkciją.",
       lb_th_rank: "#",
       lb_th_engineer: "INŽINIERIUS",
       lb_th_time: "LAIKAS",
       lb_th_fuel: "{fuelName} LIKUTIS",
       lb_th_date: "DATA",
       lb_connecting: "Jungiamasi prie lyderių lentelės...",
-      lb_empty: "Užbaigtų „pipeline“ dar nėra. Įdiekite Bronzos, Sidabro ir Aukso lygius, kad užimtumėte 1 vietą.",
+      lb_empty: "Užbaigtų „pipeline“ dar nėra. Įdiekite visus kampanijos lygius, kad užimtumėte 1 vietą.",
       lb_fuel_units: "{count} {fuelCountUnit}",
       btn_clear_lb: "Išvalyti vietinius įrašus",
       btn_close: "UŽDARYTI",
@@ -88,8 +88,8 @@
 
       game_over_title: "TRŪKSTA ATMINTIES (OOM)",
       game_over_desc: "Jūsų duomenų srautui pritrūko {fuelGenitive} bandant ištaisyti klaidingas užklausas. Pasiektas aklavietės taškas.",
-      victory_title: "AUKSO SERTIFIKATAS PRODUKCIJOJE",
-      victory_desc: "Visi 3 duomenų srauto sluoksniai (Bronzos PySpark, Sidabro analitinis SQL, Aukso Spark/Delta optimizavimas) sėkmingai įdiegti į produkciją.",
+      victory_title: "DUOMENŲ SRAUTAS ĮDIEGTAS Į PRODUKCIJĄ",
+      victory_desc: "Visi duomenų srauto lygiai ({levelCount}) sėkmingai įdiegti į produkciją.",
       victory_final_time: "Galutinis laikas:",
       victory_fuel_preserved: "Liko {fuelGenitive}:",
       victory_fuel_summary: "Kuras: Surinkta <strong>{scavenged}</strong> {fuelUnits} - <strong>{mistakes}</strong> skubūs taisymai = liko <strong>{remaining}</strong>",
@@ -133,11 +133,11 @@
       menu_badge: "HOUSTON WE HAVE DATA",
       menu_title: "DATA PIPELINE SURVIVOR",
       menu_subtitle: "Zero to Production: A Data Engineering Roguelike",
-      rule_levels: "<strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) -> Silver (Analytical SQL) -> Gold (Spark/Delta Lake Optimization).",
+      rule_levels: "<strong>Levels: {levelCount}.</strong> {levelNames}.",
       rule_fuel: "<strong>{fuelName} Survival:</strong> You start with <strong>0 {fuelUnits}</strong>. Collect {fuelPickups} across the grid to fuel hotfixes when bugs occur.",
       rule_blind: "<strong>Blind Staging:</strong> Code correctness is validated only when executing <strong>RUN PIPELINE</strong>.",
       rule_penalties: "<strong>Hotfixes & Penalties:</strong> Each bug consumes <strong>1 {fuelUnit}</strong> and adds <strong>+60s penalty</strong> to your final time. Insufficient fuel for a hotfix causes an OOM crash.",
-      rule_leaderboard: "<strong>Leaderboard:</strong> The timer tracks deployment speed from launch to Gold certification.",
+      rule_leaderboard: "<strong>Leaderboard:</strong> The timer tracks deployment speed from launch to completion of the final level.",
       btn_start_run: "START PIPELINE RUN",
       btn_view_leaderboard: "VIEW LEADERBOARD",
 
@@ -171,14 +171,14 @@
       btn_continue: "CONTINUE",
 
       lb_title: "PRODUCTION PIPELINE LEADERBOARD",
-      lb_subtitle: "Fastest engineers to deploy Bronze, Silver, and Gold layers to production.",
+      lb_subtitle: "Fastest engineers to deploy every level in the campaign to production.",
       lb_th_rank: "#",
       lb_th_engineer: "ENGINEER",
       lb_th_time: "TIME",
       lb_th_fuel: "REMAINING {fuelName}",
       lb_th_date: "DATE",
       lb_connecting: "Connecting to leaderboard...",
-      lb_empty: "No completed pipeline runs yet. Deploy Bronze, Silver, and Gold to claim #1.",
+      lb_empty: "No completed pipeline runs yet. Deploy every level in the campaign to claim #1.",
       lb_fuel_units: "{count} {fuelCountUnit}",
       btn_clear_lb: "Clear Local Records",
       btn_close: "CLOSE",
@@ -186,8 +186,8 @@
 
       game_over_title: "OUT OF MEMORY (OOM)",
       game_over_desc: "Your pipeline ran out of {fuelGenitive} while attempting to patch faulty queries. Critical deadlock reached.",
-      victory_title: "GOLD PRODUCTION CERTIFIED",
-      victory_desc: "All 3 data pipeline layers (Bronze PySpark, Silver Analytical SQL, Gold Spark/Delta Optimization) successfully deployed to production.",
+      victory_title: "PIPELINE PRODUCTION CERTIFIED",
+      victory_desc: "All {levelCount} pipeline levels successfully deployed to production.",
       victory_final_time: "Final Time:",
       victory_fuel_preserved: "{fuelName} Preserved:",
       victory_fuel_summary: "Fuel: Scavenged <strong>{scavenged}</strong> {fuelUnits} - <strong>{mistakes}</strong> hotfixes = <strong>{remaining}</strong> remaining",
@@ -244,7 +244,16 @@
     t(key, params = {}) {
       const dict = DICT[currentLang] || DICT.lt;
       let text = dict[key] ?? DICT.en[key] ?? key;
-      const values = { ...window.GameFuel.tokens(currentLang, params.count), ...params };
+      const levels = window.GAME_LEVELS || [];
+      const escapeHTML = value => value.replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+      const values = {
+        ...window.GameFuel.tokens(currentLang, params.count),
+        levelCount: levels.length,
+        levelNames: levels.map(level => escapeHTML(this.getLocalizedLevel(level).name)).join(' → '),
+        ...params
+      };
       Object.keys(values).forEach(p => {
         text = text.replace(new RegExp(`\\{${p}\\}`, 'g'), () => String(values[p]));
       });
@@ -253,36 +262,24 @@
 
     getLocalizedLevel(levelObj) {
       if (!levelObj) return levelObj;
-      if (currentLang === 'lt' && window.TASK_TRANSLATIONS?.lt?.levels?.[levelObj.level]) {
-        const trans = window.TASK_TRANSLATIONS.lt.levels[levelObj.level];
-        return {
-          ...levelObj,
-          name: trans.name || levelObj.name,
-          description: trans.description || levelObj.description
-        };
-      }
-      return levelObj;
+      if (currentLang === window.GAME_CONTENT_PACK.defaultLanguage) return levelObj;
+      const trans = levelObj.translations[currentLang];
+      return {...levelObj, name: trans.name, description: trans.description};
     },
 
     getLocalizedTask(task) {
       if (!task) return task;
-      if (currentLang === 'lt' && window.TASK_TRANSLATIONS?.lt?.tasks?.[task.id]) {
-        const t = window.TASK_TRANSLATIONS.lt.tasks[task.id];
-        return {
-          ...task,
-          name: t.name || task.name,
-          desc: t.desc || task.desc,
-          skills: task.skills.map((skill, idx) => {
-            const skillTrans = t.skills?.[idx];
-            return {
-              ...skill,
-              label: skillTrans?.label || skill.label,
-              explain: skillTrans?.explain || skill.explain
-            };
-          })
-        };
-      }
-      return task;
+      if (currentLang === window.GAME_CONTENT_PACK.defaultLanguage) return task;
+      const trans = task.translations[currentLang];
+      return {
+        ...task,
+        name: trans.name,
+        desc: trans.desc,
+        skills: task.skills.map(skill => {
+          const skillTrans = trans.skills[skill.id];
+          return {...skill, label: skillTrans.label, explain: skillTrans.explain};
+        })
+      };
     },
 
     applyDOM() {

@@ -36,7 +36,7 @@ function makeThreeDouble() {
   return result;
 }
 
-function createGame({fuelType, language='lt', seed=1}={}) {
+function createGame({fuelType, language='lt', seed=1, prepareContent}={}) {
   const elements=[], byId=new Map(), events={}, timeouts=new Map(), intervals=new Map();
   const storage=new Map([['pyspark_survivor_lang',language]]), sounds=[], canvasText=[], delays=[];
   let now=1000000, timerId=1;
@@ -81,6 +81,11 @@ function createGame({fuelType, language='lt', seed=1}={}) {
   const run=code=>vm.runInContext(code,context);
   for(const file of scripts) {
     let source=fs.readFileSync(path.join(ROOT,file),'utf8');
+    if(file==='src/data.js' && prepareContent) {
+      // Prepare fixtures before the real startup validator sees the pack.
+      const validate=context.GameContent.validate;
+      context.GameContent={...context.GameContent,validate:pack=>{prepareContent(pack);return validate(pack);}};
+    }
     if(file==='src/config.js' && fuelType!==undefined)source=source.replace(/fuelType:\s*'[^']*'/,`fuelType: ${JSON.stringify(fuelType)}`);
     if(file==='src/main.js') {
       // Real board, controls, UI, staging, timer and pipeline; only drawing/audio are stubbed.
@@ -116,7 +121,7 @@ function createGame({fuelType, language='lt', seed=1}={}) {
       visit(x,y);
       const correct=index++>=mistakes;
       const desired=cell.data.skills.find(skill=>skill.correct===correct);
-      const card=byId.get('skills-grid').children.find(el=>el.innerHTML.includes(desired.code));
+      const card=byId.get('skills-grid').children.find(el=>el.getAttribute('data-skill-id')===desired.id);
       if(!card)throw Error('Answer card missing');
       card.onclick();advance(650);
     }));

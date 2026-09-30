@@ -82,7 +82,8 @@ changing the selected drink does not rewrite or delete existing scores.
 With Node.js 20 or newer, run from the repository root:
 
 ```bash
-node --test tests/fuel.test.cjs tests/controls.test.cjs
+node scripts/validate-content.cjs
+node --test tests/content.test.cjs tests/fuel.test.cjs tests/controls.test.cjs
 ```
 
 No packages need installing. Tests load scripts in HTML order and exercise both
@@ -97,3 +98,23 @@ CommonJS build to run these checks with real geometry/material constructors.
 With that build, three additional raycasting checks verify coffee visibility
 through a full rotation at gameplay camera angles, the open handle, and dark
 cup/saucer outlines. These geometry checks are skipped by the default harness.
+
+## Content packs
+
+The campaign is a validated schema-v1 pack in `src/data.js`. Its manifest selects
+registered level IDs in order and sets the board size. Level definitions live in
+`src/content/bronze.js`, `silver.js`, and `gold.js`, with their English content
+and Lithuanian translations together. Every level, task and answer has a stable
+ID; translated answers and pipeline explanations use answer IDs, never array
+positions or displayed code.
+
+Validation runs before gameplay starts and through `node scripts/validate-content.cjs`.
+It rejects duplicate IDs, incomplete EN/LT content, invalid correctness flags,
+multiple/no correct answers, malformed table previews, unknown fields and board
+overflow, including the reserved start tile. Invalid packs show an error and
+disable startup. Tests also cover reordered content and four/five-level campaigns.
+
+See [the content-pack authoring guide](docs/content-packs.md) for the complete
+contract and a copyable level. Add a level file, load it in `index.html`, and add
+its ID to the manifest; campaign menus and victory text derive their counts
+from the loaded pack. No engine changes are required.

@@ -200,7 +200,7 @@ test('espresso cup and saucer silhouettes use dark unlit outlines', realGeometry
 
 test('shared gameplay, DOM and translations contain no drink-specific names', () => {
   const shared=['src/main.js','src/board.js','src/engine.js','src/audio.js','src/pipeline.js','src/ui.js','src/i18n.js',
-    'src/levels/bronze.js','src/levels/silver.js','src/levels/gold.js'];
+    'src/content/bronze.js','src/content/silver.js','src/content/gold.js'];
   for(const file of shared)assert.doesNotMatch(fs.readFileSync(path.join(ROOT,file),'utf8'),/espresso|red.?bull|coffee|espreso|puod/i,file);
   assert.doesNotMatch(html,/espresso|red.?bull|coffee|espreso|puod/i);
 });

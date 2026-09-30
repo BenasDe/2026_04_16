@@ -68,13 +68,13 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
     const titleEl = document.getElementById('end-title');
     const descEl = document.getElementById('end-desc');
     if (titleEl) {
-      titleEl.innerText = window.i18n ? window.i18n.t('victory_title') : 'GOLD PRODUCTION CERTIFIED';
+      titleEl.innerText = window.i18n ? window.i18n.t('victory_title') : 'PIPELINE PRODUCTION CERTIFIED';
       titleEl.style.color = '#ffffff';
     }
     if (descEl) {
       descEl.innerText = window.i18n
         ? window.i18n.t('victory_desc')
-        : 'All 3 data pipeline layers successfully deployed to production.';
+        : `All ${window.GAME_LEVELS.length} pipeline levels successfully deployed to production.`;
     }
 
     const victoryEntry = document.getElementById('victory-score-entry');
