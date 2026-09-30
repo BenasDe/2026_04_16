@@ -83,6 +83,7 @@ class BattleSystem {
     shuffled.forEach(skill => {
       const btn = document.createElement('button');
       btn.className = 'skill-card';
+      btn.setAttribute('data-skill-id', skill.id);
       btn.innerHTML = `
         <div class="skill-code">${skill.code}</div>
         <div class="skill-effect">${skill.label}</div>

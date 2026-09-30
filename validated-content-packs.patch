@@ -1,0 +1,3120 @@
+diff --git a/README.md b/README.md
+index 6da478ead909e2d7b7734c5bbc1dd55374d58b29..384ff7a9cbc99e0b52168a3885407dc1601c9a7d 100644
+--- a/README.md
++++ b/README.md
+@@ -82,7 +82,8 @@ changing the selected drink does not rewrite or delete existing scores.
+ With Node.js 20 or newer, run from the repository root:
+ 
+ ```bash
+-node --test tests/fuel.test.cjs tests/controls.test.cjs
++node scripts/validate-content.cjs
++node --test tests/content.test.cjs tests/fuel.test.cjs tests/controls.test.cjs
+ ```
+ 
+ No packages need installing. Tests load scripts in HTML order and exercise both
+@@ -97,3 +98,23 @@ CommonJS build to run these checks with real geometry/material constructors.
+ With that build, three additional raycasting checks verify coffee visibility
+ through a full rotation at gameplay camera angles, the open handle, and dark
+ cup/saucer outlines. These geometry checks are skipped by the default harness.
++
++## Content packs
++
++The campaign is a validated schema-v1 pack in `src/data.js`. Its manifest selects
++registered level IDs in order and sets the board size. Level definitions live in
++`src/content/bronze.js`, `silver.js`, and `gold.js`, with their English content
++and Lithuanian translations together. Every level, task and answer has a stable
++ID; translated answers and pipeline explanations use answer IDs, never array
++positions or displayed code.
++
++Validation runs before gameplay starts and through `node scripts/validate-content.cjs`.
++It rejects duplicate IDs, incomplete EN/LT content, invalid correctness flags,
++multiple/no correct answers, malformed table previews, unknown fields and board
++overflow, including the reserved start tile. Invalid packs show an error and
++disable startup. Tests also cover reordered content and four/five-level campaigns.
++
++See [the content-pack authoring guide](docs/content-packs.md) for the complete
++contract and a copyable level. Add a level file, load it in `index.html`, and add
++its ID to the manifest; campaign menus and victory text derive their counts
++from the loaded pack. No engine changes are required.
+diff --git a/docs/content-packs.md b/docs/content-packs.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ce86e3faca4c3f8618b6bd371d1a9a4feccf45b2
+--- /dev/null
++++ b/docs/content-packs.md
+@@ -0,0 +1,159 @@
++# Content packs: schema version 1
++
++`src/content-pack.js` is the executable contract. Browser startup and the Node
++development command use the same validator. Level files contain data registered
++with `window.GameContent.registerLevel(...)`; they require no build step or package
++installation. These are trusted project scripts, not a sandbox for uploaded code.
++
++## Manifest and loading
++
++`src/data.js` defines `GAME_CONTENT_PACK` and publishes `GAME_LEVELS` only after
++successful validation. `main.js` takes its board size from the pack and refuses
++to start without validated levels.
++
++| Pack field | Required value |
++| --- | --- |
++| `schemaVersion` | Integer `1` |
++| `id` | Stable lowercase snake_case string, currently `data_lake` |
++| `defaultLanguage` | `en`; base fields hold English text |
++| `languages` | Both `en` and `lt`, each once; these are the supported UI languages |
++| `gridSize` | Integer at least 2; the board is square |
++| `levels` | Non-empty ordered array of registered level objects |
++
++The list in `src/data.js` is the campaign order:
++
++```js
++levels: ['bronze', 'silver', 'gold'].map(id => window.GameContent.getLevel(id))
++```
++
++In `index.html`, load `src/content-pack.js`, then every selected level file,
++then `src/data.js`, before localization and gameplay scripts. A missing selected
++level or duplicate registration fails startup instead of silently dropping a level.
++Other registered levels can be kept outside the active campaign by leaving their
++IDs out of the manifest.
++
++## Required content fields
++
++| Record | Required fields |
++| --- | --- |
++| Level | `id`, `name`, `engine`, `description`, `fuelToPlace`, `tasks`, `translations` |
++| Task | `id`, `name`, `desc`, `tableHeaders`, `tableRows`, `glitchIndices`, `skills`, `translations` |
++| Answer (`skills` entry) | `id`, `code`, `label`, `correct`, `explain` |
++| Level `translations.lt` | `name`, `description` |
++| Task `translations.lt` | `name`, `desc`, `skills` |
++| Translated answer | `label`, `explain` |
++
++IDs must match `^[a-z][a-z0-9_]*$` and cannot be reserved object-property names
++such as `constructor`. Level IDs, task IDs and answer IDs are each unique across
++the whole active pack, including across levels. Use descriptive IDs, not choice
++positions. Keep an ID when editing its text, code or position. When replacing an
++answer with a different concept, assign a new ID and update its translation key.
++
++All text fields in the table are non-empty strings. `correct` is a boolean,
++and each task must have at least two answers and exactly one `correct: true`.
++Translations can change labels and explanations only; they cannot override
++IDs, executable-looking code text or correctness. Code is displayed, not executed.
++
++`translations.lt.skills` is an object keyed by each answer's exact ID. Every
++answer needs a translated label and explanation. Missing keys, extra/stale keys,
++old positional translation arrays and unknown fields are rejected. English is
++validated through the base fields, so there is no separate `translations.en`.
++Adding another UI language requires extending the UI dictionaries and the
++validator's supported-language contract together.
++
++Preview data is shared between languages: `tableHeaders` is a non-empty array of
++non-empty strings; `tableRows` is a non-empty array of equal-width rows matching
++those headers. Cells can be strings, finite numbers, booleans or `null`.
++`glitchIndices` contains unique integer row indexes in bounds, or is empty when
++no highlighting is needed.
++
++Each level has at least one task. `fuelToPlace` is an integer at least zero, and:
++
++```text
++fuelToPlace + tasks.length <= gridSize * gridSize - 1
++```
++
++The extra cell is reserved for the player's starting position. On a 5×5 board,
++24 cells are available for tasks and fuel; overflowing content is rejected
++instead of being truncated during board placement.
++
++## Add a level
++
++Create `src/content/example.js` with a complete definition like this:
++
++```js
++window.GameContent.registerLevel({
++  id: 'example',
++  name: 'Example level',
++  engine: 'PySpark',
++  description: 'Practice deduplicating transaction IDs.',
++  fuelToPlace: 2,
++  translations: {
++    lt: {name: 'Pavyzdinis lygis', description: 'Pašalinkite pasikartojančius transakcijų ID.'}
++  },
++  tasks: [{
++    id: 'example_duplicates',
++    name: 'DUPLICATES',
++    desc: 'Keep one row for each transaction ID.',
++    tableHeaders: ['transaction_id'],
++    tableRows: [['T1'], ['T1']],
++    glitchIndices: [1],
++    skills: [
++      {
++        id: 'example_deduplicate_transactions',
++        code: "df.dropDuplicates(['transaction_id'])",
++        label: 'Deduplicate by transaction ID',
++        correct: true,
++        explain: 'Keeps one row for each transaction ID.'
++      },
++      {
++        id: 'example_select_transaction_id',
++        code: "df.select('transaction_id')",
++        label: 'Select the transaction ID column',
++        correct: false,
++        explain: 'Selecting a column keeps duplicate rows.'
++      }
++    ],
++    translations: {
++      lt: {
++        name: 'DUBLIKATAI',
++        desc: 'Palikite po vieną eilutę kiekvienam transakcijos ID.',
++        skills: {
++          example_deduplicate_transactions: {
++            label: 'Pašalinti dublikatus pagal transakcijos ID',
++            explain: 'Palieka po vieną eilutę kiekvienam transakcijos ID.'
++          },
++          example_select_transaction_id: {
++            label: 'Pasirinkti transakcijos ID stulpelį',
++            explain: 'Stulpelio pasirinkimas nepašalina pasikartojančių eilučių.'
++          }
++        }
++      }
++    }
++  }]
++});
++```
++
++Add `<script src="src/content/example.js"></script>` before `src/data.js` in
++`index.html`, and append `'example'` to the level-ID list in `src/data.js`.
++The engine, answer staging and pipeline progression consume the resulting array.
++Menus and victory messages use the active campaign's level count and names.
++
++Run from the repository root with Node.js 20 or later:
++
++```bash
++node scripts/validate-content.cjs
++node --test tests/content.test.cjs tests/fuel.test.cjs tests/controls.test.cjs
++```
++
++The validator reports field paths and exits with a nonzero status on failure.
++It validates the active HTML-registered pack, not unused files elsewhere on disk.
++The content tests reorder answers and translations, exercise invalid packs and
++complete four/five-level fixture campaigns. The fixtures are test data, not new
++published lessons.
++
++Validation checks structure, translation coverage and board constraints. Authors
++still review SQL/PySpark correctness, translation meaning and lesson difficulty.
++The current leaderboard is shared: `pack.id` does not namespace scores. Separate
++campaign leaderboards should be introduced before comparing runs from campaigns
++with different lengths or difficulty.
+diff --git a/index.html b/index.html
+index d0008d997be23bae09e3df652cb13863320cf58d..8ab7c67f225cec04c6b4758ef4a769f69b0bcd02 100644
+--- a/index.html
++++ b/index.html
+@@ -77,10 +77,11 @@
+       <div class="menu-badge" data-i18n="menu_badge">HOUSTON WE HAVE DATA</div>
+       <h1 class="menu-title" data-i18n="menu_title">PIPELINE</h1>
+       <p class="menu-subtitle" data-i18n="menu_subtitle">Nuo nulio iki produkcijos: Duomenų inžinerijos „Roguelike“</p>
++      <pre id="content-error" role="alert" hidden style="white-space: pre-wrap; text-align: left;"></pre>
+ 
+       <div class="rules-box">
+         <div class="rule-item">
+-          <div data-i18n="rule_levels"><strong>3  lygiai:</strong> Bronza (PySpark) -> Sidabras (SQL) -> Auksas (Spark/Delta Lake optimizavimas).</div>
++          <div data-i18n="rule_levels">Įdiekite visus kampanijos duomenų srauto lygius.</div>
+         </div>
+         <div class="rule-item">
+           <div data-i18n="rule_fuel"><strong>Kuras klaidų taisymui:</strong> Pradedate su <strong>0 kuro vienetų</strong>. Rinkite kurą žemėlapyje, kad galėtumėte išgyventi radus klaidas.</div>
+@@ -92,7 +93,7 @@
+           <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 kuro vienetą</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Kai klaidai ištaisyti nepakanka kuro, Game Over.</div>
+         </div>
+         <div class="rule-item">
+-          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja greitį nuo paleidimo iki 3 lygio užbaigimo.</div>
++          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja laiką nuo paleidimo iki paskutinio lygio užbaigimo.</div>
+         </div>
+       </div>
+ 
+@@ -171,7 +172,7 @@
+         <h2 data-i18n="lb_title">PRODUKCIJOS "PIPELINE" LYDERIŲ LENTELĖ</h2>
+         <button id="btn-close-leaderboard" class="close-x">&times;</button>
+       </div>
+-      <p style="font-size:12px; color:#888888; margin-bottom:12px;" data-i18n="lb_subtitle">Greičiausi inžinieriai, sėkmingai įdiegę Bronzos, Sidabro ir Aukso sluoksnius į produkciją.</p>
++      <p style="font-size:12px; color:#888888; margin-bottom:12px;" data-i18n="lb_subtitle">Greičiausi inžinieriai, sėkmingai įdiegę visus kampanijos lygius į produkciją.</p>
+       
+       <div class="leaderboard-table-container">
+         <table class="leaderboard-table">
+@@ -221,15 +222,15 @@
+   <!-- Configuration and fuel definitions must precede localization and gameplay. -->
+   <script src="src/config.js"></script>
+   <script src="src/fuel.js"></script>
+-  <script src="src/i18n-tasks.js"></script>
++  <script src="src/content-pack.js"></script>
++  <script src="src/content/bronze.js"></script>
++  <script src="src/content/silver.js"></script>
++  <script src="src/content/gold.js"></script>
++  <script src="src/data.js"></script>
+   <script src="src/i18n.js"></script>
+   <script src="src/utils.js"></script>
+   <script src="src/audio.js"></script>
+   <script src="src/music.js"></script>
+-  <script src="src/levels/bronze.js"></script>
+-  <script src="src/levels/silver.js"></script>
+-  <script src="src/levels/gold.js"></script>
+-  <script src="src/data.js"></script>
+   <script src="src/player.js"></script>
+   <script src="src/board.js"></script>
+   <script src="src/engine.js"></script>
+diff --git a/scripts/validate-content.cjs b/scripts/validate-content.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..8e87fffc3fa2d28d0511eee74391a6eb56a770a3
+--- /dev/null
++++ b/scripts/validate-content.cjs
+@@ -0,0 +1,32 @@
++#!/usr/bin/env node
++// Load exactly the content scripts registered in the browser's manifest order.
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++
++function loadContent(root = path.resolve(__dirname, '..')) {
++  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
++  const scripts = [...html.matchAll(/<script src="(src\/[^"]+)"/g)].map(match => match[1]);
++  const contentScripts = scripts.filter(file => file === 'src/content-pack.js' || file.startsWith('src/content/') || file === 'src/data.js');
++  const context = {window: {}};
++  vm.createContext(context);
++  for (const file of contentScripts) {
++    vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, {filename: file});
++  }
++  if (!context.window.GAME_LEVELS) throw new Error('Content scripts did not publish a validated campaign. Check index.html script order.');
++  return {pack: context.window.GAME_CONTENT_PACK, validate: context.window.GameContent.validate};
++}
++
++if (require.main === module) {
++  try {
++    const {pack} = loadContent();
++    const tasks = pack.levels.flatMap(level => level.tasks);
++    const skills = tasks.flatMap(task => task.skills);
++    console.log(`Content pack "${pack.id}" is valid: ${pack.levels.length} levels, ${tasks.length} tasks, ${skills.length} answers; ${pack.languages.join(', ')}.`);
++  } catch (error) {
++    console.error(error.message);
++    process.exitCode = 1;
++  }
++}
++
++module.exports = {loadContent};
+diff --git a/src/battle.js b/src/battle.js
+index b552069c5e71aa019d4ee21892667412aa194aca..faee8e188cc8930b581c6d30c2171db6598d493b 100644
+--- a/src/battle.js
++++ b/src/battle.js
+@@ -83,6 +83,7 @@ class BattleSystem {
+     shuffled.forEach(skill => {
+       const btn = document.createElement('button');
+       btn.className = 'skill-card';
++      btn.setAttribute('data-skill-id', skill.id);
+       btn.innerHTML = `
+         <div class="skill-code">${skill.code}</div>
+         <div class="skill-effect">${skill.label}</div>
+diff --git a/src/content-pack.js b/src/content-pack.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..9a36d93ee436d203f2be072a9bbeda72f6051954
+--- /dev/null
++++ b/src/content-pack.js
+@@ -0,0 +1,198 @@
++/** Content-pack schema v1. No renderer, DOM, network or third-party dependencies. */
++(function () {
++  'use strict';
++
++  const SUPPORTED_LANGUAGES = Object.freeze(['en', 'lt']);
++  const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
++  const definitions = new Map();
++  let registrationError = null;
++
++  function registerLevel(level) {
++    if (!level || typeof level.id !== 'string' || !level.id.trim()) {
++      registrationError = new Error('Invalid content pack: a registered level must have a stable string ID.');
++    } else if (definitions.has(level.id)) {
++      registrationError = new Error(`Invalid content pack: duplicate level registration "${level.id}".`);
++    }
++    if (registrationError) throw registrationError;
++    definitions.set(level.id, level);
++  }
++
++  function getLevel(id) {
++    // Earlier script errors must still block startup if the browser continues.
++    if (registrationError) throw registrationError;
++    if (!definitions.has(id)) throw new Error(`Invalid content pack: level "${id}" is not registered. Check its script in index.html.`);
++    return definitions.get(id);
++  }
++
++  function validate(pack) {
++    const errors = [];
++    const levelIds = new Map(), taskIds = new Map(), skillIds = new Map();
++    const issue = (path, message) => errors.push(`${path}: ${message}`);
++
++    function record(value, path, keys) {
++      if (!value || typeof value !== 'object' || Array.isArray(value)) {
++        issue(path, 'must be an object');
++        return false;
++      }
++      for (const key of Object.keys(value)) {
++        if (!keys.includes(key)) issue(`${path}.${key}`, 'unknown field');
++      }
++      for (const key of keys) {
++        if (!hasOwn(value, key)) issue(`${path}.${key}`, 'required field is missing');
++      }
++      return true;
++    }
++
++    function text(value, path) {
++      if (typeof value !== 'string' || !value.trim()) {
++        issue(path, 'must be a non-empty string');
++        return false;
++      }
++      return true;
++    }
++
++    function array(value, path, minimum = 0) {
++      if (!Array.isArray(value) || value.length < minimum) {
++        issue(path, `must be an array with at least ${minimum} item(s)`);
++        return false;
++      }
++      return true;
++    }
++
++    function identifier(value, path, seen) {
++      if (!text(value, path)) return;
++      if (!/^[a-z][a-z0-9_]*$/.test(value) || hasOwn(Object.prototype, value)) {
++        issue(path, 'must be a non-reserved lowercase snake_case ID');
++      } else if (seen) {
++        if (seen.has(value)) issue(path, `duplicate ID "${value}"; first used at ${seen.get(value)}`);
++        else seen.set(value, path);
++      }
++    }
++
++    function integer(value, path, minimum) {
++      if (!Number.isSafeInteger(value) || value < minimum) {
++        issue(path, `must be an integer >= ${minimum}`);
++        return false;
++      }
++      return true;
++    }
++
++    function translations(value, path, fields, skills) {
++      // English lives in the base fields. Every other supported language is required.
++      const languages = SUPPORTED_LANGUAGES.filter(language => language !== 'en');
++      if (!record(value, path, languages)) return;
++      for (const language of languages) {
++        const entryPath = `${path}.${language}`;
++        const entry = hasOwn(value, language) ? value[language] : undefined;
++        if (!record(entry, entryPath, skills ? [...fields, 'skills'] : fields)) continue;
++        for (const field of fields) text(entry[field], `${entryPath}.${field}`);
++        if (!skills) continue;
++        const ids = skills.filter(skill => skill && typeof skill.id === 'string').map(skill => skill.id);
++        if (!record(entry.skills, `${entryPath}.skills`, ids)) continue;
++        for (const id of ids) {
++          const answerPath = `${entryPath}.skills.${id}`;
++          const answer = hasOwn(entry.skills, id) ? entry.skills[id] : undefined;
++          if (!record(answer, answerPath, ['label', 'explain'])) continue;
++          text(answer.label, `${answerPath}.label`);
++          text(answer.explain, `${answerPath}.explain`);
++        }
++      }
++    }
++
++    function task(value, path) {
++      if (!record(value, path, ['id', 'name', 'desc', 'tableHeaders', 'tableRows', 'glitchIndices', 'skills', 'translations'])) return;
++      identifier(value.id, `${path}.id`, taskIds);
++      for (const field of ['name', 'desc']) text(value[field], `${path}.${field}`);
++      const headersValid = array(value.tableHeaders, `${path}.tableHeaders`, 1);
++      if (headersValid) {
++        for (const [index, header] of value.tableHeaders.entries()) text(header, `${path}.tableHeaders[${index}]`);
++      }
++      const rowsValid = array(value.tableRows, `${path}.tableRows`, 1);
++      if (rowsValid) {
++        for (const [index, row] of value.tableRows.entries()) {
++          const rowPath = `${path}.tableRows[${index}]`;
++          if (!array(row, rowPath)) continue;
++          if (headersValid && row.length !== value.tableHeaders.length) issue(rowPath, 'cell count must match tableHeaders');
++          for (const [column, cell] of row.entries()) {
++            if (cell !== null && typeof cell !== 'string' && typeof cell !== 'boolean' && !(typeof cell === 'number' && Number.isFinite(cell))) {
++              issue(`${rowPath}[${column}]`, 'must be a string, finite number, boolean or null');
++            }
++          }
++        }
++      }
++      if (array(value.glitchIndices, `${path}.glitchIndices`)) {
++        const seen = new Set();
++        for (const [index, row] of value.glitchIndices.entries()) {
++          const rowPath = `${path}.glitchIndices[${index}]`;
++          if (integer(row, rowPath, 0) && rowsValid && row >= value.tableRows.length) issue(rowPath, 'row index is out of bounds');
++          if (seen.has(row)) issue(rowPath, 'duplicate row index');
++          seen.add(row);
++        }
++      }
++      const skillsValid = array(value.skills, `${path}.skills`, 2);
++      if (skillsValid) {
++        let correctCount = 0;
++        for (const [index, skill] of value.skills.entries()) {
++          const skillPath = `${path}.skills[${index}]`;
++          if (!record(skill, skillPath, ['id', 'code', 'label', 'correct', 'explain'])) continue;
++          identifier(skill.id, `${skillPath}.id`, skillIds);
++          for (const field of ['code', 'label', 'explain']) text(skill[field], `${skillPath}.${field}`);
++          if (typeof skill.correct !== 'boolean') issue(`${skillPath}.correct`, 'must be a boolean');
++          if (skill.correct === true) correctCount++;
++        }
++        if (correctCount !== 1) issue(`${path}.skills`, `must have exactly one correct answer; found ${correctCount}`);
++      }
++      translations(value.translations, `${path}.translations`, ['name', 'desc'], skillsValid ? value.skills : []);
++    }
++
++    if (record(pack, 'pack', ['schemaVersion', 'id', 'defaultLanguage', 'languages', 'gridSize', 'levels'])) {
++      if (pack.schemaVersion !== 1) issue('pack.schemaVersion', 'must be 1');
++      identifier(pack.id, 'pack.id');
++      if (pack.defaultLanguage !== 'en') issue('pack.defaultLanguage', 'schema v1 uses English (en) base fields');
++      if (array(pack.languages, 'pack.languages', 1)) {
++        const seen = new Set();
++        for (const [index, language] of pack.languages.entries()) {
++          if (!SUPPORTED_LANGUAGES.includes(language)) issue(`pack.languages[${index}]`, 'unsupported language');
++          if (seen.has(language)) issue(`pack.languages[${index}]`, 'duplicate language');
++          seen.add(language);
++        }
++        for (const language of SUPPORTED_LANGUAGES) {
++          if (!seen.has(language)) issue('pack.languages', `missing required language "${language}"`);
++        }
++      }
++      const gridValid = integer(pack.gridSize, 'pack.gridSize', 2) && Number.isSafeInteger(pack.gridSize ** 2);
++      if (Number.isSafeInteger(pack.gridSize) && !Number.isSafeInteger(pack.gridSize ** 2)) issue('pack.gridSize', 'board area exceeds the safe integer range');
++      if (array(pack.levels, 'pack.levels', 1)) {
++        for (const [index, level] of pack.levels.entries()) {
++          const path = `pack.levels[${index}]`;
++          if (!record(level, path, ['id', 'name', 'engine', 'description', 'fuelToPlace', 'tasks', 'translations'])) continue;
++          identifier(level.id, `${path}.id`, levelIds);
++          for (const field of ['name', 'engine', 'description']) text(level[field], `${path}.${field}`);
++          const fuelValid = integer(level.fuelToPlace, `${path}.fuelToPlace`, 0);
++          if (array(level.tasks, `${path}.tasks`, 1)) {
++            if (gridValid && fuelValid && level.fuelToPlace + level.tasks.length > pack.gridSize ** 2 - 1) {
++              issue(path, `${level.tasks.length} tasks + ${level.fuelToPlace} fuel pickups exceed ${pack.gridSize ** 2 - 1} usable cells (one cell is reserved for the start)`);
++            }
++            for (const [taskIndex, value] of level.tasks.entries()) task(value, `${path}.tasks[${taskIndex}]`);
++          }
++          translations(level.translations, `${path}.translations`, ['name', 'description']);
++        }
++      }
++    }
++
++    if (errors.length) {
++      const error = new Error(`Invalid content pack:\n- ${errors.join('\n- ')}`);
++      error.name = 'ContentPackValidationError';
++      error.errors = errors;
++      throw error;
++    }
++    return pack;
++  }
++
++  window.GameContent = Object.freeze({
++    validate,
++    registerLevel,
++    getLevel,
++    supportedLanguages: SUPPORTED_LANGUAGES
++  });
++})();
+diff --git a/src/content/bronze.js b/src/content/bronze.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..92325991861c5cde994549d20d0ea85e1e4dca13
+--- /dev/null
++++ b/src/content/bronze.js
+@@ -0,0 +1,351 @@
++/** Schema v1 level. English is the base language; translated answers are keyed by stable ID. */
++window.GameContent.registerLevel({
++  id: "bronze",
++  name: "Bronze Layer (Raw Ingestion)",
++  engine: "PySpark 3.5.0",
++  description: "Sanitize raw ingestion tables from Kafka and landing buckets before bronze tables corrupt downstream schemas.",
++  fuelToPlace: 2,
++  tasks: [
++    {
++      id: "b_chimera",
++      name: "CHIMERA",
++      desc: "Upstream retry storm caused identical payment transactions to be ingested multiple times.",
++      tableHeaders: ["transaction_id","user_id","amount","timestamp"],
++      tableRows: [
++        ["TX-9901","USR_42","$150.00","10:00:01"],
++        ["TX-9901","USR_42","$150.00","10:00:01"],
++        ["TX-9902","USR_88","$25.50","10:00:04"],
++        ["TX-9901","USR_42","$150.00","10:00:01"]
++      ],
++      glitchIndices: [1,3],
++      skills: [
++        {
++          id: "deduplicate_by_transaction_id",
++          code: "df.dropDuplicates(['transaction_id'])",
++          label: "Deduplicate rows by transaction primary key",
++          correct: true,
++          explain: "Deduplicated rows by transaction ID without dropping unique transactions."
++        },
++        {
++          id: "select_transaction_id_only",
++          code: "df.select('transaction_id')",
++          label: "Keep only transaction_id column",
++          correct: false,
++          explain: "Discarded user_id, amount, and timestamp columns."
++        },
++        {
++          id: "filter_positive_amounts",
++          code: "df.filter(col('amount') > 0)",
++          label: "Filter for positive payment amount",
++          correct: false,
++          explain: "Duplicate transactions still have positive amounts; duplicates remain."
++        },
++        {
++          id: "limit_transactions_to_one",
++          code: "df.limit(1)",
++          label: "Take top 1 row from dataframe",
++          correct: false,
++          explain: "Truncated the entire dataframe down to 1 record."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "CHIMERA",
++          desc: "Pakartotinių užklausų banga lėmė identiškų mokėjimo transakcijų pasikartojantį įrašymą.",
++          skills: {
++            deduplicate_by_transaction_id: {
++              label: "Panaikinti pasikartojančias eilutes pagal transakcijos raktą",
++              explain: "Pasikartojančios eilutės pašalintos pagal transakcijos ID, išsaugant unikalius įrašus."
++            },
++            select_transaction_id_only: {
++              label: "Palikti tik transaction_id stulpelį",
++              explain: "Atmesti user_id, amount ir timestamp stulpeliai."
++            },
++            filter_positive_amounts: {
++              label: "Filtruoti pagal teigiamą mokėjimo sumą",
++              explain: "Pasikartojančios transakcijos turi teigiamas sumas; dublikatai lieka."
++            },
++            limit_transactions_to_one: {
++              label: "Paimti tik 1 viršutinę eilutę iš duomenų rėmelio",
++              explain: "Visas duomenų rėmelis sutrumpintas iki 1 įrašo."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "b_phantom",
++      name: "PHANTOM",
++      desc: "Feature pipeline failed: customer records arrived with missing country codes and null ages.",
++      tableHeaders: ["customer_id","country","age","churn_risk"],
++      tableRows: [
++        ["CUST-10","LT","29","0.12"],
++        ["CUST-11","NULL","NULL","0.84"],
++        ["CUST-12","US","41","0.05"],
++        ["CUST-13","NaN","33","NULL"]
++      ],
++      glitchIndices: [1,3],
++      skills: [
++        {
++          id: "fill_missing_country_and_age",
++          code: "df.fillna({'country': 'UNKNOWN', 'age': 0})",
++          label: "Impute missing values with standardized defaults",
++          correct: true,
++          explain: "Imputed missing fields cleanly without discarding customer records."
++        },
++        {
++          id: "drop_country_and_age",
++          code: "df.drop('country', 'age')",
++          label: "Drop country and age columns from schema",
++          correct: false,
++          explain: "Deleted required features needed for downstream pipelines."
++        },
++        {
++          id: "drop_null_customers",
++          code: "df.na.drop()",
++          label: "Drop all rows containing any null values",
++          correct: false,
++          explain: "Discarded 50% of valid customer records."
++        },
++        {
++          id: "increment_customer_age",
++          code: "df.withColumn('age', col('age') + 1)",
++          label: "Increment age column by 1",
++          correct: false,
++          explain: "NULL + 1 remains NULL in Spark SQL."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "PHANTOM",
++          desc: "Požymių srautas sugedo: klientų įrašai atvyko be šalies kodų ir su tuščiomis (NULL) amžiaus reikšmėmis.",
++          skills: {
++            fill_missing_country_and_age: {
++              label: "Užpildyti trūkstamas reikšmes standartinėmis numatytosiomis",
++              explain: "Trūkstami laukai tvarkingai užpildyti neatmetant klientų įrašų."
++            },
++            drop_country_and_age: {
++              label: "Pašalinti šalies ir amžiaus stulpelius iš schemos",
++              explain: "Ištrinti reikalingi požymiai, būtini tolesniems srautams."
++            },
++            drop_null_customers: {
++              label: "Atmesti visas eilutes, turinčias bent vieną NULL reikšmę",
++              explain: "Atmesta 50% galiojančių klientų įrašų."
++            },
++            increment_customer_age: {
++              label: "Padidinti amžiaus stulpelį 1",
++              explain: "NULL + 1 Spark SQL lieka NULL."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "b_wyrm",
++      name: "WYRM",
++      desc: "Customer names contaminated with unescaped control bytes and binary regex symbols (\\x00, @#$).",
++      tableHeaders: ["user_id","raw_name","email"],
++      tableRows: [
++        ["101","Alice Stark","alice@corp.io"],
++        ["102","Bb%#\\x00$mith","bob@corp.io"],
++        ["103","Carlos Vega","carlos@corp.io"],
++        ["104","D@v!d_#99","david@corp.io"]
++      ],
++      glitchIndices: [1,3],
++      skills: [
++        {
++          id: "remove_invalid_name_characters",
++          code: "df.withColumn('raw_name', regexp_replace(col('raw_name'), '[^a-zA-Z\\s]', ''))",
++          label: "Sanitize strings using regex character class filter",
++          correct: true,
++          explain: "Stripped illegal control characters while preserving alphabetical names."
++        },
++        {
++          id: "select_null_names",
++          code: "df.filter(col('raw_name').isNull())",
++          label: "Filter for null names",
++          correct: false,
++          explain: "Filtered out valid names, returning an empty DataFrame."
++        },
++        {
++          id: "lowercase_raw_names",
++          code: "df.withColumn('raw_name', lower(col('raw_name')))",
++          label: "Convert names to lowercase",
++          correct: false,
++          explain: "Lowercasing retains unescaped binary control characters."
++        },
++        {
++          id: "distinct_name_rows",
++          code: "df.distinct()",
++          label: "Call distinct() across all rows",
++          correct: false,
++          explain: "distinct() does not sanitize column string contents."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "WYRM",
++          desc: "Klientų vardai užteršti neapdorotais valdymo baitais ir specialiais simboliais (\\x00, @#$).",
++          skills: {
++            remove_invalid_name_characters: {
++              label: "Išvalyti eilutes naudojant reguliariosios išraiškos filtrą",
++              explain: "Pašalinti neleistini valdymo simboliai, išsaugant raidinius vardus."
++            },
++            select_null_names: {
++              label: "Filtruoti tik tuščius (NULL) vardus",
++              explain: "Atmesti visi teisingi vardai, grąžintas tuščias duomenų rėmelis."
++            },
++            lowercase_raw_names: {
++              label: "Paversti vardus mažosiomis raidėmis",
++              explain: "Mažosios raidės nepašalina neapdorotų binarinių valdymo simbolių."
++            },
++            distinct_name_rows: {
++              label: "Iškviesti distinct() visoms eilutėms",
++              explain: "distinct() neišvalo stulpelių tekstinio turinio."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "b_mimic",
++      name: "MIMIC",
++      desc: "Revenue metrics arrived as formatted currency strings ('$1,250.00'), breaking numeric aggregations.",
++      tableHeaders: ["invoice_id","revenue_str","status"],
++      tableRows: [
++        ["INV-01","$1,250.00","PAID"],
++        ["INV-02","$450.50","PAID"],
++        ["INV-03","$9,900.00","PENDING"],
++        ["INV-04","N/A_FREE","REFUNDED"]
++      ],
++      glitchIndices: [0,1,2,3],
++      skills: [
++        {
++          id: "clean_and_cast_revenue",
++          code: "df.withColumn('revenue', regexp_replace(col('revenue_str'), '[$,]', '').cast('double'))",
++          label: "Strip currency symbols and cast to Double",
++          correct: true,
++          explain: "Stripped currency symbols and cast string to numeric Double."
++        },
++        {
++          id: "cast_formatted_revenue_directly",
++          code: "df.withColumn('revenue', col('revenue_str').cast('double'))",
++          label: "Directly cast string to double",
++          correct: false,
++          explain: "Direct cast on formatted '$1,250.00' evaluates to NULL in Spark SQL."
++        },
++        {
++          id: "sum_revenue_strings",
++          code: "df.groupBy('revenue_str').sum()",
++          label: "Directly sum the string column",
++          correct: false,
++          explain: "AnalysisException: cannot resolve sum() on string data type."
++        },
++        {
++          id: "remove_all_revenue_rows",
++          code: "df.limit(0)",
++          label: "Truncate dataframe buffer",
++          correct: false,
++          explain: "Emptied the entire table."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "MIMIC",
++          desc: "Pajamų rodikliai atvyko kaip formatuotas tekstas ('$1,250.00'), stabdantis skaitinę agregaciją.",
++          skills: {
++            clean_and_cast_revenue: {
++              label: "Pašalinti valiutos simbolius ir konvertuoti į Double tipą",
++              explain: "Valiutos simboliai pašalinti, tekstas konvertuotas į skaitinį Double tipą."
++            },
++            cast_formatted_revenue_directly: {
++              label: "Tiesiogiai konvertuoti tekstą į Double",
++              explain: "Tiesioginė formatuoto '$1,250.00' konversija Spark SQL grąžina NULL."
++            },
++            sum_revenue_strings: {
++              label: "Tiesiogiai sumuoti tekstinį stulpelį",
++              explain: "AnalysisException: negalima atlikti sum() tekstinio tipo stulpeliui."
++            },
++            remove_all_revenue_rows: {
++              label: "Išvalyti duomenų rėmelio buferį",
++              explain: "Išvalyta visa lentelė."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "b_stalker",
++      name: "STALKER",
++      desc: "Foreign key join dropped rows due to unescaped leading and trailing whitespace in store codes.",
++      tableHeaders: ["order_id","store_code","shipped"],
++      tableRows: [
++        ["ORD-1","STORE_NYC   ","true"],
++        ["ORD-2","  STORE_LON ","true"],
++        ["ORD-3","STORE_TOK   ","false"],
++        ["ORD-4","STORE_NYC","true"]
++      ],
++      glitchIndices: [0,1,2],
++      skills: [
++        {
++          id: "trim_store_codes",
++          code: "df.withColumn('store_code', trim(col('store_code')))",
++          label: "Apply trim() to strip leading and trailing spaces",
++          correct: true,
++          explain: "Trimmed whitespace padding, restoring join key alignment."
++        },
++        {
++          id: "keep_only_new_york_store",
++          code: "df.filter(col('store_code') == 'STORE_NYC')",
++          label: "Hardcode filter for single store code",
++          correct: false,
++          explain: "Filtered out London and Tokyo stores, resulting in data loss."
++        },
++        {
++          id: "drop_store_code",
++          code: "df.drop('store_code')",
++          label: "Drop the store_code column entirely",
++          correct: false,
++          explain: "Dropped the foreign key required for downstream joins."
++        },
++        {
++          id: "repartition_store_rows",
++          code: "df.repartition(10)",
++          label: "Repartition dataframe into 10 partitions",
++          correct: false,
++          explain: "Repartitioning changes partition distribution, not column whitespace."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "STALKER",
++          desc: "Išorinio rakto sujungimas prarado eilutes dėl nepašalintų tarpų parduotuvių koduose.",
++          skills: {
++            trim_store_codes: {
++              label: "Pritaikyti trim() pradžios ir pabaigos tarpų pašalinimui",
++              explain: "Tarpai pašalinti, sujungimo raktai vėl sutampa."
++            },
++            keep_only_new_york_store: {
++              label: "Filtruoti tik vieną konkrečios parduotuvės kodą",
++              explain: "Atmestos Londono ir Tokijo parduotuvės, prarasti duomenys."
++            },
++            drop_store_code: {
++              label: "Visiškai pašalinti store_code stulpelį",
++              explain: "Pašalintas išorinis raktas, būtinas tolesniems sujungimams."
++            },
++            repartition_store_rows: {
++              label: "Perskirstyti duomenų rėmelį į 10 skaidinių",
++              explain: "Perskirstymas keičia skaidinius, bet nepašalina tarpų reikšmėse."
++            }
++          }
++        }
++      }
++    }
++  ],
++  translations: {
++    lt: {
++      name: "Bronzos sluoksnis (Neapdorotų duomenų gavimas)",
++      description: "Išvalykite neapdorotas lenteles iš Kafka ir talpyklų, kol klaidingos schemos nesugadino tolesnių procesų."
++    }
++  }
++});
+diff --git a/src/content/gold.js b/src/content/gold.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f5f47ce573dfbc9c034508bc4d6991ae4f5ab17
+--- /dev/null
++++ b/src/content/gold.js
+@@ -0,0 +1,351 @@
++/** Schema v1 level. English is the base language; translated answers are keyed by stable ID. */
++window.GameContent.registerLevel({
++  id: "gold",
++  name: "Gold Layer (Production Optimization)",
++  engine: "Delta Lake & Spark Catalyst",
++  description: "Optimize high-volume big data pipelines. Eliminate shuffle skews, broadcast lookup dimensions, and execute Delta Lake merges.",
++  fuelToPlace: 2,
++  tasks: [
++    {
++      id: "g_broadcast",
++      name: "BROADCAST_JOIN",
++      desc: "A 500M row fact table joins a 50-row lookup dimension, generating network shuffle spills.",
++      tableHeaders: ["query_type","fact_rows","dim_rows","shuffle_spill"],
++      tableRows: [
++        ["SortMergeJoin","500,000,000","50","42.8 GB SPILL"],
++        ["SortMergeJoin","500,000,000","50","38.2 GB SPILL"],
++        ["BroadcastJoin","500,000,000","50","Target: 0 GB"],
++        ["SortMergeJoin","500,000,000","50","45.1 GB SPILL"]
++      ],
++      glitchIndices: [0,1,3],
++      skills: [
++        {
++          id: "broadcast_small_lookup",
++          code: "df_fact.join(broadcast(df_lookup), 'country_code', 'inner')",
++          label: "Apply broadcast() hint on the small lookup table",
++          correct: true,
++          explain: "Broadcast Hash Join sends the 50-row table to all executors, eliminating shuffle spills."
++        },
++        {
++          id: "broadcast_large_fact_table",
++          code: "broadcast(df_fact).join(df_lookup, 'country_code', 'inner')",
++          label: "Broadcast the 500M row fact table",
++          correct: false,
++          explain: "Broadcasting a 500M row table exhausts driver JVM memory."
++        },
++        {
++          id: "repartition_fact_before_join",
++          code: "df_fact.repartition(1000).join(df_lookup, 'country_code')",
++          label: "Repartition fact table into 1000 partitions",
++          correct: false,
++          explain: "SortMergeJoin still performs a full network shuffle across partitions."
++        },
++        {
++          id: "limit_fact_before_join",
++          code: "df_fact.limit(1000).join(df_lookup, 'country_code')",
++          label: "Limit fact table to 1,000 rows",
++          correct: false,
++          explain: "Limits dataset row count, discarding production records."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "BROADCAST_JOIN",
++          desc: "500 mln. eilučių faktų lentelė jungiama su 50 eilučių dimensija, sukeldama tinklo perpildymo (shuffle spill) nuostolius.",
++          skills: {
++            broadcast_small_lookup: {
++              label: "Pritaikyti broadcast() užuominą mažai žinyno lentelei",
++              explain: "Broadcast Hash Join išsiunčia 50 eilučių lentelę visiems vykdytojams, panaikindamas duomenų perpildymą."
++            },
++            broadcast_large_fact_table: {
++              label: "Transliuoti (broadcast) 500 mln. faktų lentelę",
++              explain: "500 mln. eilučių lentelės transliavimas išeikvoja pagrindinio mazgo (driver) JVM atmintį."
++            },
++            repartition_fact_before_join: {
++              label: "Perskirstyti faktų lentelę į 1000 skaidinių",
++              explain: "SortMergeJoin vis tiek atlieka pilną duomenų persiuntimą per tinklą."
++            },
++            limit_fact_before_join: {
++              label: "Apriboti faktų lentelę iki 1 000 eilučių",
++              explain: "Apriboja eilučių skaičių ir atmeta produkcinius duomenis."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "g_delta_merge",
++      name: "DELTA_MERGE",
++      desc: "Execute an atomic UPSERT on Delta Lake: update existing records and insert new rows on customer_id.",
++      tableHeaders: ["target_table","source_table","action","status"],
++      tableRows: [
++        ["delta_silver.customers","updates_batch","UPSERT","Needs MERGE"],
++        ["delta_silver.customers","updates_batch","UPDATE","Matches on ID"],
++        ["delta_silver.customers","updates_batch","INSERT","New records"],
++        ["delta_silver.customers","updates_batch","UPSERT","Needs MERGE"]
++      ],
++      glitchIndices: [0,3],
++      skills: [
++        {
++          id: "merge_customers_by_id",
++          code: "target.alias('t').merge(source.alias('s'), 't.customer_id = s.customer_id').whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()",
++          label: "Delta Lake MERGE INTO with matched update and unmatched insert",
++          correct: true,
++          explain: "Executes an atomic Delta ACID upsert: updates existing records and appends new rows."
++        },
++        {
++          id: "overwrite_customers_with_batch",
++          code: "source.write.format('delta').mode('overwrite').saveAsTable('delta_silver.customers')",
++          label: "Overwrite target table with source batch",
++          correct: false,
++          explain: "Overwrote target table, deleting existing historical customer records."
++        },
++        {
++          id: "append_customers_without_merge",
++          code: "source.write.format('delta').mode('append').saveAsTable('delta_silver.customers')",
++          label: "Append source batch directly to target table",
++          correct: false,
++          explain: "Appends duplicate rows for existing customer IDs without updating."
++        },
++        {
++          id: "delete_non_null_customers",
++          code: "target.filter('customer_id IS NOT NULL').delete()",
++          label: "Delete all non-null customer rows",
++          correct: false,
++          explain: "Deleted all active rows from the target table."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "DELTA_MERGE",
++          desc: "Atlikti atominį UPSERT Delta Lake: atnaujinti esamus ir įterpti naujus įrašus pagal customer_id.",
++          skills: {
++            merge_customers_by_id: {
++              label: "Delta Lake MERGE INTO su atnaujinimu sutapus ir įterpimu nesutapus",
++              explain: "Atlieka atominį Delta ACID atnaujinimą: atnaujina esamus ir prideda naujus įrašus."
++            },
++            overwrite_customers_with_batch: {
++              label: "Perrašyti tikslinę lentelę šaltinio partija",
++              explain: "Perrašė tikslinę lentelę, ištrindama esamus istorinius klientų įrašus."
++            },
++            append_customers_without_merge: {
++              label: "Pridėti šaltinio partiją tiesiai prie tikslinės lentelės",
++              explain: "Prideda dublikuotas eilutes esamiems klientams be atnaujinimo."
++            },
++            delete_non_null_customers: {
++              label: "Ištrinti visas ne tuščias klientų eilutes",
++              explain: "Ištrynė visas aktyvias eilutes iš tikslinės lentelės."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "g_partition_prune",
++      name: "PARTITION_PRUNING",
++      desc: "Queries on a 100TB event lake trigger full table scans because filters don't align with partition keys.",
++      tableHeaders: ["dataset_size","query_filter","scan_volume","latency"],
++      tableRows: [
++        ["100 TB","WHERE timestamp > now() - 1d","Full 100 TB scan","38 min"],
++        ["100 TB","WHERE year=2026 AND month=4","Target: 250 GB","14 sec"],
++        ["100 TB","WHERE date(timestamp) = today","Full 100 TB scan","41 min"],
++        ["100 TB","WHERE substring(ts, 1, 4)='2026'","Full 100 TB scan","45 min"]
++      ],
++      glitchIndices: [0,2,3],
++      skills: [
++        {
++          id: "filter_physical_partition_keys",
++          code: "SELECT * FROM events WHERE year = 2026 AND month = 4 AND day = 16",
++          label: "Filter directly on exact physical partition key columns",
++          correct: true,
++          explain: "Spark Catalyst prunes partitions, skipping non-matching storage paths."
++        },
++        {
++          id: "cast_partition_key_to_string",
++          code: "SELECT * FROM events WHERE CAST(year AS STRING) = '2026'",
++          label: "Cast partition column to string in filter",
++          correct: false,
++          explain: "Function calls on partition columns can disable file-skipping metadata."
++        },
++        {
++          id: "scan_events_without_filter",
++          code: "SELECT * FROM events",
++          label: "Run query with no WHERE filter",
++          correct: false,
++          explain: "Triggers full 100TB scan across all partitions."
++        },
++        {
++          id: "sample_event_rows",
++          code: "SELECT * FROM events TABLESAMPLE (1 PERCENT)",
++          label: "Sample 1% of table rows",
++          correct: false,
++          explain: "TABLESAMPLE returns partial data and does not satisfy production queries."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "PARTITION_PRUNING",
++          desc: "Užklausos 100 TB įvykių ežere atlieka pilną lentelės nuskaitymą, nes filtrai nesutampa su skaidinių raktais.",
++          skills: {
++            filter_physical_partition_keys: {
++              label: "Filtruoti tiesiogiai pagal tikslius fizinių skaidinių stulpelius",
++              explain: "Spark Catalyst atmeta nereikalingus skaidinius ir praleidžia neatitinkančius saugyklos kelius."
++            },
++            cast_partition_key_to_string: {
++              label: "Konvertuoti skaidinio stulpelį į tekstą filtre",
++              explain: "Funkcijos skaidinių stulpeliuose gali atjungti failų praleidimo metaduomenis."
++            },
++            scan_events_without_filter: {
++              label: "Vykdyti užklausą be WHERE filtro",
++              explain: "Sukelia pilną 100 TB nuskaitymą per visus skaidinius."
++            },
++            sample_event_rows: {
++              label: "Atrinkti 1% lentelės eilučių imtį",
++              explain: "TABLESAMPLE grąžina dalinius duomenis ir netinka produkcinei užklausai."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "g_skew_salt",
++      name: "KEY_SALTING",
++      desc: "90% of traffic belongs to a single viral tenant, causing one Spark task to skew execution time.",
++      tableHeaders: ["tenant_id","record_count","task_status","skew_ratio"],
++      tableRows: [
++        ["VIRAL_TENANT_X","85,000,000","Stuck 99%","Skew 90%"],
++        ["TENANT_A","12,000","Finished (0.2s)","Normal"],
++        ["TENANT_B","45,000","Finished (0.4s)","Normal"],
++        ["VIRAL_TENANT_X","85,000,000","Stuck 99%","Skew 90%"]
++      ],
++      glitchIndices: [0,3],
++      skills: [
++        {
++          id: "salt_and_repartition_tenant_keys",
++          code: "df.withColumn('salt', (rand() * 16).cast('int')).repartition(col('tenant_id'), col('salt'))",
++          label: "Salting: append randomized key to distribute heavy keys across partitions",
++          correct: true,
++          explain: "Salting splits the skewed key into uniform buckets across executors."
++        },
++        {
++          id: "repartition_tenants_to_one",
++          code: "df.repartition(1)",
++          label: "Repartition entire dataframe to 1 partition",
++          correct: false,
++          explain: "Forces all 85 million records onto a single executor core."
++        },
++        {
++          id: "remove_viral_tenant",
++          code: "df.filter(col('tenant_id') != 'VIRAL_TENANT_X')",
++          label: "Filter out the viral tenant completely",
++          correct: false,
++          explain: "Filtering out the skewed key drops valid production records."
++        },
++        {
++          id: "coalesce_tenants_without_shuffle",
++          code: "df.coalesce(200)",
++          label: "Coalesce dataframe to 200 partitions",
++          correct: false,
++          explain: "coalesce() does not shuffle or rebalance skewed key distribution."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "KEY_SALTING",
++          desc: "90% srauto tenka vienam populiariam klientui, todėl viena Spark užduotis smarkiai vėluoja (skew).",
++          skills: {
++            salt_and_repartition_tenant_keys: {
++              label: "Sūdymas (Salting): pridėti atsitiktinį raktą tolygiam perskirstymui",
++              explain: "Sūdymas išskaido perkrautą raktą į tolygias dalis tarp vykdytojų."
++            },
++            repartition_tenants_to_one: {
++              label: "Perskirstyti visą duomenų rėmelį į 1 skaidinį",
++              explain: "Priverčia visus 85 mln. įrašų apdoroti viename vykdytojo branduolyje."
++            },
++            remove_viral_tenant: {
++              label: "Visiškai išfiltruoti didžiausią klientą",
++              explain: "Išfiltravus perkrautą raktą prarandami galiojantys produkciniai duomenys."
++            },
++            coalesce_tenants_without_shuffle: {
++              label: "Sumažinti skaidinių skaičių iki 200 su coalesce",
++              explain: "coalesce() neatlieka perskirstymo ir nesubalansuoja netolygių raktų."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "g_cache_unpersist",
++      name: "PERSIST_UNPERSIST",
++      desc: "An iterative computation reuses intermediate DataFrame df_clean across 10 actions. Optimize memory reuse.",
++      tableHeaders: ["computation","action_count","storage_level","risk"],
++      tableRows: [
++        ["Iterative Loop","10 actions","Recomputing graph","10x redundant I/O"],
++        ["Iterative Loop","10 actions","Target: MEMORY_AND_DISK","Fast reuse"],
++        ["Iterative Loop","10 actions","No unpersist","OOM leak risk"],
++        ["Iterative Loop","10 actions","Recomputing graph","10x redundant I/O"]
++      ],
++      glitchIndices: [0,3],
++      skills: [
++        {
++          id: "persist_and_release_clean_frame",
++          code: "df_clean.persist(StorageLevel.MEMORY_AND_DISK); ... ; df_clean.unpersist()",
++          label: "Persist with MEMORY_AND_DISK, then unpersist() when loop completes",
++          correct: true,
++          explain: "Caches intermediate stages to avoid recomputation and releases JVM memory when done."
++        },
++        {
++          id: "collect_clean_frame_to_driver",
++          code: "df_clean.collect()",
++          label: "Collect entire distributed dataset to driver memory",
++          correct: false,
++          explain: "collect() pulls the entire distributed dataset into driver JVM memory, causing OOM."
++        },
++        {
++          id: "checkpoint_without_directory",
++          code: "df_clean.checkpoint() without setting checkpoint dir",
++          label: "Call checkpoint() directly",
++          correct: false,
++          explain: "checkpoint() fails when checkpoint directory has not been set in SparkContext."
++        },
++        {
++          id: "cache_repeatedly_in_loop",
++          code: "for i in range(10): df_clean.cache()",
++          label: "Call .cache() 10 times in a loop",
++          correct: false,
++          explain: "Redundant cache() calls do not accelerate execution."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "PERSIST_UNPERSIST",
++          desc: "Iteracinis skaičiavimas pakartotinai naudoja tarpinį duomenų rėmelį df_clean per 10 veiksmų. Optimizuokite atmintį.",
++          skills: {
++            persist_and_release_clean_frame: {
++              label: "Išsaugoti su MEMORY_AND_DISK, o baigus ciklą iškviesti unpersist()",
++              explain: "Išsaugo tarpinius etapus išvengiant perskaičiavimo ir atlaisvina JVM atmintį baigus."
++            },
++            collect_clean_frame_to_driver: {
++              label: "Surinkti visus paskirstytus duomenis į pagrindinio mazgo (driver) atmintį",
++              explain: "collect() atsiunčia visus paskirstytus duomenis į driver atmintį, sukeldamas OOM."
++            },
++            checkpoint_without_directory: {
++              label: "Tiesiogiai iškviesti checkpoint()",
++              explain: "checkpoint() nepavyksta, kai SparkContext nenurodytas kontrolinio taško katalogas."
++            },
++            cache_repeatedly_in_loop: {
++              label: "Iškviesti .cache() 10 kartų cikle",
++              explain: "Pertekliniai cache() iškvietimai nepagreitina vykdymo."
++            }
++          }
++        }
++      }
++    }
++  ],
++  translations: {
++    lt: {
++      name: "Aukso sluoksnis (Produkcijos optimizavimas)",
++      description: "Optimizuokite didelės apimties duomenų srautus. Pašalinkite duomenų perskirstymo (shuffle) iškraipymus ir atlikite Delta Lake sujungimus."
++    }
++  }
++});
+diff --git a/src/content/silver.js b/src/content/silver.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..5771569a072aaac9af3fcf16f1d8bcd00c7c6fb6
+--- /dev/null
++++ b/src/content/silver.js
+@@ -0,0 +1,351 @@
++/** Schema v1 level. English is the base language; translated answers are keyed by stable ID. */
++window.GameContent.registerLevel({
++  id: "silver",
++  name: "Silver Layer (SQL Transformations)",
++  engine: "Spark SQL / ANSI SQL",
++  description: "Write analytical SQL transformations to produce clean dimensional models and aggregated feature sets.",
++  fuelToPlace: 2,
++  tasks: [
++    {
++      id: "s_window",
++      name: "WINDOW_RANKER",
++      desc: "Isolate only the most recent status update per customer using an SQL window function.",
++      tableHeaders: ["customer_id","status","updated_at"],
++      tableRows: [
++        ["C-1","ACTIVE","2026-04-01 10:00:00"],
++        ["C-1","SUSPENDED","2026-04-02 12:00:00"],
++        ["C-2","PENDING","2026-04-01 09:00:00"],
++        ["C-2","ACTIVE","2026-04-03 15:00:00"]
++      ],
++      glitchIndices: [0,2],
++      skills: [
++        {
++          id: "rank_latest_customer_update",
++          code: "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY updated_at DESC) as rn FROM updates) WHERE rn = 1",
++          label: "Window ROW_NUMBER() partitioned by customer descending",
++          correct: true,
++          explain: "ROW_NUMBER() partitioned by customer isolates the latest update record."
++        },
++        {
++          id: "aggregate_latest_timestamp_only",
++          code: "SELECT customer_id, MAX(updated_at) FROM updates GROUP BY customer_id",
++          label: "GROUP BY with MAX(updated_at)",
++          correct: false,
++          explain: "status column omitted because it was not included in the GROUP BY clause."
++        },
++        {
++          id: "limit_global_latest_updates",
++          code: "SELECT * FROM updates ORDER BY updated_at DESC LIMIT 2",
++          label: "Global ORDER BY updated_at DESC LIMIT 2",
++          correct: false,
++          explain: "LIMIT returns top 2 global rows regardless of customer groupings."
++        },
++        {
++          id: "distinct_customer_statuses",
++          code: "SELECT DISTINCT customer_id, status FROM updates",
++          label: "SELECT DISTINCT customer_id, status",
++          correct: false,
++          explain: "Retains all historical status transitions since status values are distinct."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "WINDOW_RANKER",
++          desc: "Atrinkti tik naujausią kiekvieno kliento būsenos atnaujinimą naudojant SQL lango funkciją.",
++          skills: {
++            rank_latest_customer_update: {
++              label: "Lango funkcija ROW_NUMBER(), skaidoma pagal klientą mažėjimo tvarka",
++              explain: "ROW_NUMBER() pagal klientą atrenka patį vėliausią atnaujinimo įrašą."
++            },
++            aggregate_latest_timestamp_only: {
++              label: "GROUP BY su MAX(updated_at)",
++              explain: "status stulpelis praleistas, nes nebuvo įtrauktas į GROUP BY sąlygą."
++            },
++            limit_global_latest_updates: {
++              label: "Bendras ORDER BY updated_at DESC LIMIT 2",
++              explain: "LIMIT grąžina 2 bendras eilutes, nepriklausomai nuo klientų grupių."
++            },
++            distinct_customer_statuses: {
++              label: "SELECT DISTINCT customer_id, status",
++              explain: "Išsaugo visus istorinius būsenų pasikeitimus, nes reikšmės unikalios."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "s_having",
++      name: "AGGREGATOR",
++      desc: "Identify merchant accounts whose total transaction volume exceeds $10,000 using SQL aggregation.",
++      tableHeaders: ["merchant_id","tx_count","total_volume"],
++      tableRows: [
++        ["M-80","150","$24,500.00"],
++        ["M-81","12","$450.00"],
++        ["M-82","310","$92,000.00"],
++        ["M-83","5","$120.00"]
++      ],
++      glitchIndices: [1,3],
++      skills: [
++        {
++          id: "filter_merchant_totals_with_having",
++          code: "SELECT merchant_id, SUM(amount) as total FROM transactions GROUP BY merchant_id HAVING SUM(amount) > 10000",
++          label: "GROUP BY merchant_id HAVING SUM(amount) > 10000",
++          correct: true,
++          explain: "HAVING clause filters aggregate sums after grouping."
++        },
++        {
++          id: "filter_aggregate_in_where",
++          code: "SELECT merchant_id, SUM(amount) as total FROM transactions WHERE SUM(amount) > 10000 GROUP BY merchant_id",
++          label: "WHERE SUM(amount) > 10000 GROUP BY merchant_id",
++          correct: false,
++          explain: "Syntax error: aggregate functions cannot appear in a WHERE clause."
++        },
++        {
++          id: "filter_individual_large_transactions",
++          code: "SELECT merchant_id, amount FROM transactions WHERE amount > 10000",
++          label: "Filter individual transactions > 10000",
++          correct: false,
++          explain: "Filters single transactions rather than aggregated volume per merchant."
++        },
++        {
++          id: "group_merchants_without_threshold",
++          code: "SELECT merchant_id FROM transactions GROUP BY merchant_id",
++          label: "GROUP BY merchant_id without sum filter",
++          correct: false,
++          explain: "Returns all merchants without applying the volume threshold."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "AGGREGATOR",
++          desc: "Nustatyti prekybininkų paskyras, kurių bendra transakcijų suma viršija $10,000, naudojant SQL agregaciją.",
++          skills: {
++            filter_merchant_totals_with_having: {
++              label: "GROUP BY merchant_id HAVING SUM(amount) > 10000",
++              explain: "HAVING sąlyga filtruoja agreguotas sumas po grupavimo."
++            },
++            filter_aggregate_in_where: {
++              label: "WHERE SUM(amount) > 10000 GROUP BY merchant_id",
++              explain: "Sintaksės klaida: agregavimo funkcijos negali būti WHERE sąlygoje."
++            },
++            filter_individual_large_transactions: {
++              label: "Filtruoti atskiras transakcijas > 10000",
++              explain: "Filtruoja pavienes transakcijas, o ne bendrą prekybininko apyvartą."
++            },
++            group_merchants_without_threshold: {
++              label: "GROUP BY merchant_id be sumos filtro",
++              explain: "Grąžina visus prekybininkus nepritaikius apyvartos ribos."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "s_join",
++      name: "ORPHAN_HUNTER",
++      desc: "Identify all active users who have never completed an order using an SQL anti-join.",
++      tableHeaders: ["user_id","email","has_orders"],
++      tableRows: [
++        ["U-10","alex@lab.io","Has 3 orders"],
++        ["U-11","sam@lab.io","0 orders (orphan)"],
++        ["U-12","eva@lab.io","Has 12 orders"],
++        ["U-13","leo@lab.io","0 orders (orphan)"]
++      ],
++      glitchIndices: [1,3],
++      skills: [
++        {
++          id: "find_users_without_orders",
++          code: "SELECT u.user_id, u.email FROM users u LEFT JOIN orders o ON u.user_id = o.user_id WHERE o.order_id IS NULL",
++          label: "LEFT JOIN ... WHERE o.order_id IS NULL",
++          correct: true,
++          explain: "Anti-join isolates unmatched users with null foreign keys."
++        },
++        {
++          id: "join_users_with_orders",
++          code: "SELECT u.user_id, u.email FROM users u INNER JOIN orders o ON u.user_id = o.user_id",
++          label: "INNER JOIN users and orders",
++          correct: false,
++          explain: "Inner join returns users with orders instead of orphans."
++        },
++        {
++          id: "exclude_users_with_not_in",
++          code: "SELECT user_id, email FROM users WHERE user_id NOT IN (SELECT user_id FROM orders)",
++          label: "WHERE user_id NOT IN (orders subquery)",
++          correct: false,
++          explain: "Vulnerable to NULL values: if orders contains a NULL user_id, NOT IN returns no rows."
++        },
++        {
++          id: "cross_join_users_and_orders",
++          code: "SELECT user_id FROM users CROSS JOIN orders",
++          label: "CROSS JOIN users and orders",
++          correct: false,
++          explain: "Cartesian product produces an unindexed join multiplication."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "ORPHAN_HUNTER",
++          desc: "Rasti visus aktyvius vartotojus, kurie niekada neatliko užsakymo, naudojant SQL anti-join.",
++          skills: {
++            find_users_without_orders: {
++              label: "LEFT JOIN ... WHERE o.order_id IS NULL",
++              explain: "Anti-join atrenka nesusietus vartotojus su NULL išoriniais raktais."
++            },
++            join_users_with_orders: {
++              label: "INNER JOIN tarp vartotojų ir užsakymų",
++              explain: "Vidinis sujungimas grąžina vartotojus su užsakymais, o ne be jų."
++            },
++            exclude_users_with_not_in: {
++              label: "WHERE user_id NOT IN (užsakymų po-užklausa)",
++              explain: "Pažeidžiama NULL reikšmėms: jei užsakymuose yra NULL, NOT IN negrąžina eilučių."
++            },
++            cross_join_users_and_orders: {
++              label: "CROSS JOIN vartotojų ir užsakymų lentelėms",
++              explain: "Dekarto sandauga sukuria nekontroliuojamą eilučių dauginimąsi."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "s_case",
++      name: "CLASSIFIER",
++      desc: "Segment customers into 'VIP' (spend >= 1000), 'REGULAR' (spend >= 100), and 'NEW' using CASE WHEN.",
++      tableHeaders: ["customer_id","lifetime_spend","target_tier"],
++      tableRows: [
++        ["C-501","$1,450.00","Should be VIP"],
++        ["C-502","$340.00","Should be REGULAR"],
++        ["C-503","$25.00","Should be NEW"],
++        ["C-504","$2,100.00","Should be VIP"]
++      ],
++      glitchIndices: [0,1,2,3],
++      skills: [
++        {
++          id: "classify_spend_highest_threshold_first",
++          code: "SELECT customer_id, CASE WHEN lifetime_spend >= 1000 THEN 'VIP' WHEN lifetime_spend >= 100 THEN 'REGULAR' ELSE 'NEW' END AS tier FROM customers",
++          label: "Evaluated CASE WHEN tier segmentation",
++          correct: true,
++          explain: "Cascading thresholds evaluate largest spend bounds first."
++        },
++        {
++          id: "classify_spend_lowest_threshold_first",
++          code: "SELECT customer_id, CASE WHEN lifetime_spend >= 100 THEN 'REGULAR' WHEN lifetime_spend >= 1000 THEN 'VIP' ELSE 'NEW' END AS tier FROM customers",
++          label: "Inverted CASE WHEN order (>= 100 first)",
++          correct: false,
++          explain: "Spend >= 100 evaluates first, incorrectly classifying VIP accounts as REGULAR."
++        },
++        {
++          id: "classify_spend_with_binary_if",
++          code: "SELECT customer_id, IF(lifetime_spend >= 1000, 'VIP', 'REGULAR') AS tier FROM customers",
++          label: "Binary IF statement",
++          correct: false,
++          explain: "Omits the 'NEW' tier, collapsing new accounts into REGULAR."
++        },
++        {
++          id: "classify_every_customer_as_vip",
++          code: "SELECT customer_id, 'VIP' AS tier FROM customers",
++          label: "Hardcode all as 'VIP'",
++          correct: false,
++          explain: "Static literal labels zero-spend accounts as VIP."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "CLASSIFIER",
++          desc: "Suskirstyti klientus į 'VIP' (išlaidos >= 1000), 'REGULAR' (>= 100) ir 'NEW' naudojant CASE WHEN.",
++          skills: {
++            classify_spend_highest_threshold_first: {
++              label: "Nuoseklus CASE WHEN lygmenų skirstymas",
++              explain: "Nuoseklios sąlygos pirmiausia patikrina didžiausias išlaidų ribas."
++            },
++            classify_spend_lowest_threshold_first: {
++              label: "Apversta CASE WHEN tvarka (>= 100 pirma)",
++              explain: "Išlaidos >= 100 tikrinamos pirmiausia, todėl VIP priskiriami REGULAR."
++            },
++            classify_spend_with_binary_if: {
++              label: "Dvejetainė IF sąlyga",
++              explain: "Praleidžiamas 'NEW' lygmuo, naujos paskyros tampa REGULAR."
++            },
++            classify_every_customer_as_vip: {
++              label: "Priskirti visiems fiksuotą 'VIP'",
++              explain: "Statinė reikšmė neturinčias išlaidų paskyras pažymi kaip VIP."
++            }
++          }
++        }
++      }
++    },
++    {
++      id: "s_coalesce",
++      name: "COALESCER",
++      desc: "Standardize fallback contact info prioritizing mobile_phone -> work_phone -> email -> 'UNREACHABLE'.",
++      tableHeaders: ["user_id","mobile_phone","work_phone","email"],
++      tableRows: [
++        ["U-90","NULL","+370-600-1111","test@corp.lt"],
++        ["U-91","NULL","NULL","contact@web.io"],
++        ["U-92","NULL","NULL","NULL"],
++        ["U-93","+370-699-2222","NULL","ceo@corp.lt"]
++      ],
++      glitchIndices: [0,1,2],
++      skills: [
++        {
++          id: "coalesce_contacts_in_priority_order",
++          code: "SELECT user_id, COALESCE(mobile_phone, work_phone, email, 'UNREACHABLE') AS primary_contact FROM directory",
++          label: "COALESCE(mobile, work, email, 'UNREACHABLE')",
++          correct: true,
++          explain: "COALESCE returns the first non-null contact value in precedence order."
++        },
++        {
++          id: "nvl_mobile_and_email",
++          code: "SELECT user_id, NVL(mobile_phone, email) AS primary_contact FROM directory",
++          label: "NVL(mobile_phone, email)",
++          correct: false,
++          explain: "Omits work_phone and fails when both mobile and email are null."
++        },
++        {
++          id: "concatenate_contact_fields",
++          code: "SELECT user_id, CONCAT(mobile_phone, work_phone, email) AS primary_contact FROM directory",
++          label: "CONCAT all contact columns",
++          correct: false,
++          explain: "In standard SQL, string concatenation with NULL returns NULL."
++        },
++        {
++          id: "select_email_only",
++          code: "SELECT user_id, email AS primary_contact FROM directory",
++          label: "Select email only",
++          correct: false,
++          explain: "Ignores phone fallbacks and produces nulls for accounts without email."
++        }
++      ],
++      translations: {
++        lt: {
++          name: "COALESCER",
++          desc: "Standartizuoti atsarginį kontaktą pagal prioritetą: mobilusis -> darbo tel. -> el. paštas -> 'NEPASIEKIAMAS'.",
++          skills: {
++            coalesce_contacts_in_priority_order: {
++              label: "COALESCE(mobile_phone, work_phone, email, 'NEPASIEKIAMAS')",
++              explain: "COALESCE grąžina pirmą ne tuščią (non-null) reikšmę pagal nurodytą prioritetą."
++            },
++            nvl_mobile_and_email: {
++              label: "NVL(mobile_phone, email)",
++              explain: "Praleidžia darbo telefoną ir nepateikia atsarginio varianto, kai abu tušti."
++            },
++            concatenate_contact_fields: {
++              label: "CONCAT visiems kontaktų stulpeliams",
++              explain: "Standartiniame SQL eilučių jungimas su NULL grąžina NULL."
++            },
++            select_email_only: {
++              label: "Pasirinkti tik el. paštą",
++              explain: "Ignoruoja telefonus ir grąžina NULL paskyroms be el. pašto."
++            }
++          }
++        }
++      }
++    }
++  ],
++  translations: {
++    lt: {
++      name: "Sidabro sluoksnis (SQL transformacijos)",
++      description: "Kurkite analitines SQL transformacijas švariems dimensijų modeliams ir agreguotiems požymių rinkiniams."
++    }
++  }
++});
+diff --git a/src/data.js b/src/data.js
+index 096f879c3c4c3b4cb2e451e6e94b88917e6e934e..dba617a5bd68ddaa5ee537013e2f3cb6c8358d8f 100644
+--- a/src/data.js
++++ b/src/data.js
+@@ -1,2 +1,27 @@
+-/** Ordered campaign; level definitions are loaded before this registry. */
+-window.GAME_LEVELS = [window.BRONZE_LEVEL, window.SILVER_LEVEL, window.GOLD_LEVEL];
++/** Schema v1 campaign manifest. Load content-pack.js and all level files first. */
++window.GAME_LEVELS = null;
++try {
++  window.GAME_CONTENT_PACK = {
++    schemaVersion: 1,
++    id: 'data_lake',
++    defaultLanguage: 'en',
++    languages: ['en', 'lt'],
++    gridSize: 5,
++    // Explicit order also makes missing or misnamed level files fail validation.
++    levels: ['bronze', 'silver', 'gold'].map(id => window.GameContent.getLevel(id))
++  };
++  window.GAME_LEVELS = window.GameContent.validate(window.GAME_CONTENT_PACK).levels;
++} catch (error) {
++  if (typeof document !== 'undefined') {
++    const message = document.getElementById('content-error');
++    if (message) {
++      message.hidden = false;
++      message.textContent = error.message;
++    }
++    const start = document.getElementById('btn-start-game');
++    if (start) start.disabled = true;
++    const menu = document.getElementById('start-menu-modal');
++    if (menu) menu.style.display = 'flex';
++  }
++  throw error;
++}
+diff --git a/src/i18n-tasks.js b/src/i18n-tasks.js
+deleted file mode 100644
+index 6c7e5f2841a6a2dd4dcf8baf2569c1e9ce23091f..0000000000000000000000000000000000000000
+--- a/src/i18n-tasks.js
++++ /dev/null
+@@ -1,350 +0,0 @@
+-window.TASK_TRANSLATIONS = {
+-  lt: {
+-    levels: {
+-      1: {
+-        name: "Bronzos sluoksnis (Neapdorotų duomenų gavimas)",
+-        description: "Išvalykite neapdorotas lenteles iš Kafka ir talpyklų, kol klaidingos schemos nesugadino tolesnių procesų."
+-      },
+-      2: {
+-        name: "Sidabro sluoksnis (SQL transformacijos)",
+-        description: "Kurkite analitines SQL transformacijas švariems dimensijų modeliams ir agreguotiems požymių rinkiniams."
+-      },
+-      3: {
+-        name: "Aukso sluoksnis (Produkcijos optimizavimas)",
+-        description: "Optimizuokite didelės apimties duomenų srautus. Pašalinkite duomenų perskirstymo (shuffle) iškraipymus ir atlikite Delta Lake sujungimus."
+-      }
+-    },
+-    tasks: {
+-      b_chimera: {
+-        name: "CHIMERA",
+-        desc: "Pakartotinių užklausų banga lėmė identiškų mokėjimo transakcijų pasikartojantį įrašymą.",
+-        skills: [
+-          {
+-            label: "Panaikinti pasikartojančias eilutes pagal transakcijos raktą",
+-            explain: "Pasikartojančios eilutės pašalintos pagal transakcijos ID, išsaugant unikalius įrašus."
+-          },
+-          {
+-            label: "Palikti tik transaction_id stulpelį",
+-            explain: "Atmesti user_id, amount ir timestamp stulpeliai."
+-          },
+-          {
+-            label: "Filtruoti pagal teigiamą mokėjimo sumą",
+-            explain: "Pasikartojančios transakcijos turi teigiamas sumas; dublikatai lieka."
+-          },
+-          {
+-            label: "Paimti tik 1 viršutinę eilutę iš duomenų rėmelio",
+-            explain: "Visas duomenų rėmelis sutrumpintas iki 1 įrašo."
+-          }
+-        ]
+-      },
+-      b_phantom: {
+-        name: "PHANTOM",
+-        desc: "Požymių srautas sugedo: klientų įrašai atvyko be šalies kodų ir su tuščiomis (NULL) amžiaus reikšmėmis.",
+-        skills: [
+-          {
+-            label: "Užpildyti trūkstamas reikšmes standartinėmis numatytosiomis",
+-            explain: "Trūkstami laukai tvarkingai užpildyti neatmetant klientų įrašų."
+-          },
+-          {
+-            label: "Pašalinti šalies ir amžiaus stulpelius iš schemos",
+-            explain: "Ištrinti reikalingi požymiai, būtini tolesniems srautams."
+-          },
+-          {
+-            label: "Atmesti visas eilutes, turinčias bent vieną NULL reikšmę",
+-            explain: "Atmesta 50% galiojančių klientų įrašų."
+-          },
+-          {
+-            label: "Padidinti amžiaus stulpelį 1",
+-            explain: "NULL + 1 Spark SQL lieka NULL."
+-          }
+-        ]
+-      },
+-      b_wyrm: {
+-        name: "WYRM",
+-        desc: "Klientų vardai užteršti neapdorotais valdymo baitais ir specialiais simboliais (\\x00, @#$).",
+-        skills: [
+-          {
+-            label: "Išvalyti eilutes naudojant reguliariosios išraiškos filtrą",
+-            explain: "Pašalinti neleistini valdymo simboliai, išsaugant raidinius vardus."
+-          },
+-          {
+-            label: "Filtruoti tik tuščius (NULL) vardus",
+-            explain: "Atmesti visi teisingi vardai, grąžintas tuščias duomenų rėmelis."
+-          },
+-          {
+-            label: "Paversti vardus mažosiomis raidėmis",
+-            explain: "Mažosios raidės nepašalina neapdorotų binarinių valdymo simbolių."
+-          },
+-          {
+-            label: "Iškviesti distinct() visoms eilutėms",
+-            explain: "distinct() neišvalo stulpelių tekstinio turinio."
+-          }
+-        ]
+-      },
+-      b_mimic: {
+-        name: "MIMIC",
+-        desc: "Pajamų rodikliai atvyko kaip formatuotas tekstas ('$1,250.00'), stabdantis skaitinę agregaciją.",
+-        skills: [
+-          {
+-            label: "Pašalinti valiutos simbolius ir konvertuoti į Double tipą",
+-            explain: "Valiutos simboliai pašalinti, tekstas konvertuotas į skaitinį Double tipą."
+-          },
+-          {
+-            label: "Tiesiogiai konvertuoti tekstą į Double",
+-            explain: "Tiesioginė formatuoto '$1,250.00' konversija Spark SQL grąžina NULL."
+-          },
+-          {
+-            label: "Tiesiogiai sumuoti tekstinį stulpelį",
+-            explain: "AnalysisException: negalima atlikti sum() tekstinio tipo stulpeliui."
+-          },
+-          {
+-            label: "Išvalyti duomenų rėmelio buferį",
+-            explain: "Išvalyta visa lentelė."
+-          }
+-        ]
+-      },
+-      b_stalker: {
+-        name: "STALKER",
+-        desc: "Išorinio rakto sujungimas prarado eilutes dėl nepašalintų tarpų parduotuvių koduose.",
+-        skills: [
+-          {
+-            label: "Pritaikyti trim() pradžios ir pabaigos tarpų pašalinimui",
+-            explain: "Tarpai pašalinti, sujungimo raktai vėl sutampa."
+-          },
+-          {
+-            label: "Filtruoti tik vieną konkrečios parduotuvės kodą",
+-            explain: "Atmestos Londono ir Tokijo parduotuvės, prarasti duomenys."
+-          },
+-          {
+-            label: "Visiškai pašalinti store_code stulpelį",
+-            explain: "Pašalintas išorinis raktas, būtinas tolesniems sujungimams."
+-          },
+-          {
+-            label: "Perskirstyti duomenų rėmelį į 10 skaidinių",
+-            explain: "Perskirstymas keičia skaidinius, bet nepašalina tarpų reikšmėse."
+-          }
+-        ]
+-      },
+-      s_window: {
+-        name: "WINDOW_RANKER",
+-        desc: "Atrinkti tik naujausią kiekvieno kliento būsenos atnaujinimą naudojant SQL lango funkciją.",
+-        skills: [
+-          {
+-            label: "Lango funkcija ROW_NUMBER(), skaidoma pagal klientą mažėjimo tvarka",
+-            explain: "ROW_NUMBER() pagal klientą atrenka patį vėliausią atnaujinimo įrašą."
+-          },
+-          {
+-            label: "GROUP BY su MAX(updated_at)",
+-            explain: "status stulpelis praleistas, nes nebuvo įtrauktas į GROUP BY sąlygą."
+-          },
+-          {
+-            label: "Bendras ORDER BY updated_at DESC LIMIT 2",
+-            explain: "LIMIT grąžina 2 bendras eilutes, nepriklausomai nuo klientų grupių."
+-          },
+-          {
+-            label: "SELECT DISTINCT customer_id, status",
+-            explain: "Išsaugo visus istorinius būsenų pasikeitimus, nes reikšmės unikalios."
+-          }
+-        ]
+-      },
+-      s_having: {
+-        name: "AGGREGATOR",
+-        desc: "Nustatyti prekybininkų paskyras, kurių bendra transakcijų suma viršija $10,000, naudojant SQL agregaciją.",
+-        skills: [
+-          {
+-            label: "GROUP BY merchant_id HAVING SUM(amount) > 10000",
+-            explain: "HAVING sąlyga filtruoja agreguotas sumas po grupavimo."
+-          },
+-          {
+-            label: "WHERE SUM(amount) > 10000 GROUP BY merchant_id",
+-            explain: "Sintaksės klaida: agregavimo funkcijos negali būti WHERE sąlygoje."
+-          },
+-          {
+-            label: "Filtruoti atskiras transakcijas > 10000",
+-            explain: "Filtruoja pavienes transakcijas, o ne bendrą prekybininko apyvartą."
+-          },
+-          {
+-            label: "GROUP BY merchant_id be sumos filtro",
+-            explain: "Grąžina visus prekybininkus nepritaikius apyvartos ribos."
+-          }
+-        ]
+-      },
+-      s_join: {
+-        name: "ORPHAN_HUNTER",
+-        desc: "Rasti visus aktyvius vartotojus, kurie niekada neatliko užsakymo, naudojant SQL anti-join.",
+-        skills: [
+-          {
+-            label: "LEFT JOIN ... WHERE o.order_id IS NULL",
+-            explain: "Anti-join atrenka nesusietus vartotojus su NULL išoriniais raktais."
+-          },
+-          {
+-            label: "INNER JOIN tarp vartotojų ir užsakymų",
+-            explain: "Vidinis sujungimas grąžina vartotojus su užsakymais, o ne be jų."
+-          },
+-          {
+-            label: "WHERE user_id NOT IN (užsakymų po-užklausa)",
+-            explain: "Pažeidžiama NULL reikšmėms: jei užsakymuose yra NULL, NOT IN negrąžina eilučių."
+-          },
+-          {
+-            label: "CROSS JOIN vartotojų ir užsakymų lentelėms",
+-            explain: "Dekarto sandauga sukuria nekontroliuojamą eilučių dauginimąsi."
+-          }
+-        ]
+-      },
+-      s_case: {
+-        name: "CLASSIFIER",
+-        desc: "Suskirstyti klientus į 'VIP' (išlaidos >= 1000), 'REGULAR' (>= 100) ir 'NEW' naudojant CASE WHEN.",
+-        skills: [
+-          {
+-            label: "Nuoseklus CASE WHEN lygmenų skirstymas",
+-            explain: "Nuoseklios sąlygos pirmiausia patikrina didžiausias išlaidų ribas."
+-          },
+-          {
+-            label: "Apversta CASE WHEN tvarka (>= 100 pirma)",
+-            explain: "Išlaidos >= 100 tikrinamos pirmiausia, todėl VIP priskiriami REGULAR."
+-          },
+-          {
+-            label: "Dvejetainė IF sąlyga",
+-            explain: "Praleidžiamas 'NEW' lygmuo, naujos paskyros tampa REGULAR."
+-          },
+-          {
+-            label: "Priskirti visiems fiksuotą 'VIP'",
+-            explain: "Statinė reikšmė neturinčias išlaidų paskyras pažymi kaip VIP."
+-          }
+-        ]
+-      },
+-      s_coalesce: {
+-        name: "COALESCER",
+-        desc: "Standartizuoti atsarginį kontaktą pagal prioritetą: mobilusis -> darbo tel. -> el. paštas -> 'NEPASIEKIAMAS'.",
+-        skills: [
+-          {
+-            label: "COALESCE(mobile_phone, work_phone, email, 'NEPASIEKIAMAS')",
+-            explain: "COALESCE grąžina pirmą ne tuščią (non-null) reikšmę pagal nurodytą prioritetą."
+-          },
+-          {
+-            label: "NVL(mobile_phone, email)",
+-            explain: "Praleidžia darbo telefoną ir nepateikia atsarginio varianto, kai abu tušti."
+-          },
+-          {
+-            label: "CONCAT visiems kontaktų stulpeliams",
+-            explain: "Standartiniame SQL eilučių jungimas su NULL grąžina NULL."
+-          },
+-          {
+-            label: "Pasirinkti tik el. paštą",
+-            explain: "Ignoruoja telefonus ir grąžina NULL paskyroms be el. pašto."
+-          }
+-        ]
+-      },
+-      g_broadcast: {
+-        name: "BROADCAST_JOIN",
+-        desc: "500 mln. eilučių faktų lentelė jungiama su 50 eilučių dimensija, sukeldama tinklo perpildymo (shuffle spill) nuostolius.",
+-        skills: [
+-          {
+-            label: "Pritaikyti broadcast() užuominą mažai žinyno lentelei",
+-            explain: "Broadcast Hash Join išsiunčia 50 eilučių lentelę visiems vykdytojams, panaikindamas duomenų perpildymą."
+-          },
+-          {
+-            label: "Transliuoti (broadcast) 500 mln. faktų lentelę",
+-            explain: "500 mln. eilučių lentelės transliavimas išeikvoja pagrindinio mazgo (driver) JVM atmintį."
+-          },
+-          {
+-            label: "Perskirstyti faktų lentelę į 1000 skaidinių",
+-            explain: "SortMergeJoin vis tiek atlieka pilną duomenų persiuntimą per tinklą."
+-          },
+-          {
+-            label: "Apriboti faktų lentelę iki 1 000 eilučių",
+-            explain: "Apriboja eilučių skaičių ir atmeta produkcinius duomenis."
+-          }
+-        ]
+-      },
+-      g_delta_merge: {
+-        name: "DELTA_MERGE",
+-        desc: "Atlikti atominį UPSERT Delta Lake: atnaujinti esamus ir įterpti naujus įrašus pagal customer_id.",
+-        skills: [
+-          {
+-            label: "Delta Lake MERGE INTO su atnaujinimu sutapus ir įterpimu nesutapus",
+-            explain: "Atlieka atominį Delta ACID atnaujinimą: atnaujina esamus ir prideda naujus įrašus."
+-          },
+-          {
+-            label: "Perrašyti tikslinę lentelę šaltinio partija",
+-            explain: "Perrašė tikslinę lentelę, ištrindama esamus istorinius klientų įrašus."
+-          },
+-          {
+-            label: "Pridėti šaltinio partiją tiesiai prie tikslinės lentelės",
+-            explain: "Prideda dublikuotas eilutes esamiems klientams be atnaujinimo."
+-          },
+-          {
+-            label: "Ištrinti visas ne tuščias klientų eilutes",
+-            explain: "Ištrynė visas aktyvias eilutes iš tikslinės lentelės."
+-          }
+-        ]
+-      },
+-      g_partition_prune: {
+-        name: "PARTITION_PRUNING",
+-        desc: "Užklausos 100 TB įvykių ežere atlieka pilną lentelės nuskaitymą, nes filtrai nesutampa su skaidinių raktais.",
+-        skills: [
+-          {
+-            label: "Filtruoti tiesiogiai pagal tikslius fizinių skaidinių stulpelius",
+-            explain: "Spark Catalyst atmeta nereikalingus skaidinius ir praleidžia neatitinkančius saugyklos kelius."
+-          },
+-          {
+-            label: "Konvertuoti skaidinio stulpelį į tekstą filtre",
+-            explain: "Funkcijos skaidinių stulpeliuose gali atjungti failų praleidimo metaduomenis."
+-          },
+-          {
+-            label: "Vykdyti užklausą be WHERE filtro",
+-            explain: "Sukelia pilną 100 TB nuskaitymą per visus skaidinius."
+-          },
+-          {
+-            label: "Atrinkti 1% lentelės eilučių imtį",
+-            explain: "TABLESAMPLE grąžina dalinius duomenis ir netinka produkcinei užklausai."
+-          }
+-        ]
+-      },
+-      g_skew_salt: {
+-        name: "KEY_SALTING",
+-        desc: "90% srauto tenka vienam populiariam klientui, todėl viena Spark užduotis smarkiai vėluoja (skew).",
+-        skills: [
+-          {
+-            label: "Sūdymas (Salting): pridėti atsitiktinį raktą tolygiam perskirstymui",
+-            explain: "Sūdymas išskaido perkrautą raktą į tolygias dalis tarp vykdytojų."
+-          },
+-          {
+-            label: "Perskirstyti visą duomenų rėmelį į 1 skaidinį",
+-            explain: "Priverčia visus 85 mln. įrašų apdoroti viename vykdytojo branduolyje."
+-          },
+-          {
+-            label: "Visiškai išfiltruoti didžiausią klientą",
+-            explain: "Išfiltravus perkrautą raktą prarandami galiojantys produkciniai duomenys."
+-          },
+-          {
+-            label: "Sumažinti skaidinių skaičių iki 200 su coalesce",
+-            explain: "coalesce() neatlieka perskirstymo ir nesubalansuoja netolygių raktų."
+-          }
+-        ]
+-      },
+-      g_cache_unpersist: {
+-        name: "PERSIST_UNPERSIST",
+-        desc: "Iteracinis skaičiavimas pakartotinai naudoja tarpinį duomenų rėmelį df_clean per 10 veiksmų. Optimizuokite atmintį.",
+-        skills: [
+-          {
+-            label: "Išsaugoti su MEMORY_AND_DISK, o baigus ciklą iškviesti unpersist()",
+-            explain: "Išsaugo tarpinius etapus išvengiant perskaičiavimo ir atlaisvina JVM atmintį baigus."
+-          },
+-          {
+-            label: "Surinkti visus paskirstytus duomenis į pagrindinio mazgo (driver) atmintį",
+-            explain: "collect() atsiunčia visus paskirstytus duomenis į driver atmintį, sukeldamas OOM."
+-          },
+-          {
+-            label: "Tiesiogiai iškviesti checkpoint()",
+-            explain: "checkpoint() nepavyksta, kai SparkContext nenurodytas kontrolinio taško katalogas."
+-          },
+-          {
+-            label: "Iškviesti .cache() 10 kartų cikle",
+-            explain: "Pertekliniai cache() iškvietimai nepagreitina vykdymo."
+-          }
+-        ]
+-      }
+-    }
+-  }
+-};
+diff --git a/src/i18n.js b/src/i18n.js
+index bf383a8c1e7ca38c47a5cda8f72dcdb4bb69079a..1b381140a072f99df306692fb20db863cc0da1d8 100644
+--- a/src/i18n.js
++++ b/src/i18n.js
+@@ -35,11 +35,11 @@
+       menu_badge: "HOUSTON WE HAVE DATA",
+       menu_title: "PIPELINE",
+       menu_subtitle: "Nuo nulio iki produkcijos: Duomenų inžinerijos „Roguelike“",
+-      rule_levels: "<strong>3  lygiai:</strong> Bronza (PySpark) -> Sidabras (SQL) -> Auksas (Spark/Delta Lake optimizavimas).",
++      rule_levels: "<strong>Lygių: {levelCount}.</strong> {levelNames}.",
+       rule_fuel: "<strong>Kuras klaidų taisymui:</strong> Pradedate su <strong>0 {fuelUnits}</strong>. Rinkite {fuelPickups} žemėlapyje, kad galėtumėte išgyventi radus klaidas.",
+       rule_blind: "<strong>Paruošimas:</strong> Kodo patikrinamas vyksta tik vykdant <strong>PALEISTI PIPELINE</strong>.",
+       rule_penalties: "<strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 {fuelUnit}</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Kai klaidai ištaisyti nepakanka kuro, Game Over.",
+-      rule_leaderboard: "<strong>Lyderių lentelė:</strong> Laikmatis fiksuoja greitį nuo paleidimo iki 3 lygio užbaigimo.",
++      rule_leaderboard: "<strong>Lyderių lentelė:</strong> Laikmatis fiksuoja laiką nuo paleidimo iki paskutinio lygio užbaigimo.",
+       btn_start_run: "PRADĖTI \"Pipeline\" DIEGIMĄ",
+       btn_view_leaderboard: "ŽIŪRĖTI LYDERIŲ LENTELĘ",
+ 
+@@ -73,14 +73,14 @@
+       btn_continue: "TĘSTI",
+ 
+       lb_title: "PRODUKCIJOS \"PIPELINE\" LYDERIŲ LENTELĖ",
+-      lb_subtitle: "Greičiausi inžinieriai, sėkmingai įdiegę Bronzos, Sidabro ir Aukso sluoksnius į produkciją.",
++      lb_subtitle: "Greičiausi inžinieriai, sėkmingai įdiegę visus kampanijos lygius į produkciją.",
+       lb_th_rank: "#",
+       lb_th_engineer: "INŽINIERIUS",
+       lb_th_time: "LAIKAS",
+       lb_th_fuel: "{fuelName} LIKUTIS",
+       lb_th_date: "DATA",
+       lb_connecting: "Jungiamasi prie lyderių lentelės...",
+-      lb_empty: "Užbaigtų „pipeline“ dar nėra. Įdiekite Bronzos, Sidabro ir Aukso lygius, kad užimtumėte 1 vietą.",
++      lb_empty: "Užbaigtų „pipeline“ dar nėra. Įdiekite visus kampanijos lygius, kad užimtumėte 1 vietą.",
+       lb_fuel_units: "{count} {fuelCountUnit}",
+       btn_clear_lb: "Išvalyti vietinius įrašus",
+       btn_close: "UŽDARYTI",
+@@ -88,8 +88,8 @@
+ 
+       game_over_title: "TRŪKSTA ATMINTIES (OOM)",
+       game_over_desc: "Jūsų duomenų srautui pritrūko {fuelGenitive} bandant ištaisyti klaidingas užklausas. Pasiektas aklavietės taškas.",
+-      victory_title: "AUKSO SERTIFIKATAS PRODUKCIJOJE",
+-      victory_desc: "Visi 3 duomenų srauto sluoksniai (Bronzos PySpark, Sidabro analitinis SQL, Aukso Spark/Delta optimizavimas) sėkmingai įdiegti į produkciją.",
++      victory_title: "DUOMENŲ SRAUTAS ĮDIEGTAS Į PRODUKCIJĄ",
++      victory_desc: "Visi duomenų srauto lygiai ({levelCount}) sėkmingai įdiegti į produkciją.",
+       victory_final_time: "Galutinis laikas:",
+       victory_fuel_preserved: "Liko {fuelGenitive}:",
+       victory_fuel_summary: "Kuras: Surinkta <strong>{scavenged}</strong> {fuelUnits} - <strong>{mistakes}</strong> skubūs taisymai = liko <strong>{remaining}</strong>",
+@@ -133,11 +133,11 @@
+       menu_badge: "HOUSTON WE HAVE DATA",
+       menu_title: "DATA PIPELINE SURVIVOR",
+       menu_subtitle: "Zero to Production: A Data Engineering Roguelike",
+-      rule_levels: "<strong>3 Progressive Levels:</strong> Bronze (PySpark Ingestion) -> Silver (Analytical SQL) -> Gold (Spark/Delta Lake Optimization).",
++      rule_levels: "<strong>Levels: {levelCount}.</strong> {levelNames}.",
+       rule_fuel: "<strong>{fuelName} Survival:</strong> You start with <strong>0 {fuelUnits}</strong>. Collect {fuelPickups} across the grid to fuel hotfixes when bugs occur.",
+       rule_blind: "<strong>Blind Staging:</strong> Code correctness is validated only when executing <strong>RUN PIPELINE</strong>.",
+       rule_penalties: "<strong>Hotfixes & Penalties:</strong> Each bug consumes <strong>1 {fuelUnit}</strong> and adds <strong>+60s penalty</strong> to your final time. Insufficient fuel for a hotfix causes an OOM crash.",
+-      rule_leaderboard: "<strong>Leaderboard:</strong> The timer tracks deployment speed from launch to Gold certification.",
++      rule_leaderboard: "<strong>Leaderboard:</strong> The timer tracks deployment speed from launch to completion of the final level.",
+       btn_start_run: "START PIPELINE RUN",
+       btn_view_leaderboard: "VIEW LEADERBOARD",
+ 
+@@ -171,14 +171,14 @@
+       btn_continue: "CONTINUE",
+ 
+       lb_title: "PRODUCTION PIPELINE LEADERBOARD",
+-      lb_subtitle: "Fastest engineers to deploy Bronze, Silver, and Gold layers to production.",
++      lb_subtitle: "Fastest engineers to deploy every level in the campaign to production.",
+       lb_th_rank: "#",
+       lb_th_engineer: "ENGINEER",
+       lb_th_time: "TIME",
+       lb_th_fuel: "REMAINING {fuelName}",
+       lb_th_date: "DATE",
+       lb_connecting: "Connecting to leaderboard...",
+-      lb_empty: "No completed pipeline runs yet. Deploy Bronze, Silver, and Gold to claim #1.",
++      lb_empty: "No completed pipeline runs yet. Deploy every level in the campaign to claim #1.",
+       lb_fuel_units: "{count} {fuelCountUnit}",
+       btn_clear_lb: "Clear Local Records",
+       btn_close: "CLOSE",
+@@ -186,8 +186,8 @@
+ 
+       game_over_title: "OUT OF MEMORY (OOM)",
+       game_over_desc: "Your pipeline ran out of {fuelGenitive} while attempting to patch faulty queries. Critical deadlock reached.",
+-      victory_title: "GOLD PRODUCTION CERTIFIED",
+-      victory_desc: "All 3 data pipeline layers (Bronze PySpark, Silver Analytical SQL, Gold Spark/Delta Optimization) successfully deployed to production.",
++      victory_title: "PIPELINE PRODUCTION CERTIFIED",
++      victory_desc: "All {levelCount} pipeline levels successfully deployed to production.",
+       victory_final_time: "Final Time:",
+       victory_fuel_preserved: "{fuelName} Preserved:",
+       victory_fuel_summary: "Fuel: Scavenged <strong>{scavenged}</strong> {fuelUnits} - <strong>{mistakes}</strong> hotfixes = <strong>{remaining}</strong> remaining",
+@@ -244,7 +244,16 @@
+     t(key, params = {}) {
+       const dict = DICT[currentLang] || DICT.lt;
+       let text = dict[key] ?? DICT.en[key] ?? key;
+-      const values = { ...window.GameFuel.tokens(currentLang, params.count), ...params };
++      const levels = window.GAME_LEVELS || [];
++      const escapeHTML = value => value.replace(/[&<>"']/g, char => ({
++        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
++      })[char]);
++      const values = {
++        ...window.GameFuel.tokens(currentLang, params.count),
++        levelCount: levels.length,
++        levelNames: levels.map(level => escapeHTML(this.getLocalizedLevel(level).name)).join(' → '),
++        ...params
++      };
+       Object.keys(values).forEach(p => {
+         text = text.replace(new RegExp(`\\{${p}\\}`, 'g'), () => String(values[p]));
+       });
+@@ -253,36 +262,24 @@
+ 
+     getLocalizedLevel(levelObj) {
+       if (!levelObj) return levelObj;
+-      if (currentLang === 'lt' && window.TASK_TRANSLATIONS?.lt?.levels?.[levelObj.level]) {
+-        const trans = window.TASK_TRANSLATIONS.lt.levels[levelObj.level];
+-        return {
+-          ...levelObj,
+-          name: trans.name || levelObj.name,
+-          description: trans.description || levelObj.description
+-        };
+-      }
+-      return levelObj;
++      if (currentLang === window.GAME_CONTENT_PACK.defaultLanguage) return levelObj;
++      const trans = levelObj.translations[currentLang];
++      return {...levelObj, name: trans.name, description: trans.description};
+     },
+ 
+     getLocalizedTask(task) {
+       if (!task) return task;
+-      if (currentLang === 'lt' && window.TASK_TRANSLATIONS?.lt?.tasks?.[task.id]) {
+-        const t = window.TASK_TRANSLATIONS.lt.tasks[task.id];
+-        return {
+-          ...task,
+-          name: t.name || task.name,
+-          desc: t.desc || task.desc,
+-          skills: task.skills.map((skill, idx) => {
+-            const skillTrans = t.skills?.[idx];
+-            return {
+-              ...skill,
+-              label: skillTrans?.label || skill.label,
+-              explain: skillTrans?.explain || skill.explain
+-            };
+-          })
+-        };
+-      }
+-      return task;
++      if (currentLang === window.GAME_CONTENT_PACK.defaultLanguage) return task;
++      const trans = task.translations[currentLang];
++      return {
++        ...task,
++        name: trans.name,
++        desc: trans.desc,
++        skills: task.skills.map(skill => {
++          const skillTrans = trans.skills[skill.id];
++          return {...skill, label: skillTrans.label, explain: skillTrans.explain};
++        })
++      };
+     },
+ 
+     applyDOM() {
+diff --git a/src/leaderboard.js b/src/leaderboard.js
+index 8b01d4c7911e59a3ccc3108996c06286a16487bc..b141addd5ace5bddfcad9cfb41c224106347fcb8 100644
+--- a/src/leaderboard.js
++++ b/src/leaderboard.js
+@@ -111,7 +111,7 @@ window.createLeaderboard = function (formatStopwatch) {
+     if (records.length === 0) {
+       const emptyMsg = window.i18n
+         ? window.i18n.t('lb_empty')
+-        : 'No completed pipeline runs yet. Deploy Bronze, Silver, and Gold to claim #1.';
++        : 'No completed pipeline runs yet. Deploy every level in the campaign to claim #1.';
+       const tr = document.createElement('tr');
+       tr.innerHTML = `
+         <td colspan="5" style="text-align: center; color: #777777; padding: 28px 12px; font-style: italic; font-family: 'Fira Code', monospace;">
+diff --git a/src/levels/bronze.js b/src/levels/bronze.js
+deleted file mode 100644
+index 200435038bc1d314fe42ea0cfef98daa233f88be..0000000000000000000000000000000000000000
+--- a/src/levels/bronze.js
++++ /dev/null
+@@ -1,204 +0,0 @@
+-window.BRONZE_LEVEL = {
+-  level: 1,
+-  name: "Bronze Layer (Raw Ingestion)",
+-  engine: "PySpark 3.5.0",
+-  description: "Sanitize raw ingestion tables from Kafka and landing buckets before bronze tables corrupt downstream schemas.",
+-  fuelToPlace: 2,
+-  tasks: [
+-    {
+-      id: "b_chimera",
+-      name: "CHIMERA",
+-      desc: "Upstream retry storm caused identical payment transactions to be ingested multiple times.",
+-      tableHeaders: ["transaction_id", "user_id", "amount", "timestamp"],
+-      tableRows: [
+-        ["TX-9901", "USR_42", "$150.00", "10:00:01"],
+-        ["TX-9901", "USR_42", "$150.00", "10:00:01"],
+-        ["TX-9902", "USR_88", "$25.50", "10:00:04"],
+-        ["TX-9901", "USR_42", "$150.00", "10:00:01"]
+-      ],
+-      glitchIndices: [1, 3],
+-      skills: [
+-        {
+-          code: "df.dropDuplicates(['transaction_id'])",
+-          label: "Deduplicate rows by transaction primary key",
+-          correct: true,
+-          explain: "Deduplicated rows by transaction ID without dropping unique transactions."
+-        },
+-        {
+-          code: "df.select('transaction_id')",
+-          label: "Keep only transaction_id column",
+-          correct: false,
+-          explain: "Discarded user_id, amount, and timestamp columns."
+-        },
+-        {
+-          code: "df.filter(col('amount') > 0)",
+-          label: "Filter for positive payment amount",
+-          correct: false,
+-          explain: "Duplicate transactions still have positive amounts; duplicates remain."
+-        },
+-        {
+-          code: "df.limit(1)",
+-          label: "Take top 1 row from dataframe",
+-          correct: false,
+-          explain: "Truncated the entire dataframe down to 1 record."
+-        }
+-      ]
+-    },
+-    {
+-      id: "b_phantom",
+-      name: "PHANTOM",
+-      desc: "Feature pipeline failed: customer records arrived with missing country codes and null ages.",
+-      tableHeaders: ["customer_id", "country", "age", "churn_risk"],
+-      tableRows: [
+-        ["CUST-10", "LT", "29", "0.12"],
+-        ["CUST-11", "NULL", "NULL", "0.84"],
+-        ["CUST-12", "US", "41", "0.05"],
+-        ["CUST-13", "NaN", "33", "NULL"]
+-      ],
+-      glitchIndices: [1, 3],
+-      skills: [
+-        {
+-          code: "df.fillna({'country': 'UNKNOWN', 'age': 0})",
+-          label: "Impute missing values with standardized defaults",
+-          correct: true,
+-          explain: "Imputed missing fields cleanly without discarding customer records."
+-        },
+-        {
+-          code: "df.drop('country', 'age')",
+-          label: "Drop country and age columns from schema",
+-          correct: false,
+-          explain: "Deleted required features needed for downstream pipelines."
+-        },
+-        {
+-          code: "df.na.drop()",
+-          label: "Drop all rows containing any null values",
+-          correct: false,
+-          explain: "Discarded 50% of valid customer records."
+-        },
+-        {
+-          code: "df.withColumn('age', col('age') + 1)",
+-          label: "Increment age column by 1",
+-          correct: false,
+-          explain: "NULL + 1 remains NULL in Spark SQL."
+-        }
+-      ]
+-    },
+-    {
+-      id: "b_wyrm",
+-      name: "WYRM",
+-      desc: "Customer names contaminated with unescaped control bytes and binary regex symbols (\\x00, @#$).",
+-      tableHeaders: ["user_id", "raw_name", "email"],
+-      tableRows: [
+-        ["101", "Alice Stark", "alice@corp.io"],
+-        ["102", "Bb%#\\x00$mith", "bob@corp.io"],
+-        ["103", "Carlos Vega", "carlos@corp.io"],
+-        ["104", "D@v!d_#99", "david@corp.io"]
+-      ],
+-      glitchIndices: [1, 3],
+-      skills: [
+-        {
+-          code: "df.withColumn('raw_name', regexp_replace(col('raw_name'), '[^a-zA-Z\\s]', ''))",
+-          label: "Sanitize strings using regex character class filter",
+-          correct: true,
+-          explain: "Stripped illegal control characters while preserving alphabetical names."
+-        },
+-        {
+-          code: "df.filter(col('raw_name').isNull())",
+-          label: "Filter for null names",
+-          correct: false,
+-          explain: "Filtered out valid names, returning an empty DataFrame."
+-        },
+-        {
+-          code: "df.withColumn('raw_name', lower(col('raw_name')))",
+-          label: "Convert names to lowercase",
+-          correct: false,
+-          explain: "Lowercasing retains unescaped binary control characters."
+-        },
+-        {
+-          code: "df.distinct()",
+-          label: "Call distinct() across all rows",
+-          correct: false,
+-          explain: "distinct() does not sanitize column string contents."
+-        }
+-      ]
+-    },
+-    {
+-      id: "b_mimic",
+-      name: "MIMIC",
+-      desc: "Revenue metrics arrived as formatted currency strings ('$1,250.00'), breaking numeric aggregations.",
+-      tableHeaders: ["invoice_id", "revenue_str", "status"],
+-      tableRows: [
+-        ["INV-01", "$1,250.00", "PAID"],
+-        ["INV-02", "$450.50", "PAID"],
+-        ["INV-03", "$9,900.00", "PENDING"],
+-        ["INV-04", "N/A_FREE", "REFUNDED"]
+-      ],
+-      glitchIndices: [0, 1, 2, 3],
+-      skills: [
+-        {
+-          code: "df.withColumn('revenue', regexp_replace(col('revenue_str'), '[$,]', '').cast('double'))",
+-          label: "Strip currency symbols and cast to Double",
+-          correct: true,
+-          explain: "Stripped currency symbols and cast string to numeric Double."
+-        },
+-        {
+-          code: "df.withColumn('revenue', col('revenue_str').cast('double'))",
+-          label: "Directly cast string to double",
+-          correct: false,
+-          explain: "Direct cast on formatted '$1,250.00' evaluates to NULL in Spark SQL."
+-        },
+-        {
+-          code: "df.groupBy('revenue_str').sum()",
+-          label: "Directly sum the string column",
+-          correct: false,
+-          explain: "AnalysisException: cannot resolve sum() on string data type."
+-        },
+-        {
+-          code: "df.limit(0)",
+-          label: "Truncate dataframe buffer",
+-          correct: false,
+-          explain: "Emptied the entire table."
+-        }
+-      ]
+-    },
+-    {
+-      id: "b_stalker",
+-      name: "STALKER",
+-      desc: "Foreign key join dropped rows due to unescaped leading and trailing whitespace in store codes.",
+-      tableHeaders: ["order_id", "store_code", "shipped"],
+-      tableRows: [
+-        ["ORD-1", "STORE_NYC   ", "true"],
+-        ["ORD-2", "  STORE_LON ", "true"],
+-        ["ORD-3", "STORE_TOK   ", "false"],
+-        ["ORD-4", "STORE_NYC", "true"]
+-      ],
+-      glitchIndices: [0, 1, 2],
+-      skills: [
+-        {
+-          code: "df.withColumn('store_code', trim(col('store_code')))",
+-          label: "Apply trim() to strip leading and trailing spaces",
+-          correct: true,
+-          explain: "Trimmed whitespace padding, restoring join key alignment."
+-        },
+-        {
+-          code: "df.filter(col('store_code') == 'STORE_NYC')",
+-          label: "Hardcode filter for single store code",
+-          correct: false,
+-          explain: "Filtered out London and Tokyo stores, resulting in data loss."
+-        },
+-        {
+-          code: "df.drop('store_code')",
+-          label: "Drop the store_code column entirely",
+-          correct: false,
+-          explain: "Dropped the foreign key required for downstream joins."
+-        },
+-        {
+-          code: "df.repartition(10)",
+-          label: "Repartition dataframe into 10 partitions",
+-          correct: false,
+-          explain: "Repartitioning changes partition distribution, not column whitespace."
+-        }
+-      ]
+-    }
+-  ]
+-};
+diff --git a/src/levels/gold.js b/src/levels/gold.js
+deleted file mode 100644
+index bcc6aa2f5ce426d8c17d90678cc5bf9909f1e9d4..0000000000000000000000000000000000000000
+--- a/src/levels/gold.js
++++ /dev/null
+@@ -1,204 +0,0 @@
+-window.GOLD_LEVEL = {
+-  level: 3,
+-  name: "Gold Layer (Production Optimization)",
+-  engine: "Delta Lake & Spark Catalyst",
+-  description: "Optimize high-volume big data pipelines. Eliminate shuffle skews, broadcast lookup dimensions, and execute Delta Lake merges.",
+-  fuelToPlace: 2,
+-  tasks: [
+-    {
+-      id: "g_broadcast",
+-      name: "BROADCAST_JOIN",
+-      desc: "A 500M row fact table joins a 50-row lookup dimension, generating network shuffle spills.",
+-      tableHeaders: ["query_type", "fact_rows", "dim_rows", "shuffle_spill"],
+-      tableRows: [
+-        ["SortMergeJoin", "500,000,000", "50", "42.8 GB SPILL"],
+-        ["SortMergeJoin", "500,000,000", "50", "38.2 GB SPILL"],
+-        ["BroadcastJoin", "500,000,000", "50", "Target: 0 GB"],
+-        ["SortMergeJoin", "500,000,000", "50", "45.1 GB SPILL"]
+-      ],
+-      glitchIndices: [0, 1, 3],
+-      skills: [
+-        {
+-          code: "df_fact.join(broadcast(df_lookup), 'country_code', 'inner')",
+-          label: "Apply broadcast() hint on the small lookup table",
+-          correct: true,
+-          explain: "Broadcast Hash Join sends the 50-row table to all executors, eliminating shuffle spills."
+-        },
+-        {
+-          code: "broadcast(df_fact).join(df_lookup, 'country_code', 'inner')",
+-          label: "Broadcast the 500M row fact table",
+-          correct: false,
+-          explain: "Broadcasting a 500M row table exhausts driver JVM memory."
+-        },
+-        {
+-          code: "df_fact.repartition(1000).join(df_lookup, 'country_code')",
+-          label: "Repartition fact table into 1000 partitions",
+-          correct: false,
+-          explain: "SortMergeJoin still performs a full network shuffle across partitions."
+-        },
+-        {
+-          code: "df_fact.limit(1000).join(df_lookup, 'country_code')",
+-          label: "Limit fact table to 1,000 rows",
+-          correct: false,
+-          explain: "Limits dataset row count, discarding production records."
+-        }
+-      ]
+-    },
+-    {
+-      id: "g_delta_merge",
+-      name: "DELTA_MERGE",
+-      desc: "Execute an atomic UPSERT on Delta Lake: update existing records and insert new rows on customer_id.",
+-      tableHeaders: ["target_table", "source_table", "action", "status"],
+-      tableRows: [
+-        ["delta_silver.customers", "updates_batch", "UPSERT", "Needs MERGE"],
+-        ["delta_silver.customers", "updates_batch", "UPDATE", "Matches on ID"],
+-        ["delta_silver.customers", "updates_batch", "INSERT", "New records"],
+-        ["delta_silver.customers", "updates_batch", "UPSERT", "Needs MERGE"]
+-      ],
+-      glitchIndices: [0, 3],
+-      skills: [
+-        {
+-          code: "target.alias('t').merge(source.alias('s'), 't.customer_id = s.customer_id').whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()",
+-          label: "Delta Lake MERGE INTO with matched update and unmatched insert",
+-          correct: true,
+-          explain: "Executes an atomic Delta ACID upsert: updates existing records and appends new rows."
+-        },
+-        {
+-          code: "source.write.format('delta').mode('overwrite').saveAsTable('delta_silver.customers')",
+-          label: "Overwrite target table with source batch",
+-          correct: false,
+-          explain: "Overwrote target table, deleting existing historical customer records."
+-        },
+-        {
+-          code: "source.write.format('delta').mode('append').saveAsTable('delta_silver.customers')",
+-          label: "Append source batch directly to target table",
+-          correct: false,
+-          explain: "Appends duplicate rows for existing customer IDs without updating."
+-        },
+-        {
+-          code: "target.filter('customer_id IS NOT NULL').delete()",
+-          label: "Delete all non-null customer rows",
+-          correct: false,
+-          explain: "Deleted all active rows from the target table."
+-        }
+-      ]
+-    },
+-    {
+-      id: "g_partition_prune",
+-      name: "PARTITION_PRUNING",
+-      desc: "Queries on a 100TB event lake trigger full table scans because filters don't align with partition keys.",
+-      tableHeaders: ["dataset_size", "query_filter", "scan_volume", "latency"],
+-      tableRows: [
+-        ["100 TB", "WHERE timestamp > now() - 1d", "Full 100 TB scan", "38 min"],
+-        ["100 TB", "WHERE year=2026 AND month=4", "Target: 250 GB", "14 sec"],
+-        ["100 TB", "WHERE date(timestamp) = today", "Full 100 TB scan", "41 min"],
+-        ["100 TB", "WHERE substring(ts, 1, 4)='2026'", "Full 100 TB scan", "45 min"]
+-      ],
+-      glitchIndices: [0, 2, 3],
+-      skills: [
+-        {
+-          code: "SELECT * FROM events WHERE year = 2026 AND month = 4 AND day = 16",
+-          label: "Filter directly on exact physical partition key columns",
+-          correct: true,
+-          explain: "Spark Catalyst prunes partitions, skipping non-matching storage paths."
+-        },
+-        {
+-          code: "SELECT * FROM events WHERE CAST(year AS STRING) = '2026'",
+-          label: "Cast partition column to string in filter",
+-          correct: false,
+-          explain: "Function calls on partition columns can disable file-skipping metadata."
+-        },
+-        {
+-          code: "SELECT * FROM events",
+-          label: "Run query with no WHERE filter",
+-          correct: false,
+-          explain: "Triggers full 100TB scan across all partitions."
+-        },
+-        {
+-          code: "SELECT * FROM events TABLESAMPLE (1 PERCENT)",
+-          label: "Sample 1% of table rows",
+-          correct: false,
+-          explain: "TABLESAMPLE returns partial data and does not satisfy production queries."
+-        }
+-      ]
+-    },
+-    {
+-      id: "g_skew_salt",
+-      name: "KEY_SALTING",
+-      desc: "90% of traffic belongs to a single viral tenant, causing one Spark task to skew execution time.",
+-      tableHeaders: ["tenant_id", "record_count", "task_status", "skew_ratio"],
+-      tableRows: [
+-        ["VIRAL_TENANT_X", "85,000,000", "Stuck 99%", "Skew 90%"],
+-        ["TENANT_A", "12,000", "Finished (0.2s)", "Normal"],
+-        ["TENANT_B", "45,000", "Finished (0.4s)", "Normal"],
+-        ["VIRAL_TENANT_X", "85,000,000", "Stuck 99%", "Skew 90%"]
+-      ],
+-      glitchIndices: [0, 3],
+-      skills: [
+-        {
+-          code: "df.withColumn('salt', (rand() * 16).cast('int')).repartition(col('tenant_id'), col('salt'))",
+-          label: "Salting: append randomized key to distribute heavy keys across partitions",
+-          correct: true,
+-          explain: "Salting splits the skewed key into uniform buckets across executors."
+-        },
+-        {
+-          code: "df.repartition(1)",
+-          label: "Repartition entire dataframe to 1 partition",
+-          correct: false,
+-          explain: "Forces all 85 million records onto a single executor core."
+-        },
+-        {
+-          code: "df.filter(col('tenant_id') != 'VIRAL_TENANT_X')",
+-          label: "Filter out the viral tenant completely",
+-          correct: false,
+-          explain: "Filtering out the skewed key drops valid production records."
+-        },
+-        {
+-          code: "df.coalesce(200)",
+-          label: "Coalesce dataframe to 200 partitions",
+-          correct: false,
+-          explain: "coalesce() does not shuffle or rebalance skewed key distribution."
+-        }
+-      ]
+-    },
+-    {
+-      id: "g_cache_unpersist",
+-      name: "PERSIST_UNPERSIST",
+-      desc: "An iterative computation reuses intermediate DataFrame df_clean across 10 actions. Optimize memory reuse.",
+-      tableHeaders: ["computation", "action_count", "storage_level", "risk"],
+-      tableRows: [
+-        ["Iterative Loop", "10 actions", "Recomputing graph", "10x redundant I/O"],
+-        ["Iterative Loop", "10 actions", "Target: MEMORY_AND_DISK", "Fast reuse"],
+-        ["Iterative Loop", "10 actions", "No unpersist", "OOM leak risk"],
+-        ["Iterative Loop", "10 actions", "Recomputing graph", "10x redundant I/O"]
+-      ],
+-      glitchIndices: [0, 3],
+-      skills: [
+-        {
+-          code: "df_clean.persist(StorageLevel.MEMORY_AND_DISK); ... ; df_clean.unpersist()",
+-          label: "Persist with MEMORY_AND_DISK, then unpersist() when loop completes",
+-          correct: true,
+-          explain: "Caches intermediate stages to avoid recomputation and releases JVM memory when done."
+-        },
+-        {
+-          code: "df_clean.collect()",
+-          label: "Collect entire distributed dataset to driver memory",
+-          correct: false,
+-          explain: "collect() pulls the entire distributed dataset into driver JVM memory, causing OOM."
+-        },
+-        {
+-          code: "df_clean.checkpoint() without setting checkpoint dir",
+-          label: "Call checkpoint() directly",
+-          correct: false,
+-          explain: "checkpoint() fails when checkpoint directory has not been set in SparkContext."
+-        },
+-        {
+-          code: "for i in range(10): df_clean.cache()",
+-          label: "Call .cache() 10 times in a loop",
+-          correct: false,
+-          explain: "Redundant cache() calls do not accelerate execution."
+-        }
+-      ]
+-    }
+-  ]
+-};
+diff --git a/src/levels/silver.js b/src/levels/silver.js
+deleted file mode 100644
+index 79316d5aabef3a37957fa301bf70bae9e446f8a8..0000000000000000000000000000000000000000
+--- a/src/levels/silver.js
++++ /dev/null
+@@ -1,204 +0,0 @@
+-window.SILVER_LEVEL = {
+-  level: 2,
+-  name: "Silver Layer (SQL Transformations)",
+-  engine: "Spark SQL / ANSI SQL",
+-  description: "Write analytical SQL transformations to produce clean dimensional models and aggregated feature sets.",
+-  fuelToPlace: 2,
+-  tasks: [
+-    {
+-      id: "s_window",
+-      name: "WINDOW_RANKER",
+-      desc: "Isolate only the most recent status update per customer using an SQL window function.",
+-      tableHeaders: ["customer_id", "status", "updated_at"],
+-      tableRows: [
+-        ["C-1", "ACTIVE", "2026-04-01 10:00:00"],
+-        ["C-1", "SUSPENDED", "2026-04-02 12:00:00"],
+-        ["C-2", "PENDING", "2026-04-01 09:00:00"],
+-        ["C-2", "ACTIVE", "2026-04-03 15:00:00"]
+-      ],
+-      glitchIndices: [0, 2],
+-      skills: [
+-        {
+-          code: "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY updated_at DESC) as rn FROM updates) WHERE rn = 1",
+-          label: "Window ROW_NUMBER() partitioned by customer descending",
+-          correct: true,
+-          explain: "ROW_NUMBER() partitioned by customer isolates the latest update record."
+-        },
+-        {
+-          code: "SELECT customer_id, MAX(updated_at) FROM updates GROUP BY customer_id",
+-          label: "GROUP BY with MAX(updated_at)",
+-          correct: false,
+-          explain: "status column omitted because it was not included in the GROUP BY clause."
+-        },
+-        {
+-          code: "SELECT * FROM updates ORDER BY updated_at DESC LIMIT 2",
+-          label: "Global ORDER BY updated_at DESC LIMIT 2",
+-          correct: false,
+-          explain: "LIMIT returns top 2 global rows regardless of customer groupings."
+-        },
+-        {
+-          code: "SELECT DISTINCT customer_id, status FROM updates",
+-          label: "SELECT DISTINCT customer_id, status",
+-          correct: false,
+-          explain: "Retains all historical status transitions since status values are distinct."
+-        }
+-      ]
+-    },
+-    {
+-      id: "s_having",
+-      name: "AGGREGATOR",
+-      desc: "Identify merchant accounts whose total transaction volume exceeds $10,000 using SQL aggregation.",
+-      tableHeaders: ["merchant_id", "tx_count", "total_volume"],
+-      tableRows: [
+-        ["M-80", "150", "$24,500.00"],
+-        ["M-81", "12", "$450.00"],
+-        ["M-82", "310", "$92,000.00"],
+-        ["M-83", "5", "$120.00"]
+-      ],
+-      glitchIndices: [1, 3],
+-      skills: [
+-        {
+-          code: "SELECT merchant_id, SUM(amount) as total FROM transactions GROUP BY merchant_id HAVING SUM(amount) > 10000",
+-          label: "GROUP BY merchant_id HAVING SUM(amount) > 10000",
+-          correct: true,
+-          explain: "HAVING clause filters aggregate sums after grouping."
+-        },
+-        {
+-          code: "SELECT merchant_id, SUM(amount) as total FROM transactions WHERE SUM(amount) > 10000 GROUP BY merchant_id",
+-          label: "WHERE SUM(amount) > 10000 GROUP BY merchant_id",
+-          correct: false,
+-          explain: "Syntax error: aggregate functions cannot appear in a WHERE clause."
+-        },
+-        {
+-          code: "SELECT merchant_id, amount FROM transactions WHERE amount > 10000",
+-          label: "Filter individual transactions > 10000",
+-          correct: false,
+-          explain: "Filters single transactions rather than aggregated volume per merchant."
+-        },
+-        {
+-          code: "SELECT merchant_id FROM transactions GROUP BY merchant_id",
+-          label: "GROUP BY merchant_id without sum filter",
+-          correct: false,
+-          explain: "Returns all merchants without applying the volume threshold."
+-        }
+-      ]
+-    },
+-    {
+-      id: "s_join",
+-      name: "ORPHAN_HUNTER",
+-      desc: "Identify all active users who have never completed an order using an SQL anti-join.",
+-      tableHeaders: ["user_id", "email", "has_orders"],
+-      tableRows: [
+-        ["U-10", "alex@lab.io", "Has 3 orders"],
+-        ["U-11", "sam@lab.io", "0 orders (orphan)"],
+-        ["U-12", "eva@lab.io", "Has 12 orders"],
+-        ["U-13", "leo@lab.io", "0 orders (orphan)"]
+-      ],
+-      glitchIndices: [1, 3],
+-      skills: [
+-        {
+-          code: "SELECT u.user_id, u.email FROM users u LEFT JOIN orders o ON u.user_id = o.user_id WHERE o.order_id IS NULL",
+-          label: "LEFT JOIN ... WHERE o.order_id IS NULL",
+-          correct: true,
+-          explain: "Anti-join isolates unmatched users with null foreign keys."
+-        },
+-        {
+-          code: "SELECT u.user_id, u.email FROM users u INNER JOIN orders o ON u.user_id = o.user_id",
+-          label: "INNER JOIN users and orders",
+-          correct: false,
+-          explain: "Inner join returns users with orders instead of orphans."
+-        },
+-        {
+-          code: "SELECT user_id, email FROM users WHERE user_id NOT IN (SELECT user_id FROM orders)",
+-          label: "WHERE user_id NOT IN (orders subquery)",
+-          correct: false,
+-          explain: "Vulnerable to NULL values: if orders contains a NULL user_id, NOT IN returns no rows."
+-        },
+-        {
+-          code: "SELECT user_id FROM users CROSS JOIN orders",
+-          label: "CROSS JOIN users and orders",
+-          correct: false,
+-          explain: "Cartesian product produces an unindexed join multiplication."
+-        }
+-      ]
+-    },
+-    {
+-      id: "s_case",
+-      name: "CLASSIFIER",
+-      desc: "Segment customers into 'VIP' (spend >= 1000), 'REGULAR' (spend >= 100), and 'NEW' using CASE WHEN.",
+-      tableHeaders: ["customer_id", "lifetime_spend", "target_tier"],
+-      tableRows: [
+-        ["C-501", "$1,450.00", "Should be VIP"],
+-        ["C-502", "$340.00", "Should be REGULAR"],
+-        ["C-503", "$25.00", "Should be NEW"],
+-        ["C-504", "$2,100.00", "Should be VIP"]
+-      ],
+-      glitchIndices: [0, 1, 2, 3],
+-      skills: [
+-        {
+-          code: "SELECT customer_id, CASE WHEN lifetime_spend >= 1000 THEN 'VIP' WHEN lifetime_spend >= 100 THEN 'REGULAR' ELSE 'NEW' END AS tier FROM customers",
+-          label: "Evaluated CASE WHEN tier segmentation",
+-          correct: true,
+-          explain: "Cascading thresholds evaluate largest spend bounds first."
+-        },
+-        {
+-          code: "SELECT customer_id, CASE WHEN lifetime_spend >= 100 THEN 'REGULAR' WHEN lifetime_spend >= 1000 THEN 'VIP' ELSE 'NEW' END AS tier FROM customers",
+-          label: "Inverted CASE WHEN order (>= 100 first)",
+-          correct: false,
+-          explain: "Spend >= 100 evaluates first, incorrectly classifying VIP accounts as REGULAR."
+-        },
+-        {
+-          code: "SELECT customer_id, IF(lifetime_spend >= 1000, 'VIP', 'REGULAR') AS tier FROM customers",
+-          label: "Binary IF statement",
+-          correct: false,
+-          explain: "Omits the 'NEW' tier, collapsing new accounts into REGULAR."
+-        },
+-        {
+-          code: "SELECT customer_id, 'VIP' AS tier FROM customers",
+-          label: "Hardcode all as 'VIP'",
+-          correct: false,
+-          explain: "Static literal labels zero-spend accounts as VIP."
+-        }
+-      ]
+-    },
+-    {
+-      id: "s_coalesce",
+-      name: "COALESCER",
+-      desc: "Standardize fallback contact info prioritizing mobile_phone -> work_phone -> email -> 'UNREACHABLE'.",
+-      tableHeaders: ["user_id", "mobile_phone", "work_phone", "email"],
+-      tableRows: [
+-        ["U-90", "NULL", "+370-600-1111", "test@corp.lt"],
+-        ["U-91", "NULL", "NULL", "contact@web.io"],
+-        ["U-92", "NULL", "NULL", "NULL"],
+-        ["U-93", "+370-699-2222", "NULL", "ceo@corp.lt"]
+-      ],
+-      glitchIndices: [0, 1, 2],
+-      skills: [
+-        {
+-          code: "SELECT user_id, COALESCE(mobile_phone, work_phone, email, 'UNREACHABLE') AS primary_contact FROM directory",
+-          label: "COALESCE(mobile, work, email, 'UNREACHABLE')",
+-          correct: true,
+-          explain: "COALESCE returns the first non-null contact value in precedence order."
+-        },
+-        {
+-          code: "SELECT user_id, NVL(mobile_phone, email) AS primary_contact FROM directory",
+-          label: "NVL(mobile_phone, email)",
+-          correct: false,
+-          explain: "Omits work_phone and fails when both mobile and email are null."
+-        },
+-        {
+-          code: "SELECT user_id, CONCAT(mobile_phone, work_phone, email) AS primary_contact FROM directory",
+-          label: "CONCAT all contact columns",
+-          correct: false,
+-          explain: "In standard SQL, string concatenation with NULL returns NULL."
+-        },
+-        {
+-          code: "SELECT user_id, email AS primary_contact FROM directory",
+-          label: "Select email only",
+-          correct: false,
+-          explain: "Ignores phone fallbacks and produces nulls for accounts without email."
+-        }
+-      ]
+-    }
+-  ]
+-};
+diff --git a/src/main.js b/src/main.js
+index 3e852277e7a2a865fe1e2d161697f279871e128a..b1e5dbfae7e100d5da1030780358ebecc16f6f0a 100644
+--- a/src/main.js
++++ b/src/main.js
+@@ -1,7 +1,10 @@
++// A failed classic script does not stop later scripts: explicitly gate startup.
++if (!window.GAME_LEVELS) throw new Error('Game content was not validated. See the content-pack error above.');
++
+ const gameState = {
+   levelIndex: 0,
+   fuel: 0,
+-  gridSize: 5,
++  gridSize: window.GAME_CONTENT_PACK.gridSize,
+   board: [],
+   player: {
+     gridX: 0,
+diff --git a/src/pipeline.js b/src/pipeline.js
+index 19eb90b31b4b3bed21a77c24bee8cd7dbd748eb4..f17a085496fcf70e61129b250a47f11bc18c1096 100644
+--- a/src/pipeline.js
++++ b/src/pipeline.js
+@@ -56,7 +56,7 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
+       const isCorrect = !!(skill && (skill.correct === true || skill.isCorrect === true));
+ 
+       const locTask = window.i18n ? window.i18n.getLocalizedTask(task) : task;
+-      const locSkill = locTask.skills.find(s => s.code === skill.code) || skill;
++      const locSkill = locTask.skills.find(s => s.id === skill.id) || skill;
+ 
+       const checkingMsg = window.i18n
+         ? window.i18n.t('diag_checking_node', { current: i + 1, total: stagedList.length, name: locTask.name })
+diff --git a/src/ui.js b/src/ui.js
+index d717f5a4db58563376ea8363527975044bb15669..7fb72980e80c304af784e562805c4906832688cd 100644
+--- a/src/ui.js
++++ b/src/ui.js
+@@ -68,13 +68,13 @@ window.createGameUI = function ({ gameState, formatStopwatch }) {
+     const titleEl = document.getElementById('end-title');
+     const descEl = document.getElementById('end-desc');
+     if (titleEl) {
+-      titleEl.innerText = window.i18n ? window.i18n.t('victory_title') : 'GOLD PRODUCTION CERTIFIED';
++      titleEl.innerText = window.i18n ? window.i18n.t('victory_title') : 'PIPELINE PRODUCTION CERTIFIED';
+       titleEl.style.color = '#ffffff';
+     }
+     if (descEl) {
+       descEl.innerText = window.i18n
+         ? window.i18n.t('victory_desc')
+-        : 'All 3 data pipeline layers successfully deployed to production.';
++        : `All ${window.GAME_LEVELS.length} pipeline levels successfully deployed to production.`;
+     }
+ 
+     const victoryEntry = document.getElementById('victory-score-entry');
+diff --git a/tests/content.test.cjs b/tests/content.test.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcdb12d8e5fe0e51114852ec3e57b95e5e8e2631
+--- /dev/null
++++ b/tests/content.test.cjs
+@@ -0,0 +1,244 @@
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const vm = require('node:vm');
++const {spawnSync} = require('node:child_process');
++const {loadContent} = require('../scripts/validate-content.cjs');
++const {createGame, ROOT, scripts} = require('./helpers/game-harness.cjs');
++const {pack: sourcePack, validate} = loadContent();
++const clone = value => JSON.parse(JSON.stringify(value));
++const firstTask = pack => pack.levels[0].tasks[0];
++const firstSkill = pack => firstTask(pack).skills[0];
++
++test('registered content passes schema v1 and loads before localization/gameplay', () => {
++  const pack = clone(sourcePack);
++  assert.equal(validate(pack), pack);
++  assert.equal(pack.levels.length, 3);
++  assert.equal(pack.levels.flatMap(level => level.tasks).length, 15);
++  assert.equal(pack.levels.flatMap(level => level.tasks.flatMap(task => task.skills)).length, 60);
++  assert(scripts.indexOf('src/data.js') < scripts.indexOf('src/i18n.js'));
++  assert(scripts.indexOf('src/data.js') < scripts.indexOf('src/main.js'));
++});
++
++test('missing or duplicate registered levels cannot silently change the campaign', () => {
++  const context = {window: {}};
++  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'src/content-pack.js'), 'utf8'), context);
++  const api = context.window.GameContent;
++  assert.throws(() => api.getLevel('missing'), /level "missing" is not registered/);
++  api.registerLevel(clone(sourcePack.levels[0]));
++  assert.equal(api.getLevel('bronze').id, 'bronze');
++  assert.throws(() => api.registerLevel(clone(sourcePack.levels[0])), /duplicate level registration/);
++  assert.throws(() => api.getLevel('bronze'), /duplicate level registration/);
++});
++
++const invalidCases = [
++  ['unsupported version', p => {p.schemaVersion = 2;}, /pack.schemaVersion/],
++  ['unsupported base language', p => {p.defaultLanguage = 'lt';}, /pack.defaultLanguage/],
++  ['missing supported language', p => {p.languages = ['en'];}, /missing required language "lt"/],
++  ['unsupported language', p => {p.languages.push('fr');}, /unsupported language/],
++  ['duplicate language', p => {p.languages.push('lt');}, /duplicate language/],
++  ['fractional grid size', p => {p.gridSize = 4.5;}, /pack.gridSize/],
++  ['invalid grid size', p => {p.gridSize = 0;}, /pack.gridSize/],
++  ['unsafe board area', p => {p.gridSize = Number.MAX_SAFE_INTEGER;}, /board area/],
++  ['empty campaign', p => {p.levels = [];}, /pack.levels/],
++  ['duplicate level ID', p => {p.levels[1].id = p.levels[0].id;}, /duplicate ID "bronze"/],
++  ['duplicate task ID within a level', p => {p.levels[0].tasks[1].id = firstTask(p).id;}, /duplicate ID "b_chimera"/],
++  ['duplicate task ID across levels', p => {p.levels[1].tasks[0].id = firstTask(p).id;}, /duplicate ID "b_chimera"/],
++  ['duplicate answer ID within a task', p => {firstTask(p).skills[1].id = firstSkill(p).id;}, /duplicate ID "deduplicate_by_transaction_id"/],
++  ['duplicate answer ID across tasks', p => {p.levels[1].tasks[0].skills[0].id = firstSkill(p).id;}, /duplicate ID "deduplicate_by_transaction_id"/],
++  ['unstable numeric answer ID', p => {firstSkill(p).id = 1;}, /skills\[0\].id/],
++  ['reserved task ID', p => {firstTask(p).id = 'constructor';}, /non-reserved/],
++  ['no correct answer', p => {firstSkill(p).correct = false;}, /exactly one correct answer; found 0/],
++  ['multiple correct answers', p => {firstTask(p).skills[1].correct = true;}, /exactly one correct answer; found 2/],
++  ['truthy correctness string', p => {firstSkill(p).correct = 'true';}, /correct: must be a boolean/],
++  ['only one choice', p => {firstTask(p).skills.length = 1;}, /at least 2/],
++  ['negative fuel', p => {p.levels[0].fuelToPlace = -1;}, /fuelToPlace/],
++  ['fractional fuel', p => {p.levels[0].fuelToPlace = 1.5;}, /fuelToPlace/],
++  ['board overflow including reserved start', p => {p.levels[0].fuelToPlace = 20;}, /one cell is reserved for the start/],
++  ['missing level translation', p => {p.levels[0].translations = {};}, /translations.lt/],
++  ['missing task translation', p => {firstTask(p).translations = {};}, /translations.lt/],
++  ['missing answer translation', p => {delete firstTask(p).translations.lt.skills[firstSkill(p).id];}, /translations.lt.skills.deduplicate_by_transaction_id/],
++  ['stale answer translation ID', p => {firstTask(p).translations.lt.skills.deleted_answer = {label: 'Old', explain: 'Old'};}, /deleted_answer: unknown field/],
++  ['positional answer translations', p => {firstTask(p).translations.lt.skills = Object.values(firstTask(p).translations.lt.skills);}, /translations.lt.skills: must be an object/],
++  ['blank translated explanation', p => {firstTask(p).translations.lt.skills[firstSkill(p).id].explain = ' ';}, /explain: must be a non-empty string/],
++  ['translated correctness override', p => {firstTask(p).translations.lt.skills[firstSkill(p).id].correct = false;}, /correct: unknown field/],
++  ['unknown field typo', p => {p.levels[0].fuelToPLace = 2;}, /fuelToPLace: unknown field/],
++  ['wrong preview row width', p => {firstTask(p).tableRows[0].pop();}, /cell count must match/],
++  ['invalid preview cell', p => {firstTask(p).tableRows[0][0] = {};}, /finite number/],
++  ['invalid highlight index', p => {firstTask(p).glitchIndices = [4];}, /row index is out of bounds/],
++  ['duplicate highlight index', p => {firstTask(p).glitchIndices = [1, 1];}, /duplicate row index/],
++  ['sparse task array', p => {delete p.levels[0].tasks[0];}, /tasks\[0\]: must be an object/],
++  ['inherited required field', p => {const skill = firstSkill(p); delete skill.code; Object.setPrototypeOf(skill, {code: 'inherited'});}, /code: required field is missing/]
++];
++for (const [name, mutate, expected] of invalidCases) {
++  test(`validation rejects ${name}`, () => {
++    const pack = clone(sourcePack);
++    mutate(pack);
++    assert.throws(() => validate(pack), error => error.name === 'ContentPackValidationError' && expected.test(error.message));
++  });
++}
++
++test('all documented required fields are enforced, including English and LT text', () => {
++  const records = [
++    [p => p, ['schemaVersion', 'id', 'defaultLanguage', 'languages', 'gridSize', 'levels']],
++    [p => p.levels[0], ['id', 'name', 'engine', 'description', 'fuelToPlace', 'tasks', 'translations']],
++    [firstTask, ['id', 'name', 'desc', 'tableHeaders', 'tableRows', 'glitchIndices', 'skills', 'translations']],
++    [firstSkill, ['id', 'code', 'label', 'correct', 'explain']],
++    [p => p.levels[0].translations.lt, ['name', 'description']],
++    [p => firstTask(p).translations.lt, ['name', 'desc', 'skills']],
++    [p => firstTask(p).translations.lt.skills[firstSkill(p).id], ['label', 'explain']]
++  ];
++  for (const [getRecord, fields] of records) for (const field of fields) {
++    const pack = clone(sourcePack);
++    delete getRecord(pack)[field];
++    assert.throws(() => validate(pack), /required field is missing/, field);
++  }
++  for (const value of [null, [], 'pack']) assert.throws(() => validate(value), /pack: must be an object/);
++});
++
++test('exact board capacity is accepted and every task/pickup is placed', () => {
++  const game = createGame({prepareContent(pack) {pack.levels[0].fuelToPlace = 19;}});
++  const cells = game.state.board.flat();
++  assert.equal(cells.filter(cell => cell.type === 'start').length, 1);
++  assert.equal(cells.filter(cell => cell.type === 'fuel').length, 19);
++  assert.equal(cells.filter(cell => cell.type === 'enemy').length, 5);
++});
++
++test('the game uses the validated pack grid size', () => {
++  const game = createGame({prepareContent(pack) {
++    pack.gridSize = 2;
++    for (const level of pack.levels) level.tasks = level.tasks.slice(0, 1);
++  }});
++  assert.equal(game.state.gridSize, 2);
++  assert.equal(game.state.board.flat().length, 4);
++  assert.equal(game.state.board.flat().filter(cell => cell.type === 'enemy').length, 1);
++});
++
++test('reordering levels, tasks, choices and translation keys preserves LT associations', () => {
++  const expected = new Map(sourcePack.levels.flatMap(level => level.tasks.map(task => [task.id, clone(task)])));
++  const game = createGame({language: 'lt', prepareContent(pack) {
++    pack.levels.reverse();
++    for (const level of pack.levels) {
++      level.tasks.reverse();
++      for (const task of level.tasks) {
++        task.skills.reverse();
++        task.translations.lt.skills = Object.fromEntries(Object.entries(task.translations.lt.skills).reverse());
++      }
++    }
++  }});
++  for (const level of game.context.GAME_LEVELS) {
++    assert.equal(game.context.i18n.getLocalizedLevel(level).name, level.translations.lt.name);
++    for (const task of level.tasks) {
++      const original = expected.get(task.id), localized = game.context.i18n.getLocalizedTask(task);
++      assert.equal(localized.name, original.translations.lt.name);
++      for (const answer of localized.skills) {
++        assert.equal(answer.label, original.translations.lt.skills[answer.id].label);
++        assert.equal(answer.explain, original.translations.lt.skills[answer.id].explain);
++        assert.equal(answer.correct, original.skills.find(skill => skill.id === answer.id).correct);
++      }
++    }
++  }
++  game.context.i18n.setLanguage('en');
++  const task = game.context.GAME_LEVELS[0].tasks[0];
++  assert.equal(game.context.i18n.getLocalizedTask(task), task);
++});
++
++test('diagnostics match the selected answer ID after a language change, even with identical code', async () => {
++  const game = createGame({language: 'en', prepareContent(pack) {
++    const task = firstTask(pack);
++    task.skills[1].code = task.skills[0].code;
++    task.translations.lt.skills[task.skills[0].id].explain = 'CORRECT_ANSWER_EXPLANATION';
++    task.translations.lt.skills[task.skills[1].id].explain = 'SELECTED_WRONG_ANSWER_EXPLANATION';
++  }});
++  game.run('startGame()');
++  game.collect();
++  game.stage(0);
++  const task = game.context.GAME_LEVELS[0].tasks[0];
++  game.state.stagedTasks[task.id].chosenSkill = task.skills[1];
++  game.context.i18n.setLanguage('lt');
++  await game.run('executePipelineRun()');
++  const diagnostic = game.byId.get('diagnostic-terminal').children.map(line => line.innerText).join('\n');
++  assert.match(diagnostic, /SELECTED_WRONG_ANSWER_EXPLANATION/);
++  assert.doesNotMatch(diagnostic, /CORRECT_ANSWER_EXPLANATION/);
++  assert.equal(game.state.fuel, 1);
++  assert.equal(game.state.stats.totalMistakes, 1);
++});
++
++function extraLevel(base, id) {
++  const level = clone(base);
++  level.id = id;
++  level.name = `Fixture ${id}`;
++  level.translations.lt.name = `Bandymas ${id}`;
++  level.tasks = level.tasks.slice(0, 1);
++  for (const task of level.tasks) {
++    task.id = `${id}_${task.id}`;
++    const translated = {};
++    for (const skill of task.skills) {
++      const oldId = skill.id;
++      skill.id = `${id}_${oldId}`;
++      translated[skill.id] = task.translations.lt.skills[oldId];
++    }
++    task.translations.lt.skills = translated;
++  }
++  return level;
++}
++
++for (const length of [4, 5]) for (const language of ['lt', 'en']) {
++  test(`${length}-level campaign completes in ${language} without engine changes`, async () => {
++    const game = createGame({language, prepareContent(pack) {
++      pack.levels.push(extraLevel(pack.levels[0], 'streaming'));
++      if (length === 5) pack.levels.push(extraLevel(pack.levels[0], 'iceberg'));
++    }});
++    assert(game.context.i18n.t('rule_levels').includes(String(length)));
++    assert(game.context.i18n.t('rule_levels').includes(language === 'lt' ? 'Bandymas streaming' : 'Fixture streaming'));
++    game.run('startGame()');
++    for (let index = 0; index < length; index++) {
++      assert.equal(game.state.levelIndex, index);
++      game.collect();
++      game.stage(0);
++      await game.run('executePipelineRun()');
++      await game.byId.get('btn-diagnostic-action').click();
++      assert.equal(game.state.gameOver, index === length - 1);
++    }
++    assert.equal(game.state.stats.totalMistakes, 0);
++    assert.equal(game.state.fuel, length * 2);
++    assert.equal(game.state.timer.running, false);
++    assert.equal(game.byId.get('end-desc').innerText, game.context.i18n.t('victory_desc'));
++    assert(game.byId.get('end-desc').innerText.includes(String(length)));
++  });
++}
++
++test('invalid content displays its error and gates startup even if later scripts execute', () => {
++  const errorNode = {hidden: true}, startButton = {disabled: false}, menu = {style: {display: 'none'}};
++  const context = {
++    window: {GameContent: {validate, getLevel: () => undefined}},
++    document: {getElementById: id => ({'content-error': errorNode, 'btn-start-game': startButton, 'start-menu-modal': menu})[id]}
++  };
++  vm.createContext(context);
++  assert.throws(() => vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/data.js'), 'utf8'), context), /Invalid content pack/);
++  assert.equal(context.window.GAME_LEVELS, null);
++  assert.equal(errorNode.hidden, false);
++  assert.match(errorNode.textContent, /pack.levels/);
++  assert.equal(startButton.disabled, true);
++  assert.equal(menu.style.display, 'flex');
++  assert.throws(() => vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf8'), context), /Game content was not validated/);
++});
++
++test('development CLI validates the HTML-registered pack and fails for invalid content', t => {
++  const valid = spawnSync(process.execPath, ['scripts/validate-content.cjs'], {cwd: ROOT, encoding: 'utf8'});
++  assert.equal(valid.status, 0, valid.stderr);
++  assert.match(valid.stdout, /3 levels, 15 tasks, 60 answers/);
++  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'content-pack-test-'));
++  t.after(() => fs.rmSync(directory, {recursive: true, force: true}));
++  for (const file of ['src/content-pack.js', 'src/data.js', 'scripts/validate-content.cjs']) {
++    fs.mkdirSync(path.dirname(path.join(directory, file)), {recursive: true});
++    fs.copyFileSync(path.join(ROOT, file), path.join(directory, file));
++  }
++  // No level scripts registered: the same manifest used by the browser must fail.
++  fs.writeFileSync(path.join(directory, 'index.html'), '<script src="src/content-pack.js"></script><script src="src/data.js"></script>');
++  const invalid = spawnSync(process.execPath, ['scripts/validate-content.cjs'], {cwd: directory, encoding: 'utf8'});
++  assert.equal(invalid.status, 1);
++  assert.match(invalid.stderr, /Invalid content pack/);
++});
+diff --git a/tests/fuel.test.cjs b/tests/fuel.test.cjs
+index 22fb82d7479f59aa4ecf497e6d759f9179daacd1..ba960c61bf084c36953f4455d56b43093a4039aa 100644
+--- a/tests/fuel.test.cjs
++++ b/tests/fuel.test.cjs
+@@ -200,7 +200,7 @@ test('espresso cup and saucer silhouettes use dark unlit outlines', realGeometry
+ 
+ test('shared gameplay, DOM and translations contain no drink-specific names', () => {
+   const shared=['src/main.js','src/board.js','src/engine.js','src/audio.js','src/pipeline.js','src/ui.js','src/i18n.js',
+-    'src/levels/bronze.js','src/levels/silver.js','src/levels/gold.js'];
++    'src/content/bronze.js','src/content/silver.js','src/content/gold.js'];
+   for(const file of shared)assert.doesNotMatch(fs.readFileSync(path.join(ROOT,file),'utf8'),/espresso|red.?bull|coffee|espreso|puod/i,file);
+   assert.doesNotMatch(html,/espresso|red.?bull|coffee|espreso|puod/i);
+ });
+diff --git a/tests/helpers/game-harness.cjs b/tests/helpers/game-harness.cjs
+index 01858225efc402f17708827dbd545ea389edff05..d998cbcc4831b109a17fdc4b4458fd5f2fd8a685 100644
+--- a/tests/helpers/game-harness.cjs
++++ b/tests/helpers/game-harness.cjs
+@@ -36,7 +36,7 @@ function makeThreeDouble() {
+   return result;
+ }
+ 
+-function createGame({fuelType, language='lt', seed=1}={}) {
++function createGame({fuelType, language='lt', seed=1, prepareContent}={}) {
+   const elements=[], byId=new Map(), events={}, timeouts=new Map(), intervals=new Map();
+   const storage=new Map([['pyspark_survivor_lang',language]]), sounds=[], canvasText=[], delays=[];
+   let now=1000000, timerId=1;
+@@ -81,6 +81,11 @@ function createGame({fuelType, language='lt', seed=1}={}) {
+   const run=code=>vm.runInContext(code,context);
+   for(const file of scripts) {
+     let source=fs.readFileSync(path.join(ROOT,file),'utf8');
++    if(file==='src/data.js' && prepareContent) {
++      // Prepare fixtures before the real startup validator sees the pack.
++      const validate=context.GameContent.validate;
++      context.GameContent={...context.GameContent,validate:pack=>{prepareContent(pack);return validate(pack);}};
++    }
+     if(file==='src/config.js' && fuelType!==undefined)source=source.replace(/fuelType:\s*'[^']*'/,`fuelType: ${JSON.stringify(fuelType)}`);
+     if(file==='src/main.js') {
+       // Real board, controls, UI, staging, timer and pipeline; only drawing/audio are stubbed.
+@@ -116,7 +121,7 @@ function createGame({fuelType, language='lt', seed=1}={}) {
+       visit(x,y);
+       const correct=index++>=mistakes;
+       const desired=cell.data.skills.find(skill=>skill.correct===correct);
+-      const card=byId.get('skills-grid').children.find(el=>el.innerHTML.includes(desired.code));
++      const card=byId.get('skills-grid').children.find(el=>el.getAttribute('data-skill-id')===desired.id);
+       if(!card)throw Error('Answer card missing');
+       card.onclick();advance(650);
+     }));

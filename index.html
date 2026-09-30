@@ -77,10 +77,11 @@
       <div class="menu-badge" data-i18n="menu_badge">HOUSTON WE HAVE DATA</div>
       <h1 class="menu-title" data-i18n="menu_title">PIPELINE</h1>
       <p class="menu-subtitle" data-i18n="menu_subtitle">Nuo nulio iki produkcijos: Duomenų inžinerijos „Roguelike“</p>
+      <pre id="content-error" role="alert" hidden style="white-space: pre-wrap; text-align: left;"></pre>
 
       <div class="rules-box">
         <div class="rule-item">
-          <div data-i18n="rule_levels"><strong>3  lygiai:</strong> Bronza (PySpark) -> Sidabras (SQL) -> Auksas (Spark/Delta Lake optimizavimas).</div>
+          <div data-i18n="rule_levels">Įdiekite visus kampanijos duomenų srauto lygius.</div>
         </div>
         <div class="rule-item">
           <div data-i18n="rule_fuel"><strong>Kuras klaidų taisymui:</strong> Pradedate su <strong>0 kuro vienetų</strong>. Rinkite kurą žemėlapyje, kad galėtumėte išgyventi radus klaidas.</div>
@@ -92,7 +93,7 @@
           <div data-i18n="rule_penalties"><strong>Taisymai ir baudos:</strong> Kiekviena klaida sunaudoja <strong>1 kuro vienetą</strong> ir prideda <strong>+60s baudą</strong> prie galutinio laiko. Kai klaidai ištaisyti nepakanka kuro, Game Over.</div>
         </div>
         <div class="rule-item">
-          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja greitį nuo paleidimo iki 3 lygio užbaigimo.</div>
+          <div data-i18n="rule_leaderboard"><strong>Lyderių lentelė:</strong> Laikmatis fiksuoja laiką nuo paleidimo iki paskutinio lygio užbaigimo.</div>
         </div>
       </div>
 
@@ -171,7 +172,7 @@
         <h2 data-i18n="lb_title">PRODUKCIJOS "PIPELINE" LYDERIŲ LENTELĖ</h2>
         <button id="btn-close-leaderboard" class="close-x">&times;</button>
       </div>
-      <p style="font-size:12px; color:#888888; margin-bottom:12px;" data-i18n="lb_subtitle">Greičiausi inžinieriai, sėkmingai įdiegę Bronzos, Sidabro ir Aukso sluoksnius į produkciją.</p>
+      <p style="font-size:12px; color:#888888; margin-bottom:12px;" data-i18n="lb_subtitle">Greičiausi inžinieriai, sėkmingai įdiegę visus kampanijos lygius į produkciją.</p>
       
       <div class="leaderboard-table-container">
         <table class="leaderboard-table">
@@ -221,15 +222,15 @@
   <!-- Configuration and fuel definitions must precede localization and gameplay. -->
   <script src="src/config.js"></script>
   <script src="src/fuel.js"></script>
-  <script src="src/i18n-tasks.js"></script>
+  <script src="src/content-pack.js"></script>
+  <script src="src/content/bronze.js"></script>
+  <script src="src/content/silver.js"></script>
+  <script src="src/content/gold.js"></script>
+  <script src="src/data.js"></script>
   <script src="src/i18n.js"></script>
   <script src="src/utils.js"></script>
   <script src="src/audio.js"></script>
   <script src="src/music.js"></script>
-  <script src="src/levels/bronze.js"></script>
-  <script src="src/levels/silver.js"></script>
-  <script src="src/levels/gold.js"></script>
-  <script src="src/data.js"></script>
   <script src="src/player.js"></script>
   <script src="src/board.js"></script>
   <script src="src/engine.js"></script>

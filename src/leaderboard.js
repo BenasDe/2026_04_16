@@ -111,7 +111,7 @@ window.createLeaderboard = function (formatStopwatch) {
     if (records.length === 0) {
       const emptyMsg = window.i18n
         ? window.i18n.t('lb_empty')
-        : 'No completed pipeline runs yet. Deploy Bronze, Silver, and Gold to claim #1.';
+        : 'No completed pipeline runs yet. Deploy every level in the campaign to claim #1.';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td colspan="5" style="text-align: center; color: #777777; padding: 28px 12px; font-style: italic; font-family: 'Fira Code', monospace;">

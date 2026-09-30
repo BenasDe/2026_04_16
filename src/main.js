@@ -1,7 +1,10 @@
+// A failed classic script does not stop later scripts: explicitly gate startup.
+if (!window.GAME_LEVELS) throw new Error('Game content was not validated. See the content-pack error above.');
+
 const gameState = {
   levelIndex: 0,
   fuel: 0,
-  gridSize: 5,
+  gridSize: window.GAME_CONTENT_PACK.gridSize,
   board: [],
   player: {
     gridX: 0,

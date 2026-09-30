@@ -56,7 +56,7 @@ window.createPipelineRunner = function ({ gameState, updateHUD, showToast, addTi
       const isCorrect = !!(skill && (skill.correct === true || skill.isCorrect === true));
 
       const locTask = window.i18n ? window.i18n.getLocalizedTask(task) : task;
-      const locSkill = locTask.skills.find(s => s.code === skill.code) || skill;
+      const locSkill = locTask.skills.find(s => s.id === skill.id) || skill;
 
       const checkingMsg = window.i18n
         ? window.i18n.t('diag_checking_node', { current: i + 1, total: stagedList.length, name: locTask.name })
